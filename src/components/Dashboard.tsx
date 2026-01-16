@@ -24,6 +24,11 @@ import { Verification } from "./Verification";
 import { HourlyMatrix } from "./HourlyMatrix";
 import { AIPredictive } from "./AIPredictive";
 import { DatoRicardo } from "./DatoRicardo";
+import { RicardoBot } from "./RicardoBot";
+import { TrendAnalysis } from "./TrendAnalysis";
+import { HourlyPredictions } from "./HourlyPredictions";
+import { NotificationCenter } from "./NotificationCenter";
+import { ExportTools } from "./ExportTools";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -107,6 +112,8 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
             
             <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <ExportTools type="results" filename="resultados" />
               <span className={`px-2 py-1 rounded text-xs font-medium ${
                 userRole === 'admin' 
                   ? 'bg-accent text-accent-foreground' 
@@ -178,7 +185,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <HourlyMatrix />
           </TabsContent>
 
-          <TabsContent value="ia" className="mt-4 space-y-4">
+          <TabsContent value="ia" className="mt-4 space-y-6">
+            <HourlyPredictions />
+            <TrendAnalysis />
             <AIPredictive />
           </TabsContent>
 
@@ -218,6 +227,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
         onSuccess={handleAdminVerified}
         title="Acceso a Insertar Resultados"
       />
+
+      {/* Bot Ricardo Flotante */}
+      <RicardoBot />
     </div>
   );
 }
