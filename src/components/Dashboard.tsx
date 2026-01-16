@@ -9,7 +9,7 @@ import {
   CheckSquare,
   Grid3X3,
   LogOut,
-  UserCircle
+  FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { getAnimalFromNumber } from "@/lib/constants";
 import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
 import { ResultsInsert } from "./ResultsInsert";
+import { ResultsPanel } from "./ResultsPanel";
 import { HistoryManager } from "./HistoryManager";
 import { AdminUserManagement } from "./AdminUserManagement";
 import { Verification } from "./Verification";
@@ -26,7 +27,6 @@ import { AIPredictive } from "./AIPredictive";
 import { DatoRicardo } from "./DatoRicardo";
 import { RicardoBot } from "./RicardoBot";
 import { TrendAnalysis } from "./TrendAnalysis";
-import { HourlyPredictions } from "./HourlyPredictions";
 import { NotificationCenter } from "./NotificationCenter";
 import { ExportTools } from "./ExportTools";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
@@ -142,6 +142,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
+            <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Resultados</span>
+            </TabsTrigger>
             <TabsTrigger value="verificacion" className="flex items-center gap-1.5 data-[state=active]:bg-background">
               <CheckSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Verificación</span>
@@ -177,6 +181,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
           </TabsContent>
 
+          <TabsContent value="resultados" className="mt-4">
+            <ResultsPanel isAdmin={userRole === 'admin'} />
+          </TabsContent>
+
           <TabsContent value="verificacion" className="mt-4">
             <Verification />
           </TabsContent>
@@ -186,7 +194,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           </TabsContent>
 
           <TabsContent value="ia" className="mt-4 space-y-6">
-            <HourlyPredictions />
             <TrendAnalysis />
             <AIPredictive />
           </TabsContent>
