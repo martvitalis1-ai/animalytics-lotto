@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brain, Sparkles, RefreshCw, Loader2, TrendingUp, Flame, Snowflake, Clock } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Brain, Sparkles, RefreshCw, Loader2, TrendingUp, Flame, Snowflake, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { LOTTERIES, ANIMAL_MAPPING } from '@/lib/constants';
+import { LOTTERIES, ANIMAL_MAPPING, DRAW_TIMES } from '@/lib/constants';
 import { calculateProbabilities, AnalysisResult } from '@/lib/probabilityEngine';
 import { getLotteryLogo } from "./LotterySelector";
+import { CAGED_NUMBERS } from '@/data/historyBatch';
 
 export function AIPredictive() {
   const [predictions, setPredictions] = useState<Record<string, AnalysisResult[]>>({});
   const [ricardoPredictions, setRicardoPredictions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [expandedLottery, setExpandedLottery] = useState<string | null>(null);
+  const [hourlyPredictions, setHourlyPredictions] = useState<Record<string, Record<string, AnalysisResult[]>>>({});
 
   const generatePredictions = async () => {
     setLoading(true);
@@ -26,13 +30,25 @@ export function AIPredictive() {
       
       if (history) {
         const allPredictions: Record<string, AnalysisResult[]> = {};
+        const allHourlyPredictions: Record<string, Record<string, AnalysisResult[]>> = {};
         
         for (const lottery of LOTTERIES) {
           const predictions = calculateProbabilities(history, lottery.id);
           allPredictions[lottery.id] = predictions.slice(0, 6);
+          
+          // Predicciones por hora
+          allHourlyPredictions[lottery.id] = {};
+          for (const time of DRAW_TIMES) {
+            const hourlyHistory = history.filter(h => h.draw_time === time);
+            if (hourlyHistory.length > 0) {
+              const hourlyPreds = calculateProbabilities(hourlyHistory, lottery.id);
+              allHourlyPredictions[lottery.id][time] = hourlyPreds.slice(0, 3);
+            }
+          }
         }
         
         setPredictions(allPredictions);
+        setHourlyPredictions(allHourlyPredictions);
         setLastUpdate(new Date());
         
         // Guardar predicciones en la base de datos
@@ -41,13 +57,11 @@ export function AIPredictive() {
         for (const [lotteryId, preds] of Object.entries(allPredictions)) {
           const lottery = LOTTERIES.find(l => l.id === lotteryId);
           
-          // Eliminar predicción anterior del mismo día/lotería
           await supabase.from('ai_predictions')
             .delete()
             .eq('lottery_type', lotteryId)
             .eq('prediction_date', today);
           
-          // Insertar nueva predicción
           await supabase.from('ai_predictions').insert({
             lottery_type: lotteryId,
             prediction_date: today,
@@ -104,6 +118,15 @@ export function AIPredictive() {
     }
   };
 
+  const toggleLottery = (lotteryId: string) => {
+    setExpandedLottery(expandedLottery === lotteryId ? null : lotteryId);
+  };
+
+  // Obtener Ricardo predictions por hora
+  const getRicardoPredictionForTime = (lotteryId: string, time: string) => {
+    return ricardoPredictions.find(p => p.lottery_type === lotteryId && p.draw_time === time);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header con actualización */}
@@ -128,56 +151,38 @@ export function AIPredictive() {
         </Button>
       </div>
 
-      {/* Predicciones de Dato Ricardo para hoy */}
-      {ricardoPredictions.length > 0 && (
-        <Card className="glass-card border-accent/30 bg-accent/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-accent" />
-              Pronósticos de Dato Ricardo - HOY
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2">
-              {ricardoPredictions.map((p) => {
-                const lottery = LOTTERIES.find(l => l.id === p.lottery_type);
-                return (
-                  <div key={p.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-lg">
-                    <img src={getLotteryLogo(p.lottery_type)} alt="" className="w-6 h-6" />
-                    <span className="font-semibold text-sm min-w-24">{lottery?.name}</span>
-                    <span className="text-xs text-muted-foreground">{p.draw_time}</span>
-                    <div className="flex gap-1 ml-auto">
-                      {p.predicted_numbers?.map((n: string, i: number) => (
-                        <span key={i} className="px-2 py-1 bg-accent text-accent-foreground rounded font-mono font-bold text-sm">
-                          {n.padStart(2, '0')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Predicciones de IA por lotería */}
+      {/* Predicciones de IA + Dato Ricardo por lotería */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {LOTTERIES.map((lottery) => {
           const lotteryPredictions = predictions[lottery.id] || [];
+          const lotteryRicardo = ricardoPredictions.filter(p => p.lottery_type === lottery.id);
+          const cagedNums = CAGED_NUMBERS[lottery.id] || [];
+          const isExpanded = expandedLottery === lottery.id;
+          const hourlyPreds = hourlyPredictions[lottery.id] || {};
           
           return (
-            <Card key={lottery.id} className="glass-card">
+            <Card key={lottery.id} className="glass-card overflow-hidden">
               <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <img src={getLotteryLogo(lottery.id)} alt="" className="w-8 h-8" />
-                  <CardTitle className="text-sm font-bold">{lottery.name}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <img src={getLotteryLogo(lottery.id)} alt="" className="w-8 h-8" />
+                    <CardTitle className="text-sm font-bold">{lottery.name}</CardTitle>
+                  </div>
+                  {cagedNums.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-accent/30 text-accent-foreground rounded">
+                      🔒 Enjaulados
+                    </span>
+                  )}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
+                {/* Predicciones generales de IA */}
                 {lotteryPredictions.length > 0 ? (
                   <div className="space-y-2">
-                    {lotteryPredictions.map((pred, idx) => (
+                    <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      <Brain className="w-3 h-3" /> Predicción IA General
+                    </div>
+                    {lotteryPredictions.slice(0, 3).map((pred, idx) => (
                       <div 
                         key={pred.number}
                         className={`flex items-center justify-between p-2 rounded-lg ${
@@ -205,12 +210,7 @@ export function AIPredictive() {
                             {getStatusIcon(pred.status)}
                             {pred.status}
                           </span>
-                          <div className="text-right">
-                            <p className="text-xs font-bold">{pred.probability.toFixed(1)}%</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {pred.frequency}× · {pred.daysSince}d
-                            </p>
-                          </div>
+                          <p className="text-xs font-bold">{pred.probability.toFixed(1)}%</p>
                         </div>
                       </div>
                     ))}
@@ -219,6 +219,94 @@ export function AIPredictive() {
                   <p className="text-center text-muted-foreground text-sm py-4">
                     {loading ? 'Calculando...' : 'Sin datos suficientes'}
                   </p>
+                )}
+
+                {/* Dato Ricardo del día */}
+                {lotteryRicardo.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-accent flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Dato Ricardo - Hoy
+                    </div>
+                    {lotteryRicardo.map((p) => (
+                      <div key={p.id} className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg">
+                        <span className="text-xs text-muted-foreground w-16">{p.draw_time}</span>
+                        <div className="flex gap-1">
+                          {p.predicted_numbers?.map((n: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-accent text-accent-foreground rounded font-mono font-bold text-sm">
+                              {n.padStart(2, '0')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Botón para desplegar horas */}
+                <Collapsible open={isExpanded} onOpenChange={() => toggleLottery(lottery.id)}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Clock className="w-4 h-4 mr-2" />
+                      Pronósticos por Hora
+                      {isExpanded ? <ChevronUp className="w-4 h-4 ml-auto" /> : <ChevronDown className="w-4 h-4 ml-auto" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3 space-y-2">
+                    <div className="max-h-60 overflow-y-auto space-y-2 p-1">
+                      {DRAW_TIMES.map((time) => {
+                        const hourPreds = hourlyPreds[time] || [];
+                        const ricardoPred = getRicardoPredictionForTime(lottery.id, time);
+                        
+                        if (hourPreds.length === 0 && !ricardoPred) return null;
+                        
+                        return (
+                          <div key={time} className="p-2 bg-muted/30 rounded-lg">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold">{time}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {/* Predicciones IA por hora */}
+                              {hourPreds.map((pred, i) => (
+                                <span 
+                                  key={`ai-${i}`}
+                                  className="px-1.5 py-0.5 bg-primary/20 text-primary rounded text-xs font-mono font-bold flex items-center gap-0.5"
+                                  title="Predicción IA"
+                                >
+                                  <Brain className="w-2.5 h-2.5" />
+                                  {pred.number.padStart(2, '0')}
+                                </span>
+                              ))}
+                              {/* Ricardo por hora */}
+                              {ricardoPred?.predicted_numbers?.map((n: string, i: number) => (
+                                <span 
+                                  key={`ricardo-${i}`}
+                                  className="px-1.5 py-0.5 bg-accent/30 text-accent-foreground rounded text-xs font-mono font-bold flex items-center gap-0.5"
+                                  title="Dato Ricardo"
+                                >
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  {n.padStart(2, '0')}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Números enjaulados */}
+                {cagedNums.length > 0 && (
+                  <div className="pt-2 border-t border-border/50">
+                    <div className="text-[10px] text-muted-foreground mb-1">🔒 Enjaulados:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {cagedNums.slice(0, 6).map((n) => (
+                        <span key={n} className="px-1.5 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-mono font-bold">
+                          {n.padStart(2, '0')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>

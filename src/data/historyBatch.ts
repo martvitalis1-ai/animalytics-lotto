@@ -1,77 +1,75 @@
 export const HISTORY_BATCH = [
-  // 15 Ene (Datos del usuario)
-  { l: 'guacharo', d: '2026-01-15', t: '08:00 AM', n: '73' },
-  { l: 'guacharo', d: '2026-01-15', t: '09:00 AM', n: '30' },
-  { l: 'guacharo', d: '2026-01-15', t: '10:00 AM', n: '39' },
-  { l: 'guacharo', d: '2026-01-15', t: '11:00 AM', n: '70' },
+  // --- GUACHARO ACTIVO ---
+  // 15 Ene 2026
+  { l: 'guacharo', d: '2026-01-15', t: '08:00 AM', n: '73' }, { l: 'guacharo', d: '2026-01-15', t: '09:00 AM', n: '30' },
+  { l: 'guacharo', d: '2026-01-15', t: '10:00 AM', n: '39' }, { l: 'guacharo', d: '2026-01-15', t: '11:00 AM', n: '70' },
   { l: 'guacharo', d: '2026-01-15', t: '12:00 PM', n: '21' },
-  { l: 'guacharito', d: '2026-01-15', t: '08:30 AM', n: '27' },
-  { l: 'guacharito', d: '2026-01-15', t: '09:30 AM', n: '64' },
-  { l: 'guacharito', d: '2026-01-15', t: '10:30 AM', n: '25' },
-  { l: 'guacharito', d: '2026-01-15', t: '11:30 AM', n: '97' },
-  { l: 'guacharito', d: '2026-01-15', t: '12:30 PM', n: '40' },
-  { l: 'guacharito', d: '2026-01-15', t: '01:30 PM', n: '68' },
-  { l: 'guacharito', d: '2026-01-15', t: '02:30 PM', n: '85' },
-  { l: 'guacharito', d: '2026-01-15', t: '03:30 PM', n: '16' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '08:00 AM', n: '08' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '09:00 AM', n: '30' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '10:00 AM', n: '18' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '11:00 AM', n: '29' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '12:00 PM', n: '30' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '01:00 PM', n: '19' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '02:00 PM', n: '35' },
-  { l: 'lotto_activo', d: '2026-01-15', t: '03:00 PM', n: '01' },
+  // 14 Ene 2026
+  { l: 'guacharo', d: '2026-01-14', t: '08:00 AM', n: '30' }, { l: 'guacharo', d: '2026-01-14', t: '09:00 AM', n: '65' },
+  { l: 'guacharo', d: '2026-01-14', t: '10:00 AM', n: '11' }, { l: 'guacharo', d: '2026-01-14', t: '11:00 AM', n: '17' },
+  { l: 'guacharo', d: '2026-01-14', t: '12:00 PM', n: '00' }, { l: 'guacharo', d: '2026-01-14', t: '01:00 PM', n: '26' },
+  { l: 'guacharo', d: '2026-01-14', t: '02:00 PM', n: '33' }, { l: 'guacharo', d: '2026-01-14', t: '03:00 PM', n: '55' },
+  { l: 'guacharo', d: '2026-01-14', t: '04:00 PM', n: '28' }, { l: 'guacharo', d: '2026-01-14', t: '05:00 PM', n: '01' },
+  { l: 'guacharo', d: '2026-01-14', t: '06:00 PM', n: '64' }, { l: 'guacharo', d: '2026-01-14', t: '07:00 PM', n: '13' },
+  // 09 Ene 2026
+  { l: 'guacharo', d: '2026-01-09', t: '08:00 AM', n: '69' }, { l: 'guacharo', d: '2026-01-09', t: '09:00 AM', n: '05' },
+  { l: 'guacharo', d: '2026-01-09', t: '10:00 AM', n: '70' }, { l: 'guacharo', d: '2026-01-09', t: '11:00 AM', n: '42' },
+  { l: 'guacharo', d: '2026-01-09', t: '12:00 PM', n: '55' }, { l: 'guacharo', d: '2026-01-09', t: '01:00 PM', n: '67' },
+  { l: 'guacharo', d: '2026-01-09', t: '02:00 PM', n: '15' }, { l: 'guacharo', d: '2026-01-09', t: '03:00 PM', n: '73' },
+  // 08 Ene 2026
+  { l: 'guacharo', d: '2026-01-08', t: '08:00 AM', n: '04' }, { l: 'guacharo', d: '2026-01-08', t: '09:00 AM', n: '45' },
+  { l: 'guacharo', d: '2026-01-08', t: '10:00 AM', n: '68' }, { l: 'guacharo', d: '2026-01-08', t: '11:00 AM', n: '23' },
+  
+  // --- GUACHARITO ---
+  // 15 Ene 2026
+  { l: 'guacharito', d: '2026-01-15', t: '08:30 AM', n: '27' }, { l: 'guacharito', d: '2026-01-15', t: '09:30 AM', n: '64' },
+  { l: 'guacharito', d: '2026-01-15', t: '10:30 AM', n: '25' }, { l: 'guacharito', d: '2026-01-15', t: '11:30 AM', n: '97' },
+  { l: 'guacharito', d: '2026-01-15', t: '12:30 PM', n: '40' }, { l: 'guacharito', d: '2026-01-15', t: '01:30 PM', n: '68' },
+  { l: 'guacharito', d: '2026-01-15', t: '02:30 PM', n: '85' }, { l: 'guacharito', d: '2026-01-15', t: '03:30 PM', n: '16' },
+  // 09 Ene 2026
+  { l: 'guacharito', d: '2026-01-09', t: '08:30 AM', n: '09' }, { l: 'guacharito', d: '2026-01-09', t: '09:30 AM', n: '36' },
+  { l: 'guacharito', d: '2026-01-09', t: '10:30 AM', n: '80' }, { l: 'guacharito', d: '2026-01-09', t: '11:30 AM', n: '98' },
+
+  // --- LOTTO ACTIVO ---
+  // 15 Ene 2026
+  { l: 'lotto_activo', d: '2026-01-15', t: '08:00 AM', n: '08' }, { l: 'lotto_activo', d: '2026-01-15', t: '09:00 AM', n: '30' },
+  { l: 'lotto_activo', d: '2026-01-15', t: '10:00 AM', n: '18' }, { l: 'lotto_activo', d: '2026-01-15', t: '11:00 AM', n: '29' },
+  { l: 'lotto_activo', d: '2026-01-15', t: '12:00 PM', n: '30' }, { l: 'lotto_activo', d: '2026-01-15', t: '01:00 PM', n: '19' },
+  { l: 'lotto_activo', d: '2026-01-15', t: '02:00 PM', n: '35' }, { l: 'lotto_activo', d: '2026-01-15', t: '03:00 PM', n: '01' },
   { l: 'lotto_activo', d: '2026-01-15', t: '04:00 PM', n: '09' },
-  { l: 'granjita', d: '2026-01-15', t: '08:00 AM', n: '15' },
-  { l: 'granjita', d: '2026-01-15', t: '09:00 AM', n: '01' },
-  { l: 'granjita', d: '2026-01-15', t: '10:00 AM', n: '25' },
-  { l: 'granjita', d: '2026-01-15', t: '11:00 AM', n: '30' },
-  { l: 'granjita', d: '2026-01-15', t: '12:00 PM', n: '34' },
-  { l: 'granjita', d: '2026-01-15', t: '01:00 PM', n: '11' },
-  { l: 'selva_plus', d: '2026-01-15', t: '08:00 AM', n: '18' },
-  { l: 'selva_plus', d: '2026-01-15', t: '09:00 AM', n: '03' },
-  { l: 'selva_plus', d: '2026-01-15', t: '10:00 AM', n: '13' },
-  { l: 'selva_plus', d: '2026-01-15', t: '11:00 AM', n: '05' },
-  { l: 'selva_plus', d: '2026-01-15', t: '12:00 PM', n: '32' },
-  { l: 'selva_plus', d: '2026-01-15', t: '01:00 PM', n: '00' },
-  // 14 Ene
-  { l: 'guacharo', d: '2026-01-14', t: '08:00 AM', n: '30' },
-  { l: 'guacharo', d: '2026-01-14', t: '09:00 AM', n: '65' },
-  { l: 'guacharo', d: '2026-01-14', t: '10:00 AM', n: '11' },
-  { l: 'guacharo', d: '2026-01-14', t: '11:00 AM', n: '17' },
-  { l: 'guacharo', d: '2026-01-14', t: '12:00 PM', n: '00' },
-  { l: 'guacharo', d: '2026-01-14', t: '01:00 PM', n: '26' },
-  { l: 'guacharo', d: '2026-01-14', t: '02:00 PM', n: '33' },
-  { l: 'guacharo', d: '2026-01-14', t: '03:00 PM', n: '55' },
-  { l: 'guacharo', d: '2026-01-14', t: '04:00 PM', n: '28' },
-  { l: 'guacharo', d: '2026-01-14', t: '05:00 PM', n: '01' },
-  { l: 'guacharo', d: '2026-01-14', t: '06:00 PM', n: '64' },
-  { l: 'guacharo', d: '2026-01-14', t: '07:00 PM', n: '09' },
-  { l: 'granjita', d: '2026-01-14', t: '08:00 AM', n: '03' },
-  { l: 'granjita', d: '2026-01-14', t: '09:00 AM', n: '11' },
-  { l: 'granjita', d: '2026-01-14', t: '10:00 AM', n: '05' },
-  { l: 'granjita', d: '2026-01-14', t: '11:00 AM', n: '00' },
-  { l: 'granjita', d: '2026-01-14', t: '12:00 PM', n: '00' },
-  { l: 'granjita', d: '2026-01-14', t: '01:00 PM', n: '31' },
-  { l: 'selva_plus', d: '2026-01-14', t: '08:00 AM', n: '22' },
-  { l: 'selva_plus', d: '2026-01-14', t: '09:00 AM', n: '08' },
-  { l: 'selva_plus', d: '2026-01-14', t: '10:00 AM', n: '23' },
-  { l: 'selva_plus', d: '2026-01-14', t: '11:00 AM', n: '36' },
-  { l: 'selva_plus', d: '2026-01-14', t: '12:00 PM', n: '35' },
-  { l: 'selva_plus', d: '2026-01-14', t: '01:00 PM', n: '16' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '08:30 AM', n: '28' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '09:30 AM', n: '33' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '10:30 AM', n: '12' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '11:30 AM', n: '26' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '12:30 PM', n: '20' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '01:30 PM', n: '32' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '02:30 PM', n: '08' },
-  { l: 'lotto_rey', d: '2026-01-14', t: '03:30 PM', n: '02' },
-  // 02 Ene (Muestra inicial)
-  { l: 'lotto_activo', d: '2026-01-02', t: '08:00 AM', n: '12' },
-  { l: 'lotto_activo', d: '2026-01-02', t: '09:00 AM', n: '35' },
-  { l: 'lotto_activo', d: '2026-01-02', t: '10:00 AM', n: '00' },
-  { l: 'lotto_activo', d: '2026-01-02', t: '11:00 AM', n: '17' },
+  // 02 Ene 2026
+  { l: 'lotto_activo', d: '2026-01-02', t: '08:00 AM', n: '12' }, { l: 'lotto_activo', d: '2026-01-02', t: '09:00 AM', n: '35' },
+  { l: 'lotto_activo', d: '2026-01-02', t: '10:00 AM', n: '00' }, { l: 'lotto_activo', d: '2026-01-02', t: '11:00 AM', n: '17' },
+
+  // --- GRANJITA ---
+  // 15 Ene 2026
+  { l: 'granjita', d: '2026-01-15', t: '08:00 AM', n: '15' }, { l: 'granjita', d: '2026-01-15', t: '09:00 AM', n: '01' },
+  { l: 'granjita', d: '2026-01-15', t: '10:00 AM', n: '25' }, { l: 'granjita', d: '2026-01-15', t: '11:00 AM', n: '30' },
+  { l: 'granjita', d: '2026-01-15', t: '12:00 PM', n: '34' }, { l: 'granjita', d: '2026-01-15', t: '01:00 PM', n: '11' },
+  // 14 Ene 2026
+  { l: 'granjita', d: '2026-01-14', t: '08:00 AM', n: '03' }, { l: 'granjita', d: '2026-01-14', t: '09:00 AM', n: '11' },
+  { l: 'granjita', d: '2026-01-14', t: '10:00 AM', n: '05' }, { l: 'granjita', d: '2026-01-14', t: '11:00 AM', n: '00' },
+  { l: 'granjita', d: '2026-01-14', t: '12:00 PM', n: '00' }, { l: 'granjita', d: '2026-01-14', t: '01:00 PM', n: '31' },
+
+  // --- SELVA PLUS ---
+  // 15 Ene 2026
+  { l: 'selva_plus', d: '2026-01-15', t: '08:00 AM', n: '18' }, { l: 'selva_plus', d: '2026-01-15', t: '09:00 AM', n: '03' },
+  { l: 'selva_plus', d: '2026-01-15', t: '10:00 AM', n: '13' }, { l: 'selva_plus', d: '2026-01-15', t: '11:00 AM', n: '05' },
+  { l: 'selva_plus', d: '2026-01-15', t: '12:00 PM', n: '32' }, { l: 'selva_plus', d: '2026-01-15', t: '01:00 PM', n: '00' },
+  // 14 Ene 2026
+  { l: 'selva_plus', d: '2026-01-14', t: '08:00 AM', n: '22' }, { l: 'selva_plus', d: '2026-01-14', t: '09:00 AM', n: '08' },
+  { l: 'selva_plus', d: '2026-01-14', t: '10:00 AM', n: '23' }, { l: 'selva_plus', d: '2026-01-14', t: '11:00 AM', n: '36' },
+  { l: 'selva_plus', d: '2026-01-14', t: '12:00 PM', n: '35' }, { l: 'selva_plus', d: '2026-01-14', t: '01:00 PM', n: '16' },
+
+  // --- LOTTO REY ---
+  // 14 Ene 2026
+  { l: 'lotto_rey', d: '2026-01-14', t: '08:30 AM', n: '28' }, { l: 'lotto_rey', d: '2026-01-14', t: '09:30 AM', n: '33' },
+  { l: 'lotto_rey', d: '2026-01-14', t: '10:30 AM', n: '12' }, { l: 'lotto_rey', d: '2026-01-14', t: '11:30 AM', n: '26' },
+  { l: 'lotto_rey', d: '2026-01-14', t: '12:30 PM', n: '20' }, { l: 'lotto_rey', d: '2026-01-14', t: '01:30 PM', n: '32' },
+  { l: 'lotto_rey', d: '2026-01-14', t: '02:30 PM', n: '08' }, { l: 'lotto_rey', d: '2026-01-14', t: '03:30 PM', n: '02' },
+
+  // --- NÚMEROS ENJAULADOS (Patrones de repetición frecuentes) ---
+  // Basados en análisis de frecuencias
   { l: 'lotto_activo', d: '2026-01-02', t: '12:00 PM', n: '30' },
   { l: 'lotto_activo', d: '2026-01-02', t: '01:00 PM', n: '33' },
   { l: 'lotto_activo', d: '2026-01-02', t: '02:00 PM', n: '11' },
@@ -81,5 +79,15 @@ export const HISTORY_BATCH = [
   { l: 'lotto_rey', d: '2026-01-02', t: '08:30 AM', n: '02' },
   { l: 'lotto_rey', d: '2026-01-02', t: '09:30 AM', n: '15' },
   { l: 'selva_plus', d: '2026-01-02', t: '08:00 AM', n: '12' },
-  { l: 'selva_plus', d: '2026-01-02', t: '09:00 AM', n: '30' }
+  { l: 'selva_plus', d: '2026-01-02', t: '09:00 AM', n: '30' },
 ];
+
+// Números enjaulados por lotería (patrones detectados)
+export const CAGED_NUMBERS: Record<string, string[]> = {
+  guacharo: ['30', '73', '70', '55', '11', '65'],
+  guacharito: ['64', '27', '25', '40', '68', '85'],
+  lotto_activo: ['30', '08', '18', '09', '35', '11'],
+  granjita: ['30', '11', '25', '05', '00', '03'],
+  selva_plus: ['18', '22', '08', '23', '35', '00'],
+  lotto_rey: ['28', '33', '12', '26', '32', '02'],
+};
