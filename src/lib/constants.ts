@@ -1,0 +1,44 @@
+// Mapeo de animales por número
+export const ANIMAL_MAPPING: Record<string, string> = {
+  '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', 
+  '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', 
+  '9': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', 
+  '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', 
+  '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', 
+  '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', 
+  '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', 
+  '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
+};
+
+export const GUACHARO_MAPPING: Record<string, string> = { 
+  '0': 'DELFÍN', '00': 'BALLENA', '75': 'GUÁCHARO' 
+};
+
+export const LOTTERIES = [
+  { id: 'guacharo', name: 'Guácharo Activo', range: 75, type: 'numbers', mapping: GUACHARO_MAPPING },
+  { id: 'guacharito', name: 'Guacharito', range: 99, type: 'numbers', mapping: GUACHARO_MAPPING },
+  { id: 'lotto_activo', name: 'Lotto Activo', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
+  { id: 'granjita', name: 'La Granjita', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
+  { id: 'selva_plus', name: 'Selva Plus', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
+  { id: 'lotto_rey', name: 'Lotto Rey', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
+] as const;
+
+export const DRAW_TIMES = [
+  '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
+  '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
+  '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM',
+  '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM'
+];
+
+export const ADMIN_CODE = "GANADOR85";
+
+// Obtener el animal desde el número
+export const getAnimalFromNumber = (num: string, lotteryId: string): string => {
+  const lottery = LOTTERIES.find(l => l.id === lotteryId);
+  if (!lottery) return '';
+  
+  if (lottery.type === 'animals') {
+    return ANIMAL_MAPPING[num] || '';
+  }
+  return lottery.mapping[num] || '';
+};

@@ -47,6 +47,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        lottery: {
+          hot: "hsl(var(--lottery-hot))",
+          cold: "hsl(var(--lottery-cold))",
+          overdue: "hsl(var(--lottery-overdue))",
+          neutral: "hsl(var(--lottery-neutral))",
+        },
+        surface: {
+          elevated: "hsl(var(--surface-elevated))",
+          sunken: "hsl(var(--surface-sunken))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
