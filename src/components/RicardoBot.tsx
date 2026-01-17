@@ -92,6 +92,49 @@ export function RicardoBot() {
     }
   }, [isOpen]);
 
+  // Llamar a la IA general para preguntas no relacionadas con loterías
+  const callGeneralAI = async (userMessage: string): Promise<string> => {
+    try {
+      const conversationHistory = messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      const response = await supabase.functions.invoke('ricardo-ai', {
+        body: { message: userMessage, conversationHistory }
+      });
+
+      if (response.error) {
+        console.error('AI function error:', response.error);
+        return `${getRandomExpression()} ¡Epa chamo! Tuve un problemita. ${response.error.message || 'Intenta de nuevo.'}`;
+      }
+
+      if (response.data?.error) {
+        return response.data.message || `${getRandomExpression()} Algo salió mal, vale.`;
+      }
+
+      return response.data?.response || `${getRandomExpression()} No pude procesar eso, intenta de nuevo.`;
+    } catch (error) {
+      console.error('Error calling AI:', error);
+      return `${getRandomExpression()} ¡Coño! Hubo un error conectando con mi cerebro. Intenta de nuevo.`;
+    }
+  };
+
+  // Verificar si el mensaje es sobre loterías/animalitos
+  const isLotteryRelated = (msg: string): boolean => {
+    const lotteryKeywords = [
+      'pronóstico', 'predicción', 'predic', 'qué va a salir', 'qué juego', 'dame números',
+      'lotería', 'loteria', 'animalitos', 'animalito', 'lotto', 'granjita', 'selva', 
+      'guacharo', 'guacharito', 'sorteo', 'número', 'numero', 'animal',
+      'tigre', 'león', 'gato', 'perro', 'caballo', 'elefante', 'mono', 'cochino',
+      'soñé', 'sueño', 'dream', 'insertar', 'resultado', 'análisis', 'estadísticas',
+      'caliente', 'frío', 'vencido', 'matriz', 'hora', 'ayuda', 'help', 'comandos'
+    ];
+    const lowerMsg = msg.toLowerCase();
+    return lotteryKeywords.some(keyword => lowerMsg.includes(keyword)) ||
+           LOTTERIES.some(l => lowerMsg.includes(l.id.toLowerCase()) || lowerMsg.includes(l.name.toLowerCase()));
+  };
+
   const processMessage = async (userMessage: string): Promise<string> => {
     const lowerMsg = userMessage.toLowerCase();
     
@@ -149,194 +192,189 @@ export function RicardoBot() {
       }
     }
 
-    // Saludos
-    if (lowerMsg.match(/hola|hey|epa|qué tal|buenas|saludos/)) {
+    // Saludos básicos
+    if (lowerMsg.match(/^(hola|hey|epa|qué tal|buenas|saludos)$/)) {
       return getRandomResponse('greeting');
     }
 
     // Despedidas
-    if (lowerMsg.match(/chao|adiós|bye|hasta luego|nos vemos/)) {
+    if (lowerMsg.match(/^(chao|adiós|bye|hasta luego|nos vemos)$/)) {
       return getRandomResponse('farewell');
     }
 
-    // Preguntar por pronósticos
-    if (lowerMsg.match(/pronóstico|predicción|predic|qué va a salir|qué juego|dame números|recomend/)) {
-      if (history.length < 10) {
-        return getRandomResponse('noData');
-      }
+    // Si es relacionado con loterías, usar lógica local
+    if (isLotteryRelated(lowerMsg)) {
+      // Preguntar por pronósticos
+      if (lowerMsg.match(/pronóstico|predicción|predic|qué va a salir|qué juego|dame números|recomend/)) {
+        if (history.length < 10) {
+          return getRandomResponse('noData');
+        }
 
-      // Buscar lotería específica en el mensaje
-      let targetLottery = LOTTERIES.find(l => 
-        lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
-      );
+        let targetLottery = LOTTERIES.find(l => 
+          lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
+        );
 
-      if (!targetLottery) {
-        targetLottery = LOTTERIES[0]; // Default a Lotto Activo
-      }
+        if (!targetLottery) {
+          targetLottery = LOTTERIES[0];
+        }
 
-      const analysis = analyzeAdvancedPatterns(history, targetLottery.id);
-      const predictions = calculateProbabilities(history, targetLottery.id).slice(0, 5);
+        const analysis = analyzeAdvancedPatterns(history, targetLottery.id);
+        const predictions = calculateProbabilities(history, targetLottery.id).slice(0, 5);
 
-      let response = `${getRandomExpression()} ¡Aquí están mis pronósticos para **${targetLottery.name}**!\n\n`;
-      
-      response += `🎯 **TOP 5 NÚMEROS:**\n`;
-      predictions.forEach((p, i) => {
-        const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📍';
-        const animal = targetLottery?.type === 'animals' ? ` - ${p.animal}` : '';
-        response += `${emoji} **${p.number.padStart(2, '0')}**${animal} (${p.probability.toFixed(1)}% prob)\n`;
-      });
-
-      response += `\n📊 **ANÁLISIS:**\n${analysis.recommendation}`;
-      response += `\n\n💪 Confianza del análisis: ${analysis.confidence.toFixed(0)}%`;
-      response += `\n\n${getRandomTip()}`;
-
-      return response;
-    }
-
-    // Preguntar por hora específica
-    const hourMatch = lowerMsg.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
-    if (hourMatch && (lowerMsg.includes('hora') || lowerMsg.includes('sorteo'))) {
-      let hour = hourMatch[1].toUpperCase();
-      // Normalizar hora
-      if (!hour.includes(':')) {
-        hour = hour.replace(/(\d+)/, '$1:00');
-      }
-      if (!hour.includes('AM') && !hour.includes('PM')) {
-        const num = parseInt(hour);
-        hour += num < 8 || num === 12 ? ' PM' : ' AM';
-      }
-
-      const targetLottery = LOTTERIES.find(l => 
-        lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
-      ) || LOTTERIES[0];
-
-      const forecast = generateHourlyForecast(history, targetLottery.id, hour);
-
-      if (forecast.numbers.length === 0) {
-        return `Chamo, no tengo suficientes datos para las ${hour}. Necesito más historial de esa hora.`;
-      }
-
-      let response = `${getRandomExpression()} ¡Pronóstico para **${targetLottery.name}** a las **${hour}**!\n\n`;
-      response += `🎯 **Números recomendados:** ${forecast.numbers.map(n => {
-        const animal = targetLottery.type === 'animals' ? ` (${ANIMAL_MAPPING[n]})` : '';
-        return `**${n.padStart(2, '0')}**${animal}`;
-      }).join(', ')}\n\n`;
-      response += `📊 ${forecast.reason}\n`;
-      response += `💪 Confianza: ${forecast.confidence}%`;
-
-      return response;
-    }
-
-    // Preguntar por animal específico
-    const animalMatch = Object.entries(ANIMAL_MAPPING).find(([num, animal]) => 
-      lowerMsg.includes(animal.toLowerCase())
-    );
-    if (animalMatch) {
-      const [num, animal] = animalMatch;
-      const meaning = getAnimalMeaning(num);
-      
-      let response = `${getRandomExpression()} ¡Te cuento sobre el **${animal}** (${num.padStart(2, '0')})!\n\n`;
-      
-      if (meaning) {
-        response += `🔮 **Significado:** ${meaning.meaning}\n`;
-        response += `💭 **Sueños:** ${meaning.dreams}\n\n`;
-      }
-
-      // Estadísticas del animal
-      const animalHistory = history.filter(h => 
-        h.result_number === num || h.result_number === num.padStart(2, '0')
-      );
-      
-      if (animalHistory.length > 0) {
-        const lastSeen = new Date(animalHistory[0].created_at);
-        const daysSince = Math.ceil((Date.now() - lastSeen.getTime()) / (1000 * 60 * 60 * 24));
+        let response = `${getRandomExpression()} ¡Aquí están mis pronósticos para **${targetLottery.name}**!\n\n`;
         
-        response += `📊 **Estadísticas:**\n`;
-        response += `• Ha salido ${animalHistory.length} veces en el historial\n`;
-        response += `• Última vez: hace ${daysSince} día(s)\n`;
-        response += `• Última lotería: ${animalHistory[0].lottery_type}\n`;
+        response += `🎯 **TOP 5 NÚMEROS:**\n`;
+        predictions.forEach((p, i) => {
+          const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📍';
+          const animal = targetLottery?.type === 'animals' ? ` - ${p.animal}` : '';
+          response += `${emoji} **${p.number.padStart(2, '0')}**${animal} (${p.probability.toFixed(1)}% prob)\n`;
+        });
+
+        response += `\n📊 **ANÁLISIS:**\n${analysis.recommendation}`;
+        response += `\n\n💪 Confianza del análisis: ${analysis.confidence.toFixed(0)}%`;
+        response += `\n\n${getRandomTip()}`;
+
+        return response;
       }
 
-      return response;
-    }
+      // Preguntar por hora específica
+      const hourMatch = lowerMsg.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+      if (hourMatch && (lowerMsg.includes('hora') || lowerMsg.includes('sorteo'))) {
+        let hour = hourMatch[1].toUpperCase();
+        if (!hour.includes(':')) {
+          hour = hour.replace(/(\d+)/, '$1:00');
+        }
+        if (!hour.includes('AM') && !hour.includes('PM')) {
+          const num = parseInt(hour);
+          hour += num < 8 || num === 12 ? ' PM' : ' AM';
+        }
 
-    // Preguntar por lotería específica
-    const lotteryMatch = LOTTERIES.find(l => 
-      lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
-    );
-    if (lotteryMatch) {
-      const info = getLotteryInfo(lotteryMatch.id);
-      if (info) {
-        let response = `${getRandomExpression()} ¡Te cuento sobre **${info.name}**!\n\n`;
-        response += `📝 ${info.description}\n\n`;
-        response += `⏰ **Horario:** ${info.schedule}\n`;
-        response += `💡 **Tip:** ${info.tips}\n`;
+        const targetLottery = LOTTERIES.find(l => 
+          lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
+        ) || LOTTERIES[0];
+
+        const forecast = generateHourlyForecast(history, targetLottery.id, hour);
+
+        if (forecast.numbers.length === 0) {
+          return `Chamo, no tengo suficientes datos para las ${hour}. Necesito más historial de esa hora.`;
+        }
+
+        let response = `${getRandomExpression()} ¡Pronóstico para **${targetLottery.name}** a las **${hour}**!\n\n`;
+        response += `🎯 **Números recomendados:** ${forecast.numbers.map(n => {
+          const animal = targetLottery.type === 'animals' ? ` (${ANIMAL_MAPPING[n]})` : '';
+          return `**${n.padStart(2, '0')}**${animal}`;
+        }).join(', ')}\n\n`;
+        response += `📊 ${forecast.reason}\n`;
+        response += `💪 Confianza: ${forecast.confidence}%`;
+
+        return response;
+      }
+
+      // Preguntar por animal específico
+      const animalMatch = Object.entries(ANIMAL_MAPPING).find(([num, animal]) => 
+        lowerMsg.includes(animal.toLowerCase())
+      );
+      if (animalMatch) {
+        const [num, animal] = animalMatch;
+        const meaning = getAnimalMeaning(num);
+        
+        let response = `${getRandomExpression()} ¡Te cuento sobre el **${animal}** (${num.padStart(2, '0')})!\n\n`;
+        
+        if (meaning) {
+          response += `🔮 **Significado:** ${meaning.meaning}\n`;
+          response += `💭 **Sueños:** ${meaning.dreams}\n\n`;
+        }
+
+        const animalHistory = history.filter(h => 
+          h.result_number === num || h.result_number === num.padStart(2, '0')
+        );
+        
+        if (animalHistory.length > 0) {
+          const lastSeen = new Date(animalHistory[0].created_at);
+          const daysSince = Math.ceil((Date.now() - lastSeen.getTime()) / (1000 * 60 * 60 * 24));
+          
+          response += `📊 **Estadísticas:**\n`;
+          response += `• Ha salido ${animalHistory.length} veces en el historial\n`;
+          response += `• Última vez: hace ${daysSince} día(s)\n`;
+          response += `• Última lotería: ${animalHistory[0].lottery_type}\n`;
+        }
+
+        return response;
+      }
+
+      // Preguntar por lotería específica
+      const lotteryMatch = LOTTERIES.find(l => 
+        lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
+      );
+      if (lotteryMatch) {
+        const info = getLotteryInfo(lotteryMatch.id);
+        if (info) {
+          let response = `${getRandomExpression()} ¡Te cuento sobre **${info.name}**!\n\n`;
+          response += `📝 ${info.description}\n\n`;
+          response += `⏰ **Horario:** ${info.schedule}\n`;
+          response += `💡 **Tip:** ${info.tips}\n`;
+          return response;
+        }
+      }
+
+      // Preguntar por sueños
+      if (lowerMsg.match(/soñé|sueño|dream|qué significa/)) {
+        let response = `${getRandomExpression()} ¡Los sueños son clave en los animalitos!\n\n`;
+        response += `Cuéntame qué soñaste y te digo qué animal jugar. Aquí algunos ejemplos:\n\n`;
+        
+        const examples = ['10', '12', '5', '20', '27'];
+        examples.forEach(num => {
+          const meaning = getAnimalMeaning(num);
+          if (meaning) {
+            response += `🔮 **${meaning.animal}** (${num}): ${meaning.dreams}\n`;
+          }
+        });
+
+        return response;
+      }
+
+      // Ayuda
+      if (lowerMsg.match(/ayuda|help|qué puedes|comandos/)) {
+        let response = `${getRandomExpression()} ¡Aquí está lo que puedo hacer!\n\n`;
+        response += `🎯 **Pronósticos:** "Dame pronóstico para Lotto Activo"\n`;
+        response += `⏰ **Por hora:** "¿Qué sale a las 10 AM?"\n`;
+        response += `🐾 **Animales:** "Cuéntame del Tigre"\n`;
+        response += `🎰 **Loterías:** "Info de La Granjita"\n`;
+        response += `💭 **Sueños:** "Soñé con un caballo"\n`;
+        response += `📊 **Análisis:** "Análisis completo"\n`;
+        response += `\n🌍 **CUALQUIER TEMA:** ¡Pregúntame lo que sea!\n`;
+        response += `Ejemplos: "¿Cuál es la capital de Francia?", "¿Quién pintó la Mona Lisa?"\n`;
+        
+        if (isAdmin) {
+          response += `\n👑 **ADMIN:**\n`;
+          response += `📝 "Insertar lotto_activo 09:00 AM 15"\n`;
+        }
+
+        return response;
+      }
+
+      // Análisis completo
+      if (lowerMsg.match(/análisis|estadísticas|reporte|completo/)) {
+        if (history.length < 10) {
+          return getRandomResponse('noData');
+        }
+
+        let response = `${getRandomExpression()} ¡Análisis completo del día!\n\n`;
+        
+        for (const lottery of LOTTERIES.slice(0, 3)) {
+          const analysis = analyzeAdvancedPatterns(history, lottery.id);
+          response += `**${lottery.name}**\n`;
+          response += `🔥 Calientes: ${analysis.hotNumbers.slice(0, 3).join(', ') || 'N/A'}\n`;
+          response += `❄️ Fríos: ${analysis.coldNumbers.slice(0, 3).join(', ') || 'N/A'}\n\n`;
+        }
+
+        response += `💡 **Tip del día:** ${getRandomTip()}`;
         return response;
       }
     }
 
-    // Preguntar por sueños
-    if (lowerMsg.match(/soñé|sueño|dream|qué significa/)) {
-      let response = `${getRandomExpression()} ¡Los sueños son clave en los animalitos!\n\n`;
-      response += `Cuéntame qué soñaste y te digo qué animal jugar. Aquí algunos ejemplos:\n\n`;
-      
-      const examples = ['10', '12', '5', '20', '27'];
-      examples.forEach(num => {
-        const meaning = getAnimalMeaning(num);
-        if (meaning) {
-          response += `🔮 **${meaning.animal}** (${num}): ${meaning.dreams}\n`;
-        }
-      });
-
-      return response;
-    }
-
-    // Ayuda
-    if (lowerMsg.match(/ayuda|help|qué puedes|comandos/)) {
-      let response = `${getRandomExpression()} ¡Aquí está lo que puedo hacer!\n\n`;
-      response += `🎯 **Pronósticos:** "Dame pronóstico para Lotto Activo"\n`;
-      response += `⏰ **Por hora:** "¿Qué sale a las 10 AM?"\n`;
-      response += `🐾 **Animales:** "Cuéntame del Tigre"\n`;
-      response += `🎰 **Loterías:** "Info de La Granjita"\n`;
-      response += `💭 **Sueños:** "Soñé con un caballo"\n`;
-      response += `📊 **Análisis:** "Análisis completo"\n`;
-      
-      if (isAdmin) {
-        response += `\n👑 **ADMIN:**\n`;
-        response += `📝 "Insertar lotto_activo 09:00 AM 15"\n`;
-      }
-
-      return response;
-    }
-
-    // Análisis completo
-    if (lowerMsg.match(/análisis|estadísticas|reporte|completo/)) {
-      if (history.length < 10) {
-        return getRandomResponse('noData');
-      }
-
-      let response = `${getRandomExpression()} ¡Análisis completo del día!\n\n`;
-      
-      for (const lottery of LOTTERIES.slice(0, 3)) {
-        const analysis = analyzeAdvancedPatterns(history, lottery.id);
-        response += `**${lottery.name}**\n`;
-        response += `🔥 Calientes: ${analysis.hotNumbers.slice(0, 3).join(', ') || 'N/A'}\n`;
-        response += `❄️ Fríos: ${analysis.coldNumbers.slice(0, 3).join(', ') || 'N/A'}\n\n`;
-      }
-
-      response += `💡 **Tip del día:** ${getRandomTip()}`;
-      return response;
-    }
-
-    // Respuesta por defecto
-    const tips = [
-      `¿Quieres un pronóstico? Dime "dame pronóstico para [lotería]"`,
-      `Pregúntame por cualquier animal y te cuento su significado`,
-      `Si soñaste algo, cuéntame y te digo qué jugar`,
-      `Escribe "ayuda" para ver todo lo que puedo hacer`
-    ];
-    
-    return `${getRandomExpression()} ${tips[Math.floor(Math.random() * tips.length)]}`;
+    // Si no es sobre loterías o no se reconoce, usar IA general
+    return await callGeneralAI(userMessage);
   };
 
   const handleSend = async () => {
