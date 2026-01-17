@@ -15,20 +15,48 @@ export const GUACHARO_MAPPING: Record<string, string> = {
 };
 
 export const LOTTERIES = [
-  { id: 'guacharo', name: 'Guácharo Activo', range: 75, type: 'numbers', mapping: GUACHARO_MAPPING },
-  { id: 'guacharito', name: 'Guacharito', range: 99, type: 'numbers', mapping: GUACHARO_MAPPING },
-  { id: 'lotto_activo', name: 'Lotto Activo', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
-  { id: 'granjita', name: 'La Granjita', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
-  { id: 'selva_plus', name: 'Selva Plus', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
-  { id: 'lotto_rey', name: 'Lotto Rey', range: 36, type: 'animals', mapping: ANIMAL_MAPPING },
+  { id: 'guacharo', name: 'Guácharo Activo', range: 75, type: 'numbers', mapping: GUACHARO_MAPPING, schedule: 'full' },
+  { id: 'guacharito', name: 'Guacharito', range: 99, type: 'numbers', mapping: GUACHARO_MAPPING, schedule: 'half' },
+  { id: 'lotto_activo', name: 'Lotto Activo', range: 36, type: 'animals', mapping: ANIMAL_MAPPING, schedule: 'full' },
+  { id: 'granjita', name: 'La Granjita', range: 36, type: 'animals', mapping: ANIMAL_MAPPING, schedule: 'full' },
+  { id: 'selva_plus', name: 'Selva Plus', range: 36, type: 'animals', mapping: ANIMAL_MAPPING, schedule: 'full' },
+  { id: 'lotto_rey', name: 'Lotto Rey', range: 36, type: 'animals', mapping: ANIMAL_MAPPING, schedule: 'half' },
 ] as const;
 
+// Horarios completos (8:00 AM - 7:00 PM)
+export const DRAW_TIMES_FULL = [
+  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
+  '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', 
+  '06:00 PM', '07:00 PM'
+];
+
+// Horarios medios (8:30 AM - 7:30 PM)
+export const DRAW_TIMES_HALF = [
+  '08:30 AM', '09:30 AM', '10:30 AM', '11:30 AM', '12:30 PM', 
+  '01:30 PM', '02:30 PM', '03:30 PM', '04:30 PM', '05:30 PM', 
+  '06:30 PM', '07:30 PM'
+];
+
+// Todos los horarios (para compatibilidad)
 export const DRAW_TIMES = [
   '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
   '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
   '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM',
-  '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM'
+  '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM'
 ];
+
+// Obtener horarios según la lotería
+export const getDrawTimesForLottery = (lotteryId: string): string[] => {
+  const lottery = LOTTERIES.find(l => l.id === lotteryId);
+  if (!lottery) return DRAW_TIMES_FULL;
+  
+  // Guacharito y Lotto Rey usan horarios de media hora
+  if (lottery.schedule === 'half') {
+    return DRAW_TIMES_HALF;
+  }
+  
+  return DRAW_TIMES_FULL;
+};
 
 export const ADMIN_CODE = "GANADOR85";
 
