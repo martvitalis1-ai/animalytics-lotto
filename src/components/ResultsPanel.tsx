@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { LOTTERIES, DRAW_TIMES, ANIMAL_MAPPING, getAnimalFromNumber } from '@/lib/constants';
+import { LOTTERIES, getDrawTimesForLottery, ANIMAL_MAPPING, getAnimalFromNumber } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
 import { toast } from "sonner";
-import { Pencil, Trash2, Save, X, Calendar, Search, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Save, X, Calendar, FileSpreadsheet, Loader2, Info } from "lucide-react";
 
 interface Result {
   id: number;
@@ -28,27 +28,26 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedLottery, setSelectedLottery] = useState<string>("all");
+  const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editNumber, setEditNumber] = useState("");
   const [editTime, setEditTime] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Obtener horarios para la lotería seleccionada
+  const availableTimes = getDrawTimesForLottery(selectedLottery);
+  const selectedLotteryData = LOTTERIES.find(l => l.id === selectedLottery);
+
   const fetchResults = async () => {
     setLoading(true);
     
-    let query = supabase
+    const { data, error } = await supabase
       .from('lottery_results')
       .select('*')
       .eq('draw_date', selectedDate)
+      .eq('lottery_type', selectedLottery)
       .order('draw_time', { ascending: true });
-    
-    if (selectedLottery !== "all") {
-      query = query.eq('lottery_type', selectedLottery);
-    }
-    
-    const { data, error } = await query;
     
     if (error) {
       toast.error("Error al cargar resultados");
@@ -97,7 +96,8 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
   const saveEdit = async () => {
     if (!editingId || !editNumber.trim()) return;
     
-    const animalName = getAnimalFromNumber(editNumber, results.find(r => r.id === editingId)?.lottery_type || '');
+    const result = results.find(r => r.id === editingId);
+    const animalName = getAnimalFromNumber(editNumber, result?.lottery_type || '');
     
     const { error } = await supabase
       .from('lottery_results')
@@ -112,7 +112,7 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
       toast.error("Error al actualizar");
       console.error(error);
     } else {
-      toast.success("Resultado actualizado");
+      toast.success("Resultado actualizado correctamente");
       cancelEdit();
       fetchResults();
     }
@@ -146,154 +146,169 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
     }
   };
 
-  // Agrupar resultados por lotería
-  const groupedResults = results.reduce((acc, r) => {
-    if (!acc[r.lottery_type]) acc[r.lottery_type] = [];
-    acc[r.lottery_type].push(r);
+  // Crear mapa de resultados por hora
+  const resultsByTime = results.reduce((acc, r) => {
+    acc[r.draw_time] = r;
     return acc;
-  }, {} as Record<string, Result[]>);
+  }, {} as Record<string, Result>);
 
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Search className="w-4 h-4 text-primary" />
-            Panel de Resultados
+            <FileSpreadsheet className="w-4 h-4 text-primary" />
+            Historial de Resultados
           </CardTitle>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{results.length} resultados</span>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+          <Info className="w-3 h-3" />
+          Formato tipo Excel. Selecciona fecha y lotería para ver/editar resultados.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filtros */}
-        <div className="flex gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <Input 
-              type="date" 
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-40 bg-background"
-            />
+        <div className="flex gap-3 flex-wrap items-end">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Fecha</label>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Input 
+                type="date" 
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-40 bg-background"
+              />
+            </div>
           </div>
-          <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-            <SelectTrigger className="w-44 bg-background">
-              <SelectValue placeholder="Todas las loterías" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border shadow-lg">
-              <SelectItem value="all">Todas las loterías</SelectItem>
-              {LOTTERIES.map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          
+          <div className="space-y-1.5 flex-1 max-w-xs">
+            <label className="text-xs font-medium text-muted-foreground">Lotería</label>
+            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+              <SelectTrigger className="bg-background">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <img src={getLotteryLogo(selectedLottery)} alt="" className="w-5 h-5" />
+                    <span>{selectedLotteryData?.name}</span>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-popover border shadow-lg">
+                {LOTTERIES.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    <div className="flex items-center gap-2">
+                      <img src={getLotteryLogo(l.id)} alt="" className="w-5 h-5" />
+                      <span>{l.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Tabla de resultados */}
+        {/* Cabecera de lotería */}
+        <div className="flex items-center gap-3 py-3 px-4 bg-muted/50 rounded-lg border">
+          <img src={getLotteryLogo(selectedLottery)} alt="" className="w-10 h-10" />
+          <div>
+            <p className="font-bold">{selectedLotteryData?.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedDate} · Horario: {selectedLotteryData?.schedule === 'half' ? '8:30 AM - 7:30 PM' : '8:00 AM - 7:00 PM'}
+            </p>
+          </div>
+        </div>
+
+        {/* Tabla tipo Excel */}
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="space-y-6 max-h-[500px] overflow-y-auto">
-            {Object.entries(groupedResults).map(([lotteryId, items]) => {
-              const lottery = LOTTERIES.find(l => l.id === lotteryId);
-              
-              return (
-                <div key={lotteryId} className="space-y-2">
-                  <div className="flex items-center gap-2 sticky top-0 bg-card py-2 border-b z-10">
-                    <img src={getLotteryLogo(lotteryId)} alt="" className="w-8 h-8" />
-                    <span className="font-bold">{lottery?.name || lotteryId}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {items.length} sorteos
-                    </span>
-                  </div>
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-bold border-b">HORA</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold border-b">NÚMERO</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold border-b">ANIMAL</th>
+                  {isAdmin && <th className="px-4 py-3 text-center text-xs font-bold border-b">ACCIONES</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {availableTimes.map((time, idx) => {
+                  const result = resultsByTime[time];
+                  const hasResult = !!result;
                   
-                  <div className="overflow-x-auto">
-                    <table className="excel-table">
-                      <thead>
-                        <tr>
-                          <th className="w-24">Hora</th>
-                          <th className="w-20">Número</th>
-                          <th className="w-28">Animal</th>
-                          {isAdmin && <th className="w-24 text-center">Acciones</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((r, idx) => (
-                          <tr key={r.id} className={idx % 2 === 0 ? '' : 'bg-muted/30'}>
-                            <td>
-                              {editingId === r.id ? (
-                                <Select value={editTime} onValueChange={setEditTime}>
-                                  <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-popover border shadow-lg max-h-48">
-                                    {DRAW_TIMES.map(t => (
-                                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <span className="font-medium">{r.draw_time}</span>
-                              )}
-                            </td>
-                            <td>
-                              {editingId === r.id ? (
-                                <Input
-                                  value={editNumber}
-                                  onChange={(e) => setEditNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                                  className="h-8 w-16 text-center font-mono font-bold"
-                                  maxLength={2}
-                                />
-                              ) : (
-                                <span className="font-mono font-black text-lg">{r.result_number}</span>
-                              )}
-                            </td>
-                            <td className="text-sm">
-                              {r.animal_name || ANIMAL_MAPPING[r.result_number] || '-'}
-                            </td>
-                            {isAdmin && (
-                              <td className="text-center">
-                                {editingId === r.id ? (
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Button size="sm" variant="ghost" onClick={saveEdit} className="h-7 w-7 p-0">
-                                      <Save className="w-4 h-4 text-primary" />
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7 w-7 p-0">
-                                      <X className="w-4 h-4 text-muted-foreground" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Button size="sm" variant="ghost" onClick={() => startEdit(r)} className="h-7 w-7 p-0">
-                                      <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => confirmDelete(r.id)} className="h-7 w-7 p-0">
-                                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {results.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm py-8">
-                No hay resultados para esta fecha
-              </p>
-            )}
+                  return (
+                    <tr 
+                      key={time} 
+                      className={`border-b last:border-0 transition-colors ${
+                        idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
+                      } ${hasResult ? '' : 'opacity-50'}`}
+                    >
+                      <td className="px-4 py-2 font-medium text-sm">{time}</td>
+                      <td className="px-4 py-2 text-center">
+                        {editingId === result?.id ? (
+                          <Input
+                            value={editNumber}
+                            onChange={(e) => setEditNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                            className="h-8 w-16 text-center font-mono font-bold mx-auto"
+                            maxLength={2}
+                          />
+                        ) : hasResult ? (
+                          <span className="font-mono font-black text-xl">{result.result_number}</span>
+                        ) : (
+                          <span className="text-muted-foreground">--</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-sm">
+                        {hasResult ? (
+                          result.animal_name || ANIMAL_MAPPING[result.result_number] || '-'
+                        ) : (
+                          <span className="text-muted-foreground">Sin resultado</span>
+                        )}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-2 text-center">
+                          {hasResult && (
+                            editingId === result.id ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <Button size="sm" variant="ghost" onClick={saveEdit} className="h-7 w-7 p-0">
+                                  <Save className="w-4 h-4 text-primary" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7 w-7 p-0">
+                                  <X className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1">
+                                <Button size="sm" variant="ghost" onClick={() => startEdit(result)} className="h-7 w-7 p-0" title="Editar">
+                                  <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => confirmDelete(result.id)} className="h-7 w-7 p-0" title="Eliminar">
+                                  <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                                </Button>
+                              </div>
+                            )
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
+
+        {/* Resumen */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+          <span>Total registrados: {results.length} de {availableTimes.length} sorteos</span>
+          {isAdmin && <span className="text-primary">✏️ Click en el ícono del lápiz para editar</span>}
+        </div>
       </CardContent>
 
       {/* Diálogo de confirmación de eliminación */}

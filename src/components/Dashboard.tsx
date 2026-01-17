@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, 
   Plus, 
   Settings, 
   Brain, 
@@ -37,7 +36,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userRole, onLogout }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("ia");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
@@ -138,9 +137,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
       <main className="container mx-auto px-4 py-4">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
-            <TabsTrigger value="dashboard" className="flex items-center gap-1.5 data-[state=active]:bg-background">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+            {/* IA Predictiva primero */}
+            <TabsTrigger value="ia" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">IA Predictiva</span>
             </TabsTrigger>
             <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-background">
               <FileText className="w-4 h-4" />
@@ -153,10 +153,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="matriz" className="flex items-center gap-1.5 data-[state=active]:bg-background">
               <Grid3X3 className="w-4 h-4" />
               <span className="hidden sm:inline">Matriz</span>
-            </TabsTrigger>
-            <TabsTrigger value="ia" className="flex items-center gap-1.5 data-[state=active]:bg-background">
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline">IA Predictiva</span>
             </TabsTrigger>
             <TabsTrigger 
               value="insertar" 
@@ -174,11 +170,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-4 mt-4">
-            <TodayResults />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Verification />
-            </div>
+          {/* IA Predictiva - ahora es el tab por defecto */}
+          <TabsContent value="ia" className="mt-4 space-y-6">
+            <TrendAnalysis />
+            <AIPredictive />
           </TabsContent>
 
           <TabsContent value="resultados" className="mt-4">
@@ -193,14 +188,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <HourlyMatrix />
           </TabsContent>
 
-          <TabsContent value="ia" className="mt-4 space-y-6">
-            <TrendAnalysis />
-            <AIPredictive />
-          </TabsContent>
-
           <TabsContent value="insertar" className="mt-4">
-            <div className="max-w-xl mx-auto">
-              <ResultsInsert onInserted={() => toast.success("Actualizado")} />
+            <div className="max-w-xl mx-auto space-y-4">
+              <ResultsInsert onInserted={() => toast.success("Resultado guardado en la base de datos")} />
+              <TodayResults />
             </div>
           </TabsContent>
 
