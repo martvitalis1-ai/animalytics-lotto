@@ -16,6 +16,9 @@
  * - Hash del historial
  */
 
+// Re-exportar AnalysisResult para uso en otros componentes
+export type { AnalysisResult } from './probabilityEngine';
+
 import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from './constants';
 import { AnalysisResult } from './probabilityEngine';
 

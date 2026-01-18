@@ -1,25 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Brain, Sparkles, RefreshCw, Loader2, Flame, Snowflake, Clock, ChevronDown, ChevronUp, AlertTriangle, Info } from "lucide-react";
+import { Brain, Sparkles, RefreshCw, Loader2, Flame, Snowflake, Clock, ChevronDown, ChevronUp, AlertTriangle, Info, Lock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
-import { calculateProbabilities, getOverdueNumbers, AnalysisResult } from '@/lib/probabilityEngine';
+import { AnalysisResult } from '@/lib/probabilityEngine';
 import { getLotteryLogo } from "./LotterySelector";
 import { CAGED_NUMBERS } from '@/data/historyBatch';
+import { 
+  getCachedPredictions, 
+  getAllCachedPredictions, 
+  getTodayDate,
+  CachedPrediction,
+  getAccuracyStats,
+  loadLearningData
+} from '@/lib/predictionCache';
 
 export function AIPredictive() {
-  const [predictions, setPredictions] = useState<Record<string, AnalysisResult[]>>({});
-  const [overdueByLottery, setOverdueByLottery] = useState<Record<string, AnalysisResult[]>>({});
+  const [predictions, setPredictions] = useState<Record<string, CachedPrediction>>({});
   const [ricardoPredictions, setRicardoPredictions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [expandedLottery, setExpandedLottery] = useState<string | null>(null);
-  const [hourlyPredictions, setHourlyPredictions] = useState<Record<string, Record<string, AnalysisResult[]>>>({});
+  const [hourlyPredictions, setHourlyPredictions] = useState<Record<string, Record<string, CachedPrediction>>>({});
+  const [accuracyStats, setAccuracyStats] = useState<{ overall: number; streak: number }>({ overall: 0, streak: 0 });
+  const [cacheDate, setCacheDate] = useState<string>('');
 
-  const generatePredictions = async () => {
+  /**
+   * Genera predicciones usando el sistema de cache determinístico
+   * Garantiza consistencia: mismos números durante todo el día
+   */
+  const generatePredictions = useCallback(async () => {
     setLoading(true);
     
     try {
@@ -29,73 +42,80 @@ export function AIPredictive() {
         .order('created_at', { ascending: false })
         .limit(500);
       
-      if (history) {
-        const allPredictions: Record<string, AnalysisResult[]> = {};
-        const allHourlyPredictions: Record<string, Record<string, AnalysisResult[]>> = {};
-        const allOverdue: Record<string, AnalysisResult[]> = {};
+      if (history && history.length > 0) {
+        const allPredictions: Record<string, CachedPrediction> = {};
+        const allHourlyPredictions: Record<string, Record<string, CachedPrediction>> = {};
         
+        // Generar predicciones con cache determinístico
         for (const lottery of LOTTERIES) {
-          // Predicciones generales
-          const preds = calculateProbabilities(history, lottery.id);
-          allPredictions[lottery.id] = preds.slice(0, 6);
-          
-          // Números vencidos
-          const overdue = getOverdueNumbers(history, lottery.id, 7);
-          allOverdue[lottery.id] = overdue.slice(0, 6);
-          
-          // Predicciones por hora específica
-          allHourlyPredictions[lottery.id] = {};
-          const times = getDrawTimesForLottery(lottery.id);
-          
-          for (const time of times) {
-            const hourlyHistory = history.filter(h => h.lottery_type === lottery.id && h.draw_time === time);
-            if (hourlyHistory.length > 0) {
-              const hourlyPreds = calculateProbabilities(hourlyHistory, lottery.id, time);
-              allHourlyPredictions[lottery.id][time] = hourlyPreds.slice(0, 3);
-            }
-          }
+          const { general, hourly } = getAllCachedPredictions(history, lottery.id);
+          allPredictions[lottery.id] = general;
+          allHourlyPredictions[lottery.id] = hourly;
         }
         
         setPredictions(allPredictions);
         setHourlyPredictions(allHourlyPredictions);
-        setOverdueByLottery(allOverdue);
         setLastUpdate(new Date());
+        setCacheDate(getTodayDate());
         
-        // Guardar predicciones en la base de datos
-        const today = new Date().toISOString().split('T')[0];
+        // Guardar en la base de datos para sincronización
+        const today = getTodayDate();
         
-        for (const [lotteryId, preds] of Object.entries(allPredictions)) {
+        for (const [lotteryId, cached] of Object.entries(allPredictions)) {
           const lottery = LOTTERIES.find(l => l.id === lotteryId);
           
+          // Eliminar predicción anterior del día
           await supabase.from('ai_predictions')
             .delete()
             .eq('lottery_type', lotteryId)
             .eq('prediction_date', today);
           
+          // Insertar nueva predicción
           await supabase.from('ai_predictions').insert({
             lottery_type: lotteryId,
             prediction_date: today,
-            predicted_numbers: preds.slice(0, 5).map(p => p.number),
+            predicted_numbers: cached.predictions.slice(0, 5).map(p => p.number),
             predicted_animals: lottery?.type === 'animals' 
-              ? preds.slice(0, 5).map(p => p.animal)
+              ? cached.predictions.slice(0, 5).map(p => p.animal)
               : null,
-            confidence_score: preds[0]?.probability || 0,
-            analysis_notes: `Análisis IA con patrones temporales y ${history.length} sorteos. Números vencidos: ${allOverdue[lotteryId]?.length || 0}`
+            confidence_score: cached.predictions[0]?.probability || 0,
+            analysis_notes: `Análisis IA determinístico. Números vencidos: ${cached.overdueNumbers.length}. Cache: ${cached.historyHash}`
           });
+
+          // Sincronizar cache en la nube
+          await supabase.from('daily_predictions_cache')
+            .upsert({
+              cache_date: today,
+              lottery_id: lotteryId,
+              draw_time: null,
+              predictions: cached,
+              history_hash: cached.historyHash
+            }, {
+              onConflict: 'cache_date,lottery_id,draw_time'
+            });
         }
         
-        toast.success("Predicciones actualizadas con análisis avanzado");
+        // Actualizar estadísticas de precisión
+        const stats = getAccuracyStats();
+        setAccuracyStats({ overall: stats.overall, streak: stats.streak });
+        
+        toast.success("Predicciones actualizadas con consistencia garantizada");
+      } else {
+        toast.warning("No hay historial suficiente para generar predicciones");
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error generando predicciones:', error);
       toast.error("Error al generar predicciones");
     }
     
     setLoading(false);
-  };
+  }, []);
 
-  const loadRicardoPredictions = async () => {
-    const today = new Date().toISOString().split('T')[0];
+  /**
+   * Cargar predicciones de Ricardo
+   */
+  const loadRicardoPredictions = useCallback(async () => {
+    const today = getTodayDate();
     const { data } = await supabase
       .from('dato_ricardo_predictions')
       .select('*')
@@ -103,12 +123,64 @@ export function AIPredictive() {
       .order('draw_time', { ascending: true });
     
     setRicardoPredictions(data || []);
-  };
+  }, []);
+
+  /**
+   * Cargar cache existente o generar nuevo
+   */
+  const loadOrGeneratePredictions = useCallback(async () => {
+    const today = getTodayDate();
+    
+    // Intentar cargar cache de la nube primero
+    const { data: cloudCache } = await supabase
+      .from('daily_predictions_cache')
+      .select('*')
+      .eq('cache_date', today);
+
+    if (cloudCache && cloudCache.length > 0) {
+      // Usar cache de la nube
+      const allPredictions: Record<string, CachedPrediction> = {};
+      const allHourlyPredictions: Record<string, Record<string, CachedPrediction>> = {};
+
+      cloudCache.forEach(item => {
+        if (!item.draw_time) {
+          allPredictions[item.lottery_id] = item.predictions as CachedPrediction;
+        } else {
+          if (!allHourlyPredictions[item.lottery_id]) {
+            allHourlyPredictions[item.lottery_id] = {};
+          }
+          allHourlyPredictions[item.lottery_id][item.draw_time] = item.predictions as CachedPrediction;
+        }
+      });
+
+      if (Object.keys(allPredictions).length > 0) {
+        setPredictions(allPredictions);
+        setHourlyPredictions(allHourlyPredictions);
+        setCacheDate(today);
+        setLastUpdate(new Date());
+        console.log('[AIPredictive] Usando cache de la nube');
+        return;
+      }
+    }
+
+    // Si no hay cache, generar nuevas predicciones
+    await generatePredictions();
+  }, [generatePredictions]);
 
   useEffect(() => {
-    generatePredictions();
+    loadOrGeneratePredictions();
     loadRicardoPredictions();
-  }, []);
+    
+    // Verificar cambio de día
+    const checkDateChange = setInterval(() => {
+      if (cacheDate && cacheDate !== getTodayDate()) {
+        console.log('[AIPredictive] Nuevo día detectado, regenerando...');
+        generatePredictions();
+      }
+    }, 60000); // Verificar cada minuto
+    
+    return () => clearInterval(checkDateChange);
+  }, [loadOrGeneratePredictions, loadRicardoPredictions, cacheDate, generatePredictions]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -161,6 +233,24 @@ export function AIPredictive() {
         </Button>
       </div>
 
+      {/* Indicador de consistencia */}
+      <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+        <div className="flex items-center gap-2 text-xs">
+          <Lock className="w-4 h-4 text-green-600" />
+          <div>
+            <span className="font-semibold text-green-700 dark:text-green-400">
+              Predicciones Bloqueadas para {cacheDate || getTodayDate()}
+            </span>
+            <p className="text-muted-foreground mt-0.5">
+              Los números son consistentes en todos los dispositivos y no cambiarán hasta mañana.
+              {accuracyStats.streak > 0 && (
+                <span className="ml-2 text-green-600">🔥 Racha: {accuracyStats.streak} aciertos</span>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Info de cómo funciona */}
       <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
         <div className="flex items-start gap-2 text-xs">
@@ -168,9 +258,9 @@ export function AIPredictive() {
           <div>
             <p className="font-semibold">¿Cómo funciona la IA Predictiva?</p>
             <p className="text-muted-foreground mt-1">
-              Analiza patrones históricos, frecuencias por hora, día de semana, y aplica algoritmos de probabilidad 
-              para identificar números calientes (🔥), fríos (❄️) y vencidos (⚠️). Los pronósticos se actualizan 
-              con cada nuevo dato y varían según la hora del día.
+              Analiza patrones históricos, frecuencias por hora y día de semana, usando un algoritmo 
+              determinístico que garantiza <strong>los mismos números durante todo el día</strong>. 
+              🔥 Calientes | ❄️ Fríos | ⚠️ Vencidos (7+ días sin salir)
             </p>
           </div>
         </div>
@@ -179,8 +269,9 @@ export function AIPredictive() {
       {/* Predicciones por lotería */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {LOTTERIES.map((lottery) => {
-          const lotteryPredictions = predictions[lottery.id] || [];
-          const lotteryOverdue = overdueByLottery[lottery.id] || [];
+          const cached = predictions[lottery.id];
+          const lotteryPredictions = cached?.predictions || [];
+          const lotteryOverdue = cached?.overdueNumbers || [];
           const lotteryRicardo = ricardoPredictions.filter(p => p.lottery_type === lottery.id);
           const cagedNums = CAGED_NUMBERS[lottery.id] || [];
           const isExpanded = expandedLottery === lottery.id;
@@ -209,6 +300,9 @@ export function AIPredictive() {
                   <div className="space-y-2">
                     <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                       <Brain className="w-3 h-3" /> Top Predicciones IA
+                      <span title="Consistente" className="ml-auto">
+                        <Zap className="w-3 h-3 text-amber-500" />
+                      </span>
                     </div>
                     {lotteryPredictions.slice(0, 3).map((pred, idx) => (
                       <div 
@@ -266,7 +360,7 @@ export function AIPredictive() {
                         <div 
                           key={n.number}
                           className="px-2 py-1 bg-amber-500/20 rounded text-center"
-                          title={`${n.daysSince} días sin salir`}
+                          title={`${n.daysSince} días sin salir - ${n.reason}`}
                         >
                           <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
                             {n.number.padStart(2, '0')}
@@ -317,7 +411,8 @@ export function AIPredictive() {
                   <CollapsibleContent className="mt-3 space-y-2">
                     <div className="max-h-60 overflow-y-auto space-y-2 p-1">
                       {availableTimes.map((time) => {
-                        const hourPreds = hourlyPreds[time] || [];
+                        const hourCached = hourlyPreds[time];
+                        const hourPreds = hourCached?.predictions || [];
                         const ricardoPred = getRicardoPredictionForTime(lottery.id, time);
                         
                         if (hourPreds.length === 0 && !ricardoPred) return null;
@@ -329,12 +424,15 @@ export function AIPredictive() {
                                 <Clock className="w-3 h-3" />
                                 {time}
                               </span>
+                              <span title="Bloqueado">
+                                <Lock className="w-2.5 h-2.5 text-green-500" />
+                              </span>
                             </div>
                             <div className="space-y-1">
                               {/* Predicciones IA */}
                               {hourPreds.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
-                                  {hourPreds.map((pred, i) => (
+                                  {hourPreds.slice(0, 3).map((pred, i) => (
                                     <div 
                                       key={`ai-${i}`}
                                       className="px-1.5 py-0.5 bg-primary/20 text-primary rounded text-xs font-mono font-bold flex items-center gap-0.5"
@@ -375,17 +473,10 @@ export function AIPredictive() {
                   </CollapsibleContent>
                 </Collapsible>
 
-                {/* Enjaulados */}
+                {/* Números enjaulados */}
                 {cagedNums.length > 0 && (
-                  <div className="pt-2 border-t border-border/50">
-                    <div className="text-[10px] text-muted-foreground mb-1">🔒 Enjaulados:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {cagedNums.slice(0, 6).map((n) => (
-                        <span key={n} className="px-1.5 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded text-xs font-mono font-bold">
-                          {n.padStart(2, '0')}
-                        </span>
-                      ))}
-                    </div>
+                  <div className="text-[10px] text-muted-foreground pt-2 border-t">
+                    🔒 Enjaulados: {cagedNums.slice(0, 5).join(', ')}
                   </div>
                 )}
               </CardContent>

@@ -1,29 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Grid3X3, Clock, Calendar, Info, TrendingUp, AlertTriangle, Flame, Snowflake, Target } from "lucide-react";
+import { Grid3X3, Clock, Calendar, Info, TrendingUp, AlertTriangle, Flame, Snowflake, Target, Lock } from "lucide-react";
 import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
-import { calculateProbabilities, getHourlyAnalysis, AnalysisResult } from '@/lib/probabilityEngine';
+import { 
+  getCachedPredictions, 
+  getTodayDate, 
+  CachedPrediction
+} from '@/lib/predictionCache';
 
 export function HourlyMatrix() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
   const [results, setResults] = useState<Record<string, any>>({});
-  const [overdueNumbers, setOverdueNumbers] = useState<AnalysisResult[]>([]);
-  const [hotNumbers, setHotNumbers] = useState<AnalysisResult[]>([]);
-  const [coldNumbers, setColdNumbers] = useState<AnalysisResult[]>([]);
-  const [hourlyAnalysis, setHourlyAnalysis] = useState<Record<string, { hot: AnalysisResult[], cold: AnalysisResult[], overdue: AnalysisResult[] }>>({});
+  const [cachedAnalysis, setCachedAnalysis] = useState<CachedPrediction | null>(null);
+  const [hourlyAnalysis, setHourlyAnalysis] = useState<Record<string, CachedPrediction>>({});
   const [history, setHistory] = useState<any[]>([]);
 
   const availableTimes = getDrawTimesForLottery(selectedLottery);
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
 
-  // Cargar historial y calcular análisis
-  const loadAnalysis = async () => {
+  /**
+   * Cargar historial y análisis con cache determinístico
+   */
+  const loadAnalysis = useCallback(async () => {
     const { data: historyData } = await supabase
       .from('lottery_results')
       .select('*')
@@ -31,63 +35,53 @@ export function HourlyMatrix() {
       .order('created_at', { ascending: false })
       .limit(500);
 
-    if (!historyData) return;
+    if (!historyData || historyData.length === 0) return;
     setHistory(historyData);
 
-    // Análisis general
-    const allPredictions = calculateProbabilities(historyData, selectedLottery);
-    
-    // Números vencidos (no han salido en 7+ días y tienen frecuencia > 0)
-    const overdue = allPredictions.filter(p => p.daysSince >= 7 && p.frequency > 0)
-      .sort((a, b) => b.daysSince - a.daysSince)
-      .slice(0, 10);
-    setOverdueNumbers(overdue);
+    // Usar cache determinístico para análisis general
+    const generalCached = getCachedPredictions(historyData, selectedLottery);
+    setCachedAnalysis(generalCached);
 
-    // Números calientes
-    const hot = allPredictions.filter(p => p.status === 'HOT').slice(0, 10);
-    setHotNumbers(hot);
-
-    // Números fríos
-    const cold = allPredictions.filter(p => p.status === 'COLD').slice(0, 10);
-    setColdNumbers(cold);
-
-    // Análisis por hora
-    const hourlyData: Record<string, { hot: AnalysisResult[], cold: AnalysisResult[], overdue: AnalysisResult[] }> = {};
+    // Análisis por hora con cache
+    const hourlyData: Record<string, CachedPrediction> = {};
     availableTimes.forEach(time => {
-      const analysis = getHourlyAnalysis(historyData, selectedLottery, time);
-      hourlyData[time] = {
-        hot: analysis.hot.slice(0, 3),
-        cold: analysis.cold.slice(0, 3),
-        overdue: analysis.overdue.slice(0, 3)
-      };
+      hourlyData[time] = getCachedPredictions(historyData, selectedLottery, time);
     });
     setHourlyAnalysis(hourlyData);
-  };
+  }, [selectedLottery, availableTimes]);
+
+  /**
+   * Cargar resultados del día seleccionado
+   */
+  const fetchResults = useCallback(async () => {
+    const { data } = await supabase
+      .from('lottery_results')
+      .select('*')
+      .eq('draw_date', selectedDate)
+      .eq('lottery_type', selectedLottery)
+      .order('draw_time', { ascending: true });
+    
+    if (data) {
+      const mapped = data.reduce((acc, r) => {
+        acc[r.draw_time] = r;
+        return acc;
+      }, {} as Record<string, any>);
+      setResults(mapped);
+    }
+  }, [selectedDate, selectedLottery]);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      const { data } = await supabase
-        .from('lottery_results')
-        .select('*')
-        .eq('draw_date', selectedDate)
-        .eq('lottery_type', selectedLottery)
-        .order('draw_time', { ascending: true });
-      
-      if (data) {
-        const mapped = data.reduce((acc, r) => {
-          acc[r.draw_time] = r;
-          return acc;
-        }, {} as Record<string, any>);
-        setResults(mapped);
-      }
-    };
-    
     fetchResults();
     loadAnalysis();
-  }, [selectedDate, selectedLottery]);
+  }, [fetchResults, loadAnalysis]);
 
   const filledCount = Object.keys(results).length;
   const totalSlots = availableTimes.length;
+
+  // Extraer datos del cache
+  const overdueNumbers = cachedAnalysis?.overdueNumbers || [];
+  const hotNumbers = cachedAnalysis?.hotNumbers || [];
+  const coldNumbers = cachedAnalysis?.coldNumbers || [];
 
   return (
     <Card className="glass-card">
@@ -95,6 +89,9 @@ export function HourlyMatrix() {
         <CardTitle className="text-base font-bold flex items-center gap-2">
           <Grid3X3 className="w-4 h-4" />
           Matriz Avanzada por Hora
+          <span title="Datos consistentes" className="ml-auto">
+            <Lock className="w-3 h-3 text-green-500" />
+          </span>
         </CardTitle>
         {/* Instrucciones claras */}
         <div className="mt-3 p-3 bg-muted/50 rounded-lg border text-xs space-y-2">
@@ -107,7 +104,7 @@ export function HourlyMatrix() {
                 <li>• <strong>🔥 Números Calientes:</strong> Han salido frecuentemente, tendencia activa.</li>
                 <li>• <strong>❄️ Números Fríos:</strong> Baja frecuencia histórica, podrían "despertar".</li>
                 <li>• <strong>⚠️ Números Vencidos:</strong> NO han salido en 7+ días, alta probabilidad de aparecer.</li>
-                <li>• <strong>Análisis por Hora:</strong> Cada hora tiene sus propios patrones y tendencias.</li>
+                <li>• <strong>🔒 Consistencia:</strong> Los análisis son fijos durante todo el día.</li>
               </ul>
             </div>
           </div>
@@ -164,6 +161,10 @@ export function HourlyMatrix() {
             <p className="text-xs text-muted-foreground">
               {selectedDate} · {filledCount}/{totalSlots} sorteos registrados
             </p>
+          </div>
+          <div className="text-xs text-green-600 flex items-center gap-1">
+            <Lock className="w-3 h-3" />
+            Bloqueado
           </div>
         </div>
 
@@ -224,9 +225,9 @@ export function HourlyMatrix() {
                     ) : (
                       <>
                         <p className="font-mono text-2xl text-muted-foreground/30">--</p>
-                        {hourData && hourData.hot.length > 0 && (
+                        {hourData && hourData.hotNumbers.length > 0 && (
                           <p className="text-[9px] text-red-500 truncate">
-                            🔥 {hourData.hot[0]?.number}
+                            🔥 {hourData.hotNumbers[0]?.number}
                           </p>
                         )}
                       </>
@@ -245,6 +246,7 @@ export function HourlyMatrix() {
                 <span className="font-bold text-red-700 dark:text-red-400">
                   Números Calientes (Alta Frecuencia)
                 </span>
+                <Lock className="w-3 h-3 text-green-500 ml-auto" />
               </div>
               {hotNumbers.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
@@ -252,6 +254,7 @@ export function HourlyMatrix() {
                     <div 
                       key={n.number} 
                       className="p-2 bg-red-500/20 border border-red-500/40 rounded-lg text-center"
+                      title={n.reason}
                     >
                       <span className="font-mono font-black text-2xl text-red-700 dark:text-red-300">
                         {n.number.padStart(2, '0')}
@@ -281,6 +284,7 @@ export function HourlyMatrix() {
                 <span className="font-bold text-blue-700 dark:text-blue-400">
                   Números Fríos (Baja Frecuencia)
                 </span>
+                <Lock className="w-3 h-3 text-green-500 ml-auto" />
               </div>
               {coldNumbers.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
@@ -288,6 +292,7 @@ export function HourlyMatrix() {
                     <div 
                       key={n.number} 
                       className="p-2 bg-blue-500/20 border border-blue-500/40 rounded-lg text-center"
+                      title={n.reason}
                     >
                       <span className="font-mono font-black text-2xl text-blue-700 dark:text-blue-300">
                         {n.number.padStart(2, '0')}
@@ -317,6 +322,7 @@ export function HourlyMatrix() {
                 <span className="font-bold text-amber-700 dark:text-amber-400">
                   Números Vencidos (No han salido en 7+ días)
                 </span>
+                <Lock className="w-3 h-3 text-green-500 ml-auto" />
               </div>
               {overdueNumbers.length > 0 ? (
                 <>
@@ -325,6 +331,7 @@ export function HourlyMatrix() {
                       <div 
                         key={n.number} 
                         className="p-2 bg-amber-500/20 border border-amber-500/40 rounded-lg text-center"
+                        title={n.reason}
                       >
                         <span className="font-mono font-black text-2xl text-amber-700 dark:text-amber-300">
                           {n.number.padStart(2, '0')}
@@ -358,6 +365,9 @@ export function HourlyMatrix() {
           <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Análisis Detallado por Hora
+            <span title="Consistente" className="ml-auto">
+              <Lock className="w-3 h-3 text-green-500" />
+            </span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
             {availableTimes.map((time) => {
@@ -371,30 +381,30 @@ export function HourlyMatrix() {
                     {time}
                   </div>
                   <div className="space-y-1">
-                    {hourData.hot.length > 0 && (
+                    {hourData.hotNumbers.length > 0 && (
                       <div className="flex items-center gap-1 flex-wrap">
                         <Flame className="w-3 h-3 text-red-500" />
-                        {hourData.hot.map(n => (
+                        {hourData.hotNumbers.slice(0, 3).map(n => (
                           <span key={n.number} className="px-1.5 py-0.5 bg-red-500/20 text-red-600 rounded text-[10px] font-mono font-bold">
                             {n.number.padStart(2, '0')}
                           </span>
                         ))}
                       </div>
                     )}
-                    {hourData.overdue.length > 0 && (
+                    {hourData.overdueNumbers.length > 0 && (
                       <div className="flex items-center gap-1 flex-wrap">
                         <AlertTriangle className="w-3 h-3 text-amber-500" />
-                        {hourData.overdue.map(n => (
+                        {hourData.overdueNumbers.slice(0, 3).map(n => (
                           <span key={n.number} className="px-1.5 py-0.5 bg-amber-500/20 text-amber-600 rounded text-[10px] font-mono font-bold">
                             {n.number.padStart(2, '0')}
                           </span>
                         ))}
                       </div>
                     )}
-                    {hourData.cold.length > 0 && (
+                    {hourData.coldNumbers.length > 0 && (
                       <div className="flex items-center gap-1 flex-wrap">
                         <Snowflake className="w-3 h-3 text-blue-500" />
-                        {hourData.cold.map(n => (
+                        {hourData.coldNumbers.slice(0, 3).map(n => (
                           <span key={n.number} className="px-1.5 py-0.5 bg-blue-500/20 text-blue-600 rounded text-[10px] font-mono font-bold">
                             {n.number.padStart(2, '0')}
                           </span>
@@ -405,26 +415,6 @@ export function HourlyMatrix() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Leyenda */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t flex-wrap">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-primary/30 border border-primary/50"></div>
-            <span>Con resultado</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Flame className="w-3 h-3 text-red-500" />
-            <span>Caliente</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Snowflake className="w-3 h-3 text-blue-500" />
-            <span>Frío</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3 text-amber-500" />
-            <span>Vencido</span>
           </div>
         </div>
       </CardContent>
