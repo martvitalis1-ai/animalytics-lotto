@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LOTTERIES, getDrawTimesForLottery, getAnimalFromNumber } from "@/lib/constants";
+import { LOTTERIES, getDrawTimesForLottery, getAnimalFromNumber, formatResultNumber } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Loader2, Save, AlertCircle } from "lucide-react";
@@ -45,6 +45,8 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
 
     setLoading(true);
     
+    // Formatear el número correctamente: "0" = Delfín, "00" = Ballena
+    const formattedNumber = formatResultNumber(resultNumber);
     const animalName = getAnimalFromNumber(resultNumber, lotteryType);
     
     // Verificar si ya existe un resultado para esa lotería/fecha/hora
@@ -61,7 +63,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
       const { error } = await supabase
         .from('lottery_results')
         .update({
-          result_number: resultNumber.padStart(2, '0'),
+          result_number: formattedNumber,
           animal_name: animalName || null,
         })
         .eq('id', existing.id);
@@ -70,7 +72,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
         console.error(error);
         toast.error("Error al actualizar");
       } else {
-        toast.success(`Resultado actualizado: ${resultNumber.padStart(2, '0')} ${animalName ? `(${animalName})` : ''}`);
+        toast.success(`Resultado actualizado: ${formattedNumber} ${animalName ? `(${animalName})` : ''}`);
         setResultNumber("");
         onInserted?.();
       }
@@ -78,7 +80,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
       // Insertar nuevo
       const { error } = await supabase.from('lottery_results').insert({
         lottery_type: lotteryType,
-        result_number: resultNumber.padStart(2, '0'),
+        result_number: formattedNumber,
         animal_name: animalName || null,
         draw_time: drawTime,
         draw_date: drawDate,
@@ -88,7 +90,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
         console.error(error);
         toast.error("Error al guardar");
       } else {
-        toast.success(`Resultado guardado: ${resultNumber.padStart(2, '0')} ${animalName ? `(${animalName})` : ''}`);
+        toast.success(`Resultado guardado: ${formattedNumber} ${animalName ? `(${animalName})` : ''}`);
         setResultNumber("");
         onInserted?.();
       }
@@ -99,6 +101,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
 
   const selectedLottery = LOTTERIES.find(l => l.id === lotteryType);
   const previewAnimal = resultNumber ? getAnimalFromNumber(resultNumber, lotteryType) : '';
+  const previewNumber = resultNumber ? formatResultNumber(resultNumber) : '';
 
   return (
     <Card className="glass-card">
@@ -110,6 +113,9 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
         <p className="text-xs text-muted-foreground mt-1">
           Los resultados se guardan automáticamente en la base de datos. Si ya existe un resultado para la misma fecha/hora, se actualizará.
         </p>
+        <div className="text-xs text-amber-600 bg-amber-500/10 p-2 rounded mt-2">
+          💡 <strong>Importante:</strong> "0" = Delfín, "00" = Ballena. Ingrésalos exactamente como quieras guardarlos.
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Selector de Lotería con Logo */}
@@ -171,9 +177,13 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
           <div className="relative">
             <Input
               type="text"
-              placeholder="00"
+              placeholder="Ej: 0, 00, 15..."
               value={resultNumber}
-              onChange={(e) => setResultNumber(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              onChange={(e) => {
+                // Permitir solo dígitos, máximo 2
+                const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                setResultNumber(val);
+              }}
               className="bg-background text-center font-mono text-3xl font-bold h-16"
               maxLength={2}
             />
@@ -199,7 +209,7 @@ export function ResultsInsert({ onInserted }: ResultsInsertProps) {
                 <div className="text-xs text-muted-foreground">{drawDate} - {drawTime}</div>
               </div>
               <div className="ml-auto text-right">
-                <div className="font-mono font-black text-2xl">{resultNumber.padStart(2, '0')}</div>
+                <div className="font-mono font-black text-2xl">{previewNumber}</div>
                 {previewAnimal && <div className="text-xs text-muted-foreground">{previewAnimal}</div>}
               </div>
             </div>
