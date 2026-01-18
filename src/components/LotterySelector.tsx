@@ -1,6 +1,7 @@
 import { LOTTERIES } from "@/lib/constants";
-import logoGuacharo from "@/assets/logo-guacharo.png";
-import logoGuacharito from "@/assets/logo-guacharito.png";
+// CORREGIDO: Los logos estaban intercambiados
+import logoGuacharito from "@/assets/logo-guacharo.png"; // El archivo guacharo.png es para Guacharito
+import logoGuacharo from "@/assets/logo-guacharito.png"; // El archivo guacharito.png es para Guacharo
 import logoLottoActivo from "@/assets/logo-lotto-activo.png";
 import logoSelvaPlus from "@/assets/logo-selva-plus.png";
 import logoGranjita from "@/assets/logo-granjita.png";

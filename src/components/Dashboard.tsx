@@ -28,6 +28,7 @@ import { RicardoBot } from "./RicardoBot";
 import { TrendAnalysis } from "./TrendAnalysis";
 import { NotificationCenter } from "./NotificationCenter";
 import { ExportTools } from "./ExportTools";
+import { QuickPrediction } from "./QuickPrediction";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -138,32 +139,32 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
             {/* IA Predictiva primero */}
-            <TabsTrigger value="ia" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+            <TabsTrigger value="ia" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <Brain className="w-4 h-4" />
               <span className="hidden sm:inline">IA Predictiva</span>
             </TabsTrigger>
-            <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+            <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Resultados</span>
             </TabsTrigger>
-            <TabsTrigger value="verificacion" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+            <TabsTrigger value="verificacion" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <CheckSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Verificación</span>
             </TabsTrigger>
-            <TabsTrigger value="matriz" className="flex items-center gap-1.5 data-[state=active]:bg-background">
+            <TabsTrigger value="matriz" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <Grid3X3 className="w-4 h-4" />
               <span className="hidden sm:inline">Matriz</span>
             </TabsTrigger>
             <TabsTrigger 
               value="insertar" 
-              className="flex items-center gap-1.5 bg-foreground text-background data-[state=active]:bg-foreground data-[state=active]:text-background hover:bg-foreground/90"
+              className="flex items-center gap-1.5 bg-foreground text-background data-[state=active]:bg-foreground data-[state=active]:text-background hover:bg-foreground/90 active:scale-95 transition-transform"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Insertar</span>
             </TabsTrigger>
             <TabsTrigger 
               value="admin" 
-              className="flex items-center gap-1.5 bg-foreground text-background data-[state=active]:bg-foreground data-[state=active]:text-background hover:bg-foreground/90"
+              className="flex items-center gap-1.5 bg-foreground text-background data-[state=active]:bg-foreground data-[state=active]:text-background hover:bg-foreground/90 active:scale-95 transition-transform"
             >
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Admin</span>
@@ -172,6 +173,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
 
           {/* IA Predictiva - ahora es el tab por defecto */}
           <TabsContent value="ia" className="mt-4 space-y-6">
+            <QuickPrediction />
             <TrendAnalysis />
             <AIPredictive />
           </TabsContent>

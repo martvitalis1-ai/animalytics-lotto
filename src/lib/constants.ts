@@ -1,4 +1,4 @@
-// Mapeo de animales por número
+// Mapeo de animales por número - CORREGIDO: 0 es Delfín, 00 es Ballena
 export const ANIMAL_MAPPING: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', 
   '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', 
@@ -7,7 +7,7 @@ export const ANIMAL_MAPPING: Record<string, string> = {
   '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', 
   '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', 
   '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', 
-  '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
+  '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'LAPA'
 };
 
 export const GUACHARO_MAPPING: Record<string, string> = { 
@@ -60,13 +60,32 @@ export const getDrawTimesForLottery = (lotteryId: string): string[] => {
 
 export const ADMIN_CODE = "GANADOR85";
 
-// Obtener el animal desde el número
+// Obtener el animal desde el número - CORREGIDO para manejar "0" correctamente
 export const getAnimalFromNumber = (num: string, lotteryId: string): string => {
   const lottery = LOTTERIES.find(l => l.id === lotteryId);
   if (!lottery) return '';
   
+  // Caso especial: si es exactamente "0" o "00", mantenerlo así
+  const normalizedNum = num.trim();
+  
   if (lottery.type === 'animals') {
-    return ANIMAL_MAPPING[num] || '';
+    // Si es "0" buscar como "0" (Delfín), si es "00" buscar como "00" (Ballena)
+    if (normalizedNum === '0') return ANIMAL_MAPPING['0'] || '';
+    if (normalizedNum === '00') return ANIMAL_MAPPING['00'] || '';
+    // Para otros números, buscar sin ceros a la izquierda
+    const numWithoutLeadingZeros = parseInt(normalizedNum).toString();
+    return ANIMAL_MAPPING[numWithoutLeadingZeros] || '';
   }
-  return lottery.mapping[num] || '';
+  return lottery.mapping[normalizedNum] || '';
+};
+
+// Guardar número correctamente - NO convertir "0" a "00"
+export const formatResultNumber = (num: string): string => {
+  const trimmed = num.trim();
+  // Si el usuario ingresa "0", guardarlo como "0" (Delfín)
+  // Si ingresa "00", guardarlo como "00" (Ballena)
+  if (trimmed === '0') return '0';
+  if (trimmed === '00') return '00';
+  // Para otros números, padStart con 2 dígitos
+  return trimmed.padStart(2, '0');
 };
