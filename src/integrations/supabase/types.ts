@@ -71,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_predictions_cache: {
+        Row: {
+          cache_date: string
+          created_at: string | null
+          draw_time: string | null
+          history_hash: string
+          id: string
+          lottery_id: string
+          predictions: Json
+        }
+        Insert: {
+          cache_date: string
+          created_at?: string | null
+          draw_time?: string | null
+          history_hash: string
+          id?: string
+          lottery_id: string
+          predictions: Json
+        }
+        Update: {
+          cache_date?: string
+          created_at?: string | null
+          draw_time?: string | null
+          history_hash?: string
+          id?: string
+          lottery_id?: string
+          predictions?: Json
+        }
+        Relationships: []
+      }
       dato_ricardo_predictions: {
         Row: {
           created_at: string

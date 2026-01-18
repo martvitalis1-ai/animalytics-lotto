@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,8 @@ import {
   getLotteryInfo,
   getRandomTip
 } from '@/lib/ricardoKnowledge';
-import { calculateProbabilities } from '@/lib/probabilityEngine';
 import { analyzeAdvancedPatterns, generateHourlyForecast } from '@/lib/advancedAI';
+import { getCachedPredictions, getTodayDate, CachedPrediction } from '@/lib/predictionCache';
 
 type Message = {
   id: string;
@@ -219,11 +219,13 @@ export function RicardoBot() {
         }
 
         const analysis = analyzeAdvancedPatterns(history, targetLottery.id);
-        const predictions = calculateProbabilities(history, targetLottery.id).slice(0, 5);
+        // Usar cache determinístico para consistencia
+        const cached = getCachedPredictions(history, targetLottery.id);
+        const predictions = cached.predictions.slice(0, 5);
 
         let response = `${getRandomExpression()} ¡Aquí están mis pronósticos para **${targetLottery.name}**!\n\n`;
         
-        response += `🎯 **TOP 5 NÚMEROS:**\n`;
+        response += `🎯 **TOP 5 NÚMEROS (Bloqueados para hoy):**\n`;
         predictions.forEach((p, i) => {
           const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📍';
           const animal = targetLottery?.type === 'animals' ? ` - ${p.animal}` : '';
