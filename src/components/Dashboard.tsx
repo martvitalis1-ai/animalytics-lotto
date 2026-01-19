@@ -8,7 +8,9 @@ import {
   CheckSquare,
   Grid3X3,
   LogOut,
-  FileText
+  FileText,
+  Flame,
+  Dices
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +31,10 @@ import { TrendAnalysis } from "./TrendAnalysis";
 import { NotificationCenter } from "./NotificationCenter";
 import { ExportTools } from "./ExportTools";
 import { QuickPrediction } from "./QuickPrediction";
+import { ExplosiveData } from "./ExplosiveData";
+import { FrequencyHeatmap } from "./FrequencyHeatmap";
+import { UniversalRoulette } from "./UniversalRoulette";
+import { HourlyPredictionView } from "./HourlyPredictionView";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -143,6 +149,14 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <Brain className="w-4 h-4" />
               <span className="hidden sm:inline">IA Predictiva</span>
             </TabsTrigger>
+            <TabsTrigger value="explosivo" className="flex items-center gap-1.5 data-[state=active]:bg-red-500 data-[state=active]:text-white active:scale-95 transition-transform">
+              <Flame className="w-4 h-4" />
+              <span className="hidden sm:inline">Explosivo</span>
+            </TabsTrigger>
+            <TabsTrigger value="ruleta" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
+              <Dices className="w-4 h-4" />
+              <span className="hidden sm:inline">Ruleta</span>
+            </TabsTrigger>
             <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Resultados</span>
@@ -174,8 +188,21 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           {/* IA Predictiva - ahora es el tab por defecto */}
           <TabsContent value="ia" className="mt-4 space-y-6">
             <QuickPrediction />
+            <HourlyPredictionView />
             <TrendAnalysis />
             <AIPredictive />
+          </TabsContent>
+
+          {/* Datos Explosivos + Ruleta */}
+          <TabsContent value="explosivo" className="mt-4 space-y-6">
+            <ExplosiveData />
+            <FrequencyHeatmap />
+          </TabsContent>
+
+          {/* Ruleta Universal */}
+          <TabsContent value="ruleta" className="mt-4 space-y-6">
+            <UniversalRoulette />
+            <HourlyPredictionView />
           </TabsContent>
 
           <TabsContent value="resultados" className="mt-4">
@@ -186,8 +213,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <Verification />
           </TabsContent>
 
-          <TabsContent value="matriz" className="mt-4">
+          <TabsContent value="matriz" className="mt-4 space-y-6">
             <HourlyMatrix />
+            <FrequencyHeatmap />
           </TabsContent>
 
           <TabsContent value="insertar" className="mt-4">

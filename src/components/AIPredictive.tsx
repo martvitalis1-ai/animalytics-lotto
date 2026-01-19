@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constan
 import { AnalysisResult } from '@/lib/probabilityEngine';
 import { getLotteryLogo } from "./LotterySelector";
 import { CAGED_NUMBERS } from '@/data/historyBatch';
+import { RichAnimalCard, RichAnimalCardCompact } from './RichAnimalCard';
+import { AnimalEmoji } from './AnimalImage';
 import { 
   getCachedPredictions, 
   getAllCachedPredictions, 
@@ -304,44 +306,20 @@ export function AIPredictive() {
                         <Zap className="w-3 h-3 text-amber-500" />
                       </span>
                     </div>
-                    {lotteryPredictions.slice(0, 3).map((pred, idx) => (
-                      <div 
-                        key={pred.number}
-                        className={`p-2 rounded-lg border ${
-                          idx === 0 ? 'bg-primary/10 border-primary/30' : 'bg-muted/50 border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
-                              idx === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20'
-                            }`}>
-                              {idx + 1}
-                            </span>
-                            <span className="font-mono font-black text-lg">
-                              {pred.number.padStart(2, '0')}
-                            </span>
-                            {lottery.type === 'animals' && (
-                              <span className="text-xs text-muted-foreground truncate max-w-16">
-                                {pred.animal}
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-1">
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 border ${getStatusClass(pred.status)}`}>
-                              {getStatusIcon(pred.status)}
-                              {pred.status}
-                            </span>
-                          </div>
-                        </div>
-                        {pred.reason && (
-                          <p className="text-[10px] text-muted-foreground mt-1 pl-8">
-                            {pred.reason}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    <div className="grid grid-cols-3 gap-2">
+                      {lotteryPredictions.slice(0, 3).map((pred, idx) => (
+                        <RichAnimalCard
+                          key={pred.number}
+                          code={pred.number}
+                          probability={pred.probability}
+                          status={pred.status}
+                          rank={idx + 1}
+                          size="sm"
+                          reason={pred.reason}
+                          showProbability
+                        />
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground text-sm py-4">
@@ -357,18 +335,12 @@ export function AIPredictive() {
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {lotteryOverdue.slice(0, 5).map((n) => (
-                        <div 
+                        <RichAnimalCardCompact
                           key={n.number}
-                          className="px-2 py-1 bg-amber-500/20 rounded text-center"
-                          title={`${n.daysSince} días sin salir - ${n.reason}`}
-                        >
-                          <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
-                            {n.number.padStart(2, '0')}
-                          </span>
-                          <span className="text-[9px] text-amber-600 ml-1">
-                            ({n.daysSince}d)
-                          </span>
-                        </div>
+                          code={n.number}
+                          status="OVERDUE"
+                          probability={n.probability}
+                        />
                       ))}
                     </div>
                   </div>

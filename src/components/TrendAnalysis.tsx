@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
 import { LOTTERIES, ANIMAL_MAPPING } from '@/lib/constants';
 import { analyzeAdvancedPatterns, TrendAnalysis as TrendType } from '@/lib/advancedAI';
 import { getLotteryLogo } from "./LotterySelector";
+import { RichAnimalCard, RichAnimalCardCompact } from './RichAnimalCard';
+import { AnimalEmoji } from './AnimalImage';
 
 export function TrendAnalysis() {
   const [trends, setTrends] = useState<Record<string, TrendType>>({});
@@ -96,16 +98,13 @@ export function TrendAnalysis() {
               <div className="flex flex-wrap gap-2">
                 {currentTrend.hotNumbers.length > 0 ? (
                   currentTrend.hotNumbers.map((num) => (
-                    <div key={num} className="flex flex-col items-center bg-red-100 dark:bg-red-900/30 rounded-lg p-2">
-                      <span className="font-mono font-black text-xl text-red-600 dark:text-red-400">
-                        {num.padStart(2, '0')}
-                      </span>
-                      {lottery?.type === 'animals' && (
-                        <span className="text-[10px] text-red-600/70 dark:text-red-400/70">
-                          {ANIMAL_MAPPING[num]}
-                        </span>
-                      )}
-                    </div>
+                    <RichAnimalCard
+                      key={num}
+                      code={num}
+                      status="HOT"
+                      size="sm"
+                      showProbability={false}
+                    />
                   ))
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin datos suficientes</p>
@@ -129,16 +128,13 @@ export function TrendAnalysis() {
               <div className="flex flex-wrap gap-2">
                 {currentTrend.coldNumbers.length > 0 ? (
                   currentTrend.coldNumbers.map((num) => (
-                    <div key={num} className="flex flex-col items-center bg-blue-100 dark:bg-blue-900/30 rounded-lg p-2">
-                      <span className="font-mono font-black text-xl text-blue-600 dark:text-blue-400">
-                        {num.padStart(2, '0')}
-                      </span>
-                      {lottery?.type === 'animals' && (
-                        <span className="text-[10px] text-blue-600/70 dark:text-blue-400/70">
-                          {ANIMAL_MAPPING[num]}
-                        </span>
-                      )}
-                    </div>
+                    <RichAnimalCard
+                      key={num}
+                      code={num}
+                      status="COLD"
+                      size="sm"
+                      showProbability={false}
+                    />
                   ))
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin datos suficientes</p>
@@ -162,16 +158,13 @@ export function TrendAnalysis() {
               <div className="flex flex-wrap gap-2">
                 {currentTrend.overdueNumbers.length > 0 ? (
                   currentTrend.overdueNumbers.map((num) => (
-                    <div key={num} className="flex flex-col items-center bg-amber-100 dark:bg-amber-900/30 rounded-lg p-2">
-                      <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400">
-                        {num.padStart(2, '0')}
-                      </span>
-                      {lottery?.type === 'animals' && (
-                        <span className="text-[10px] text-amber-600/70 dark:text-amber-400/70">
-                          {ANIMAL_MAPPING[num]}
-                        </span>
-                      )}
-                    </div>
+                    <RichAnimalCard
+                      key={num}
+                      code={num}
+                      status="OVERDUE"
+                      size="sm"
+                      showProbability={false}
+                    />
                   ))
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin datos suficientes</p>
@@ -205,9 +198,14 @@ export function TrendAnalysis() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{pattern.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Tipo: {pattern.type} | Números: {pattern.numbers.join(', ')}
-                        </p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {pattern.numbers.map((n, i) => (
+                            <div key={i} className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded">
+                              <AnimalEmoji code={n} size="sm" />
+                              <span className="font-mono font-bold text-sm">{n.padStart(2, '0')}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -237,9 +235,10 @@ export function TrendAnalysis() {
                     </div>
                     <div className="flex gap-1">
                       {trend.topNumbers.map((n, i) => (
-                        <span key={i} className="px-2 py-1 bg-primary/10 text-primary rounded font-mono text-xs font-bold">
-                          {n.padStart(2, '0')}
-                        </span>
+                        <div key={i} className="flex items-center gap-0.5 px-2 py-1 bg-primary/10 text-primary rounded">
+                          <AnimalEmoji code={n} size="sm" />
+                          <span className="font-mono text-xs font-bold">{n.padStart(2, '0')}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -263,9 +262,10 @@ export function TrendAnalysis() {
                     <span className="text-xs font-medium">{trend.day}</span>
                     <div className="flex gap-1">
                       {trend.topNumbers.slice(0, 2).map((n, i) => (
-                        <span key={i} className="px-1.5 py-0.5 bg-accent/20 text-accent-foreground rounded font-mono text-[10px] font-bold">
-                          {n.padStart(2, '0')}
-                        </span>
+                        <div key={i} className="flex items-center gap-0.5 px-1.5 py-0.5 bg-accent/20 text-accent-foreground rounded">
+                          <AnimalEmoji code={n} size="sm" />
+                          <span className="font-mono text-[10px] font-bold">{n.padStart(2, '0')}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
