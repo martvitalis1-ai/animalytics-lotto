@@ -1,26 +1,24 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, RotateCcw, Dices, Trophy, Zap } from "lucide-react";
-import { LOTTERIES, ANIMAL_MAPPING } from '@/lib/constants';
+import { LOTTERIES } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
 import { RichAnimalCard } from './RichAnimalCard';
-import { AnimalEmoji } from './AnimalImage';
-import { getCachedPredictions, getTodayDate } from '@/lib/predictionCache';
-import { getAnimalByCode, ALL_ANIMAL_CODES } from '@/lib/animalData';
+import { getCodesForLottery, getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { generateHourlyPredictions } from '@/lib/advancedProbability';
 import { toast } from "sonner";
 
 export function UniversalRoulette() {
-  const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
+  const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [lastNumber, setLastNumber] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const [history, setHistory] = useState<any[]>([]);
-  const canvasRef = useRef<HTMLDivElement>(null);
 
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
 
@@ -37,13 +35,14 @@ export function UniversalRoulette() {
     loadHistory();
   }, []);
 
-  // Numbers for the roulette wheel (animals: 0-36 + 00)
+  // Get roulette numbers based on lottery type
   const rouletteNumbers = useMemo(() => {
-    if (lottery?.type !== 'numbers') {
-      return ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
-    }
-    return Array.from({ length: 38 }, (_, i) => i.toString());
-  }, [lottery]);
+    return getCodesForLottery(selectedLottery);
+  }, [selectedLottery]);
+
+  // Check if extended mode (Guácharo)
+  const isExtendedMode = selectedLottery === 'guacharo' || selectedLottery === 'guacharito';
+  const maxNumber = isExtendedMode ? 99 : 36;
 
   // Intelligent spin algorithm
   const spinRoulette = useCallback(async () => {
@@ -52,18 +51,23 @@ export function UniversalRoulette() {
     setIsSpinning(true);
     setResult(null);
 
-    // Get cached predictions for consistency
-    const cached = getCachedPredictions(history, selectedLottery);
-    const topPredictions = cached.predictions.slice(0, 10);
+    // Get predictions for weighting
+    const today = new Date().toISOString().split('T')[0];
+    const predictions = generateHourlyPredictions(
+      selectedLottery,
+      new Date().getHours() < 12 ? '09:00 AM' : '03:00 PM',
+      history,
+      today
+    );
     
     // Weight selection based on predictions + last number input
     let weightedNumbers: string[] = [];
     
     // Add top predictions with higher weight
-    topPredictions.forEach((pred, idx) => {
-      const weight = 10 - idx; // More weight for top predictions
+    predictions.slice(0, 10).forEach((pred, idx) => {
+      const weight = 10 - idx;
       for (let i = 0; i < weight; i++) {
-        weightedNumbers.push(pred.number);
+        weightedNumbers.push(pred.code);
       }
     });
 
@@ -73,20 +77,20 @@ export function UniversalRoulette() {
       if (!isNaN(lastNum)) {
         // Digital root
         let root = lastNum;
-        while (root > 36) {
+        while (root > maxNumber) {
           root = root.toString().split('').reduce((a, b) => a + parseInt(b), 0);
         }
         weightedNumbers.push(root.toString(), root.toString(), root.toString());
         
         // Sum of digits
         const digitSum = lastNumber.split('').reduce((a, b) => a + parseInt(b), 0);
-        if (digitSum <= 36) {
+        if (digitSum <= maxNumber) {
           weightedNumbers.push(digitSum.toString(), digitSum.toString());
         }
         
-        // Complement to 36
-        const complement = Math.abs(36 - lastNum);
-        if (complement <= 36) {
+        // Complement
+        const complement = Math.abs(maxNumber - lastNum);
+        if (complement <= maxNumber && complement >= 0) {
           weightedNumbers.push(complement.toString(), complement.toString());
         }
       }
@@ -111,16 +115,20 @@ export function UniversalRoulette() {
     setTimeout(() => {
       setResult(selectedNumber);
       setIsSpinning(false);
+      const name = getAnimalName(selectedNumber);
       toast.success(`¡La ruleta ha hablado! 🎯`, {
-        description: `Número sugerido: ${selectedNumber.padStart(2, '0')} - ${ANIMAL_MAPPING[selectedNumber] || 'Número'}`
+        description: `Número sugerido: ${selectedNumber} - ${name}`
       });
     }, 4000);
-  }, [isSpinning, history, selectedLottery, lastNumber, rouletteNumbers]);
+  }, [isSpinning, history, selectedLottery, lastNumber, rouletteNumbers, maxNumber]);
 
   const resetRoulette = () => {
     setResult(null);
     setLastNumber('');
   };
+
+  // Get segment size based on mode
+  const segmentStyle = isExtendedMode ? 'text-[5px]' : 'text-[8px]';
 
   return (
     <Card className="glass-card overflow-hidden">
@@ -135,8 +143,8 @@ export function UniversalRoulette() {
             <SelectTrigger className="w-[180px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              {LOTTERIES.filter(l => l.type === 'animals').map((l) => (
+            <SelectContent className="bg-popover border shadow-lg">
+              {LOTTERIES.map((l) => (
                 <SelectItem key={l.id} value={l.id}>
                   <div className="flex items-center gap-2">
                     <img src={getLotteryLogo(l.id)} alt="" className="w-5 h-5" />
@@ -148,7 +156,7 @@ export function UniversalRoulette() {
           </Select>
         </div>
         <p className="text-xs text-muted-foreground">
-          Basada en algoritmo predictivo • Consistente para {getTodayDate()}
+          {isExtendedMode ? 'Modo Extendido (0-99)' : 'Modo Estándar (0-36)'} • Algoritmo predictivo
         </p>
       </CardHeader>
       
@@ -158,15 +166,16 @@ export function UniversalRoulette() {
           <img 
             src={getLotteryLogo(selectedLottery)} 
             alt={lottery?.name} 
-            className="w-20 h-20 object-contain"
+            className="w-20 h-20 object-contain drop-shadow-lg"
           />
         </div>
 
         {/* Roulette Wheel */}
         <div className="relative flex justify-center items-center">
           <div 
-            ref={canvasRef}
-            className="relative w-64 h-64 rounded-full border-4 border-primary shadow-lg overflow-hidden"
+            className={`relative rounded-full border-4 border-primary shadow-2xl overflow-hidden ${
+              isExtendedMode ? 'w-72 h-72' : 'w-64 h-64'
+            }`}
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
@@ -181,14 +190,14 @@ export function UniversalRoulette() {
               )`
             }}
           >
-            {/* Number labels around the wheel */}
+            {/* Number labels around the wheel with high contrast */}
             {rouletteNumbers.map((num, idx) => {
               const angle = (idx / rouletteNumbers.length) * 360 - 90;
-              const radius = 100;
+              const radius = isExtendedMode ? 120 : 100;
               return (
                 <div
                   key={num}
-                  className="absolute text-[8px] font-bold text-primary-foreground"
+                  className={`absolute font-black ${segmentStyle}`}
                   style={{
                     left: '50%',
                     top: '50%',
@@ -197,25 +206,29 @@ export function UniversalRoulette() {
                       rotate(${angle}deg) 
                       translateX(${radius}px) 
                       rotate(${-angle}deg)
-                    `
+                    `,
+                    // HIGH CONTRAST: White text with black shadow
+                    color: 'white',
+                    textShadow: '0 0 3px black, 0 0 3px black, 1px 1px 2px black',
+                    WebkitTextStroke: '0.5px black'
                   }}
                 >
-                  {num.padStart(2, '0')}
+                  {num === "0" ? "0" : num === "00" ? "00" : num.padStart(2, '0')}
                 </div>
               );
             })}
             
             {/* Center pointer */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-background border-2 border-primary shadow-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 rounded-full bg-background border-2 border-primary shadow-xl flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-primary" />
               </div>
             </div>
           </div>
           
           {/* Arrow indicator */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-            <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-amber-500" />
+            <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-amber-500 drop-shadow-lg" />
           </div>
         </div>
 
@@ -225,9 +238,9 @@ export function UniversalRoulette() {
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="Ej: 15"
+              placeholder={`Ej: ${isExtendedMode ? '75' : '15'}`}
               value={lastNumber}
-              onChange={(e) => setLastNumber(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
+              onChange={(e) => setLastNumber(e.target.value.replace(/[^0-9]/g, '').slice(0, isExtendedMode ? 2 : 2))}
               className="font-mono text-center text-lg"
               maxLength={2}
             />
@@ -257,7 +270,7 @@ export function UniversalRoulette() {
             <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 via-accent/10 to-primary/20 border-2 border-primary">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Trophy className="w-6 h-6 text-amber-500" />
-                <h3 className="font-bold text-lg">¡Resultado!</h3>
+                <h3 className="font-bold text-lg">{lottery?.name}</h3>
                 <Trophy className="w-6 h-6 text-amber-500" />
               </div>
               
@@ -266,6 +279,7 @@ export function UniversalRoulette() {
                 size="lg"
                 showProbability={false}
                 className="mx-auto w-fit"
+                lotteryName={lottery?.name}
               />
               
               <p className="text-center text-sm text-muted-foreground mt-3">

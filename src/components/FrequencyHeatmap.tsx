@@ -4,10 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RefreshCw, Loader2, Grid3X3, Flame, Snowflake, Clock, Ban } from "lucide-react";
-import { LOTTERIES, DRAW_TIMES_FULL, ANIMAL_MAPPING } from '@/lib/constants';
-import { ALL_ANIMAL_CODES, getAnimalByCode } from '@/lib/animalData';
+import { LOTTERIES, DRAW_TIMES_FULL } from '@/lib/constants';
+import { getCodesForLottery, getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
 import { getLotteryLogo } from './LotterySelector';
-import { AnimalEmoji } from './AnimalImage';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -25,26 +24,73 @@ interface CellData {
   daysSince?: number;
 }
 
+// Memoized cell component to prevent re-renders
+const HeatCell = ({ cell, animal, num, time }: { 
+  cell: CellData; 
+  animal: { name?: string } | undefined; 
+  num: string; 
+  time: string 
+}) => {
+  const getCellStyle = (level: HeatLevel): string => {
+    switch (level) {
+      case 'hot': return 'bg-red-500 text-white';
+      case 'warm': return 'bg-orange-400 text-white';
+      case 'cold': return 'bg-blue-500 text-white';
+      case 'overdue': return 'bg-gray-400 text-white';
+      default: return 'bg-muted/30 text-muted-foreground';
+    }
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div 
+          className={`
+            w-full h-8 rounded flex items-center justify-center 
+            text-[10px] font-bold cursor-default transition-transform
+            hover:scale-110
+            ${getCellStyle(cell.level)}
+          `}
+        >
+          {cell.count || '-'}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="text-xs">
+          <p className="font-bold">{animal?.name || `#${num}`} ({num})</p>
+          <p>Hora: {time}</p>
+          <p>Frecuencia: {cell.count} veces</p>
+          {cell.daysSince !== undefined && (
+            <p>Último: hace {cell.daysSince} días</p>
+          )}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 export function FrequencyHeatmap() {
-  const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
+  const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [heatData, setHeatData] = useState<Record<string, Record<string, CellData>>>({});
   const [loading, setLoading] = useState(false);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
 
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
-  const drawTimes = DRAW_TIMES_FULL.slice(1, -1); // 9AM to 6PM
+  const drawTimes = useMemo(() => DRAW_TIMES_FULL.slice(1, -1), []); // 9AM to 6PM
   
-  // Get appropriate number range for lottery
+  // Get appropriate number range for lottery - MEMOIZED
   const numberRange = useMemo(() => {
-    if (lottery?.type !== 'numbers') {
-      return ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
-    }
-    return ALL_ANIMAL_CODES;
-  }, [lottery]);
+    return getCodesForLottery(selectedLottery);
+  }, [selectedLottery]);
+
+  // Visible numbers for lazy loading
+  const visibleNumbers = useMemo(() => {
+    return numberRange.slice(visibleRange.start, visibleRange.end);
+  }, [numberRange, visibleRange]);
 
   const loadHeatData = useCallback(async () => {
     setLoading(true);
     try {
-      // Load last 30 days of history
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
@@ -60,7 +106,7 @@ export function FrequencyHeatmap() {
         return;
       }
 
-      // Build frequency matrix
+      // Build frequency matrix - optimized
       const matrix: Record<string, Record<string, CellData>> = {};
       const globalLastSeen: Record<string, Date> = {};
       const now = new Date();
@@ -75,10 +121,17 @@ export function FrequencyHeatmap() {
 
       // Count frequencies
       history.forEach(draw => {
-        const num = draw.result_number?.toString().trim();
+        let num = draw.result_number?.toString().trim();
+        if (!num) return;
+        
+        // Normalize: keep "0" and "00" distinct
+        if (num !== "0" && num !== "00" && !isNaN(parseInt(num))) {
+          num = parseInt(num).toString();
+        }
+        
         const time = draw.draw_time;
         
-        if (num && matrix[num] && matrix[num][time] !== undefined) {
+        if (matrix[num] && matrix[num][time] !== undefined) {
           matrix[num][time].count++;
           
           const drawDate = new Date(draw.created_at || draw.draw_date);
@@ -99,7 +152,6 @@ export function FrequencyHeatmap() {
       const avgCount = allCounts.length > 0 
         ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length 
         : 1;
-      const maxCount = Math.max(...allCounts, 1);
 
       // Assign levels
       numberRange.forEach(num => {
@@ -138,15 +190,13 @@ export function FrequencyHeatmap() {
     loadHeatData();
   }, [loadHeatData]);
 
-  const getCellStyle = (level: HeatLevel): string => {
-    switch (level) {
-      case 'hot': return 'bg-red-500 text-white';
-      case 'warm': return 'bg-orange-400 text-white';
-      case 'cold': return 'bg-blue-500 text-white';
-      case 'overdue': return 'bg-gray-400 text-white';
-      default: return 'bg-muted/30 text-muted-foreground';
-    }
-  };
+  // Load more on scroll
+  const loadMore = useCallback(() => {
+    setVisibleRange(prev => ({
+      start: prev.start,
+      end: Math.min(prev.end + 20, numberRange.length)
+    }));
+  }, [numberRange.length]);
 
   return (
     <Card className="glass-card">
@@ -158,12 +208,15 @@ export function FrequencyHeatmap() {
           </CardTitle>
           
           <div className="flex items-center gap-2">
-            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+            <Select value={selectedLottery} onValueChange={(v) => {
+              setSelectedLottery(v);
+              setVisibleRange({ start: 0, end: 20 });
+            }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {LOTTERIES.filter(l => l.type === 'animals').map((l) => (
+              <SelectContent className="bg-popover border shadow-lg">
+                {LOTTERIES.map((l) => (
                   <SelectItem key={l.id} value={l.id}>
                     <div className="flex items-center gap-2">
                       <img src={getLotteryLogo(l.id)} alt="" className="w-5 h-5" />
@@ -215,77 +268,67 @@ export function FrequencyHeatmap() {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <ScrollArea className="w-full">
-            <TooltipProvider>
-              <table className="w-full text-xs border-collapse">
-                <thead>
-                  <tr>
-                    <th className="sticky left-0 z-10 bg-card p-2 text-left font-semibold border-b">
-                      #
-                    </th>
-                    <th className="sticky left-8 z-10 bg-card p-2 text-left font-semibold border-b">
-                      Animal
-                    </th>
-                    {drawTimes.map(time => (
-                      <th key={time} className="p-1 text-center font-medium border-b min-w-[45px]">
-                        {time.replace(':00 ', '')}
+          <>
+            <ScrollArea className="w-full h-[400px]">
+              <TooltipProvider>
+                <table className="w-full text-xs border-collapse">
+                  <thead className="sticky top-0 z-20 bg-card">
+                    <tr>
+                      <th className="sticky left-0 z-30 bg-card p-2 text-left font-semibold border-b">
+                        #
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {numberRange.map(num => {
-                    const animal = getAnimalByCode(num);
-                    return (
-                      <tr key={num} className="hover:bg-muted/30">
-                        <td className="sticky left-0 z-10 bg-card p-1 font-mono font-bold border-b">
-                          {num.padStart(2, '0')}
-                        </td>
-                        <td className="sticky left-8 z-10 bg-card p-1 border-b">
-                          <div className="flex items-center gap-1">
-                            <AnimalEmoji code={num} size="sm" />
-                            <span className="truncate max-w-16 text-[10px]">{animal?.name}</span>
-                          </div>
-                        </td>
-                        {drawTimes.map(time => {
-                          const cell = heatData[num]?.[time] || { count: 0, level: 'none' };
-                          return (
-                            <td key={time} className="p-0.5 border-b">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div 
-                                    className={`
-                                      w-full h-8 rounded flex items-center justify-center 
-                                      text-[10px] font-bold cursor-default transition-transform
-                                      hover:scale-110
-                                      ${getCellStyle(cell.level)}
-                                    `}
-                                  >
-                                    {cell.count || '-'}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div className="text-xs">
-                                    <p className="font-bold">{animal?.name} ({num})</p>
-                                    <p>Hora: {time}</p>
-                                    <p>Frecuencia: {cell.count} veces</p>
-                                    {cell.daysSince !== undefined && (
-                                      <p>Último: hace {cell.daysSince} días</p>
-                                    )}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </TooltipProvider>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                      <th className="sticky left-10 z-30 bg-card p-2 text-left font-semibold border-b">
+                        Animal
+                      </th>
+                      {drawTimes.map(time => (
+                        <th key={time} className="p-1 text-center font-medium border-b min-w-[45px]">
+                          {time.replace(':00 ', '').replace(' ', '')}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleNumbers.map(num => {
+                      const animal = getAnimalByCode(num);
+                      const emoji = getAnimalEmoji(num);
+                      return (
+                        <tr key={num} className="hover:bg-muted/30">
+                          <td className="sticky left-0 z-10 bg-card p-1 font-mono font-bold border-b text-sm">
+                            {num === "0" ? "0" : num === "00" ? "00" : num.padStart(2, '0')}
+                          </td>
+                          <td className="sticky left-10 z-10 bg-card p-1 border-b">
+                            <div className="flex items-center gap-1">
+                              <span className="text-lg">{emoji}</span>
+                              <span className="truncate max-w-20 text-[10px] font-medium">
+                                {animal?.name || `#${num}`}
+                              </span>
+                            </div>
+                          </td>
+                          {drawTimes.map(time => {
+                            const cell = heatData[num]?.[time] || { count: 0, level: 'none' as HeatLevel };
+                            return (
+                              <td key={time} className="p-0.5 border-b">
+                                <HeatCell cell={cell} animal={animal} num={num} time={time} />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </TooltipProvider>
+              <ScrollBar orientation="horizontal" />
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
+            
+            {/* Load more button */}
+            {visibleRange.end < numberRange.length && (
+              <Button onClick={loadMore} variant="outline" className="w-full mt-2" size="sm">
+                Cargar más ({numberRange.length - visibleRange.end} restantes)
+              </Button>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
