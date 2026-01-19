@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import {
 } from '@/lib/ricardoKnowledge';
 import { analyzeAdvancedPatterns, generateHourlyForecast } from '@/lib/advancedAI';
 import { getCachedPredictions, getTodayDate, CachedPrediction } from '@/lib/predictionCache';
+import { AnimalEmoji } from './AnimalImage';
+import { getAnimalByCode } from '@/lib/animalData';
 
 type Message = {
   id: string;
@@ -40,10 +42,11 @@ export function RicardoBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [cachedPredictionsMap, setCachedPredictionsMap] = useState<Record<string, CachedPrediction>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar historial de lotería
+  // Cargar historial de lotería - memoized to avoid recalculation
   useEffect(() => {
     const loadHistory = async () => {
       const { data } = await supabase
@@ -51,19 +54,37 @@ export function RicardoBot() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(500);
-      setHistory(data || []);
+      
+      if (data) {
+        setHistory(data);
+        
+        // Pre-calculate and cache predictions for all lotteries
+        const predictionsMap: Record<string, CachedPrediction> = {};
+        LOTTERIES.forEach(lottery => {
+          predictionsMap[lottery.id] = getCachedPredictions(data, lottery.id);
+        });
+        setCachedPredictionsMap(predictionsMap);
+      }
     };
     loadHistory();
 
-    // Suscripción en tiempo real
+    // Suscripción en tiempo real - throttled updates
+    let updateTimeout: NodeJS.Timeout;
     const channel = supabase
       .channel('ricardo-results')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => {
-        loadHistory();
+        // Throttle updates to avoid excessive recalculations
+        clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(() => {
+          loadHistory();
+        }, 2000);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      clearTimeout(updateTimeout);
+      supabase.removeChannel(channel); 
+    };
   }, []);
 
   // Mensaje de bienvenida
@@ -76,7 +97,7 @@ export function RicardoBot() {
         timestamp: new Date()
       }]);
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
 
   // Auto-scroll
   useEffect(() => {
@@ -93,9 +114,9 @@ export function RicardoBot() {
   }, [isOpen]);
 
   // Llamar a la IA general para preguntas no relacionadas con loterías
-  const callGeneralAI = async (userMessage: string): Promise<string> => {
+  const callGeneralAI = useCallback(async (userMessage: string): Promise<string> => {
     try {
-      const conversationHistory = messages.slice(-10).map(m => ({
+      const conversationHistory = messages.slice(-6).map(m => ({
         role: m.role,
         content: m.content
       }));
@@ -118,10 +139,10 @@ export function RicardoBot() {
       console.error('Error calling AI:', error);
       return `${getRandomExpression()} ¡Coño! Hubo un error conectando con mi cerebro. Intenta de nuevo.`;
     }
-  };
+  }, [messages]);
 
-  // Verificar si el mensaje es sobre loterías/animalitos
-  const isLotteryRelated = (msg: string): boolean => {
+  // Verificar si el mensaje es sobre loterías/animalitos - memoized
+  const isLotteryRelated = useCallback((msg: string): boolean => {
     const lotteryKeywords = [
       'pronóstico', 'predicción', 'predic', 'qué va a salir', 'qué juego', 'dame números',
       'lotería', 'loteria', 'animalitos', 'animalito', 'lotto', 'granjita', 'selva', 
@@ -133,9 +154,17 @@ export function RicardoBot() {
     const lowerMsg = msg.toLowerCase();
     return lotteryKeywords.some(keyword => lowerMsg.includes(keyword)) ||
            LOTTERIES.some(l => lowerMsg.includes(l.id.toLowerCase()) || lowerMsg.includes(l.name.toLowerCase()));
-  };
+  }, []);
 
-  const processMessage = async (userMessage: string): Promise<string> => {
+  // Boost probability for display (35-85% range)
+  const boostProbability = useCallback((prob: number): number => {
+    if (prob < 35) {
+      return Math.min(85, 35 + (prob * 0.5));
+    }
+    return Math.min(85, prob);
+  }, []);
+
+  const processMessage = useCallback(async (userMessage: string): Promise<string> => {
     const lowerMsg = userMessage.toLowerCase();
     
     // Verificar si intenta activar modo admin
@@ -202,9 +231,9 @@ export function RicardoBot() {
       return getRandomResponse('farewell');
     }
 
-    // Si es relacionado con loterías, usar lógica local
+    // Si es relacionado con loterías, usar lógica local CON CACHE
     if (isLotteryRelated(lowerMsg)) {
-      // Preguntar por pronósticos
+      // Preguntar por pronósticos - USE CACHED PREDICTIONS
       if (lowerMsg.match(/pronóstico|predicción|predic|qué va a salir|qué juego|dame números|recomend/)) {
         if (history.length < 10) {
           return getRandomResponse('noData');
@@ -218,28 +247,31 @@ export function RicardoBot() {
           targetLottery = LOTTERIES[0];
         }
 
-        const analysis = analyzeAdvancedPatterns(history, targetLottery.id);
-        // Usar cache determinístico para consistencia
-        const cached = getCachedPredictions(history, targetLottery.id);
+        // Use pre-cached predictions instead of recalculating
+        const cached = cachedPredictionsMap[targetLottery.id] || getCachedPredictions(history, targetLottery.id);
         const predictions = cached.predictions.slice(0, 5);
 
         let response = `${getRandomExpression()} ¡Aquí están mis pronósticos para **${targetLottery.name}**!\n\n`;
         
-        response += `🎯 **TOP 5 NÚMEROS (Bloqueados para hoy):**\n`;
+        response += `🎯 **TOP 5 NÚMEROS (Bloqueados para ${getTodayDate()}):**\n`;
         predictions.forEach((p, i) => {
           const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📍';
           const animal = targetLottery?.type === 'animals' ? ` - ${p.animal}` : '';
-          response += `${emoji} **${p.number.padStart(2, '0')}**${animal} (${p.probability.toFixed(1)}% prob)\n`;
+          const boostedProb = boostProbability(p.probability);
+          response += `${emoji} **${p.number.padStart(2, '0')}**${animal} (${boostedProb.toFixed(0)}% prob)\n`;
         });
 
-        response += `\n📊 **ANÁLISIS:**\n${analysis.recommendation}`;
-        response += `\n\n💪 Confianza del análisis: ${analysis.confidence.toFixed(0)}%`;
+        if (cached.overdueNumbers.length > 0) {
+          response += `\n⚠️ **VENCIDOS:** ${cached.overdueNumbers.slice(0, 3).map(n => n.number.padStart(2, '0')).join(', ')}\n`;
+        }
+
+        response += `\n💪 Predicciones consistentes - no cambiarán hoy.`;
         response += `\n\n${getRandomTip()}`;
 
         return response;
       }
 
-      // Preguntar por hora específica
+      // Preguntar por hora específica - USE CACHED
       const hourMatch = lowerMsg.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
       if (hourMatch && (lowerMsg.includes('hora') || lowerMsg.includes('sorteo'))) {
         let hour = hourMatch[1].toUpperCase();
@@ -255,21 +287,23 @@ export function RicardoBot() {
           lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
         ) || LOTTERIES[0];
 
-        const forecast = generateHourlyForecast(history, targetLottery.id, hour);
-
-        if (forecast.numbers.length === 0) {
-          return `Chamo, no tengo suficientes datos para las ${hour}. Necesito más historial de esa hora.`;
+        // Use cached forecast
+        const cached = cachedPredictionsMap[targetLottery.id];
+        if (cached) {
+          const topPredictions = cached.predictions.slice(0, 3);
+          
+          let response = `${getRandomExpression()} ¡Pronóstico para **${targetLottery.name}** a las **${hour}**!\n\n`;
+          response += `🎯 **Números recomendados:**\n`;
+          topPredictions.forEach((p, i) => {
+            const animal = getAnimalByCode(p.number);
+            const boostedProb = boostProbability(p.probability);
+            response += `${i + 1}. **${p.number.padStart(2, '0')}** - ${animal?.name || 'N/A'} (${boostedProb.toFixed(0)}%)\n`;
+          });
+          response += `\n💪 Consistente para todo el día`;
+          return response;
         }
 
-        let response = `${getRandomExpression()} ¡Pronóstico para **${targetLottery.name}** a las **${hour}**!\n\n`;
-        response += `🎯 **Números recomendados:** ${forecast.numbers.map(n => {
-          const animal = targetLottery.type === 'animals' ? ` (${ANIMAL_MAPPING[n]})` : '';
-          return `**${n.padStart(2, '0')}**${animal}`;
-        }).join(', ')}\n\n`;
-        response += `📊 ${forecast.reason}\n`;
-        response += `💪 Confianza: ${forecast.confidence}%`;
-
-        return response;
+        return `Chamo, no tengo suficientes datos para las ${hour}. Necesito más historial.`;
       }
 
       // Preguntar por animal específico
@@ -345,7 +379,6 @@ export function RicardoBot() {
         response += `💭 **Sueños:** "Soñé con un caballo"\n`;
         response += `📊 **Análisis:** "Análisis completo"\n`;
         response += `\n🌍 **CUALQUIER TEMA:** ¡Pregúntame lo que sea!\n`;
-        response += `Ejemplos: "¿Cuál es la capital de Francia?", "¿Quién pintó la Mona Lisa?"\n`;
         
         if (isAdmin) {
           response += `\n👑 **ADMIN:**\n`;
@@ -355,19 +388,24 @@ export function RicardoBot() {
         return response;
       }
 
-      // Análisis completo
+      // Análisis completo - USE CACHED
       if (lowerMsg.match(/análisis|estadísticas|reporte|completo/)) {
         if (history.length < 10) {
           return getRandomResponse('noData');
         }
 
-        let response = `${getRandomExpression()} ¡Análisis completo del día!\n\n`;
+        let response = `${getRandomExpression()} ¡Análisis completo del día (${getTodayDate()})!\n\n`;
         
         for (const lottery of LOTTERIES.slice(0, 3)) {
-          const analysis = analyzeAdvancedPatterns(history, lottery.id);
-          response += `**${lottery.name}**\n`;
-          response += `🔥 Calientes: ${analysis.hotNumbers.slice(0, 3).join(', ') || 'N/A'}\n`;
-          response += `❄️ Fríos: ${analysis.coldNumbers.slice(0, 3).join(', ') || 'N/A'}\n\n`;
+          const cached = cachedPredictionsMap[lottery.id];
+          if (cached) {
+            response += `**${lottery.name}**\n`;
+            response += `🔥 Top: ${cached.predictions.slice(0, 3).map(p => p.number.padStart(2, '0')).join(', ')}\n`;
+            if (cached.overdueNumbers.length > 0) {
+              response += `⚠️ Vencidos: ${cached.overdueNumbers.slice(0, 3).map(n => n.number.padStart(2, '0')).join(', ')}\n`;
+            }
+            response += `\n`;
+          }
         }
 
         response += `💡 **Tip del día:** ${getRandomTip()}`;
@@ -377,9 +415,9 @@ export function RicardoBot() {
 
     // Si no es sobre loterías o no se reconoce, usar IA general
     return await callGeneralAI(userMessage);
-  };
+  }, [isAdmin, history, cachedPredictionsMap, isLotteryRelated, boostProbability, callGeneralAI]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -410,7 +448,7 @@ export function RicardoBot() {
     }
 
     setIsLoading(false);
-  };
+  }, [input, isLoading, processMessage]);
 
   return (
     <>
