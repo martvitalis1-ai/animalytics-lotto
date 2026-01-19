@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { LOTTERIES, getDrawTimesForLottery, ANIMAL_MAPPING, getAnimalFromNumber } from '@/lib/constants';
+import { LOTTERIES, getDrawTimesForLottery, getAnimalFromNumber } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { RichAnimalCard } from './RichAnimalCard';
 import { toast } from "sonner";
 import { Pencil, Trash2, Save, X, Calendar, FileSpreadsheet, Loader2, Info } from "lucide-react";
 
@@ -34,6 +36,7 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
   const [editTime, setEditTime] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [selectedResult, setSelectedResult] = useState<Result | null>(null);
 
   // Obtener horarios para la lotería seleccionada
   const availableTimes = getDrawTimesForLottery(selectedLottery);
@@ -102,7 +105,7 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
     const { error } = await supabase
       .from('lottery_results')
       .update({
-        result_number: editNumber.padStart(2, '0'),
+        result_number: editNumber === "00" ? "00" : editNumber === "0" ? "0" : editNumber.padStart(2, '0'),
         animal_name: animalName || null,
         draw_time: editTime,
       })
@@ -210,18 +213,18 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
           </div>
         </div>
 
-        {/* Cabecera de lotería */}
-        <div className="flex items-center gap-3 py-3 px-4 bg-muted/50 rounded-lg border">
-          <img src={getLotteryLogo(selectedLottery)} alt="" className="w-10 h-10" />
+        {/* Cabecera de lotería - PROMINENTE */}
+        <div className="flex items-center gap-4 py-4 px-5 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-xl border-2 border-primary/30">
+          <img src={getLotteryLogo(selectedLottery)} alt="" className="w-14 h-14 drop-shadow-lg" />
           <div>
-            <p className="font-bold">{selectedLotteryData?.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-black text-xl text-foreground">{selectedLotteryData?.name}</p>
+            <p className="text-sm text-muted-foreground">
               {selectedDate} · Horario: {selectedLotteryData?.schedule === 'half' ? '8:30 AM - 7:30 PM' : '8:00 AM - 7:00 PM'}
             </p>
           </div>
         </div>
 
-        {/* Tabla tipo Excel */}
+        {/* Tabla tipo Excel con RichAnimalCard */}
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -232,8 +235,7 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
               <thead className="bg-muted/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-bold border-b">HORA</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold border-b">NÚMERO</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold border-b">ANIMAL</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold border-b">RESULTADO</th>
                   {isAdmin && <th className="px-4 py-3 text-center text-xs font-bold border-b">ACCIONES</th>}
                 </tr>
               </thead>
@@ -249,8 +251,8 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
                         idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                       } ${hasResult ? '' : 'opacity-50'}`}
                     >
-                      <td className="px-4 py-2 font-medium text-sm">{time}</td>
-                      <td className="px-4 py-2 text-center">
+                      <td className="px-4 py-3 font-medium text-sm">{time}</td>
+                      <td className="px-4 py-3">
                         {editingId === result?.id ? (
                           <Input
                             value={editNumber}
@@ -259,20 +261,23 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
                             maxLength={2}
                           />
                         ) : hasResult ? (
-                          <span className="font-mono font-black text-xl">{result.result_number}</span>
+                          <div className="flex justify-center">
+                            <RichAnimalCard
+                              code={result.result_number}
+                              size="sm"
+                              showProbability={false}
+                              onClick={() => setSelectedResult(result)}
+                              className="cursor-pointer hover:ring-2 hover:ring-primary"
+                            />
+                          </div>
                         ) : (
-                          <span className="text-muted-foreground">--</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        {hasResult ? (
-                          result.animal_name || ANIMAL_MAPPING[result.result_number] || '-'
-                        ) : (
-                          <span className="text-muted-foreground">Sin resultado</span>
+                          <div className="text-center text-muted-foreground text-sm">
+                            Sin resultado
+                          </div>
                         )}
                       </td>
                       {isAdmin && (
-                        <td className="px-4 py-2 text-center">
+                        <td className="px-4 py-3 text-center">
                           {hasResult && (
                             editingId === result.id ? (
                               <div className="flex items-center justify-center gap-1">
@@ -328,6 +333,32 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
               Eliminar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail dialog */}
+      <Dialog open={!!selectedResult} onOpenChange={() => setSelectedResult(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <img src={getLotteryLogo(selectedResult?.lottery_type || '')} alt="" className="w-8 h-8" />
+              {selectedLotteryData?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedResult && (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <RichAnimalCard
+                code={selectedResult.result_number}
+                size="lg"
+                showProbability={false}
+                lotteryName={selectedLotteryData?.name}
+              />
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Hora: {selectedResult.draw_time}</p>
+                <p>Fecha: {selectedResult.draw_date}</p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Card>
