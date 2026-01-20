@@ -192,16 +192,21 @@ export const calculateDeterministicProbabilities = (
     dayMap.set(num, (dayMap.get(num) || 0) + 1);
   });
 
-  // Construir universo de números
+  // Construir universo de números basado en el tipo de lotería
   let universe: string[] = [];
-  if (config?.type === 'animals') {
+  if (lotteryId === 'guacharo') {
+    // Guácharo: 0-75 + "00"
+    universe = ['0', '00', ...Array.from({ length: 75 }, (_, i) => (i + 1).toString())];
+  } else if (lotteryId === 'guacharito') {
+    // Guacharito: 0-99 + "00"
+    universe = ['0', '00', ...Array.from({ length: 99 }, (_, i) => (i + 1).toString())];
+  } else if (config?.type === 'animals') {
+    // Standard animal lotteries: 0-36 + "00"
     universe = ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
   } else {
     const max = config?.range || 75;
     universe = Array.from({ length: max + 1 }, (_, i) => i.toString());
-    if (config?.id === 'guacharo' || config?.id === 'guacharito') {
-      if (!universe.includes('00')) universe.unshift('00');
-    }
+    if (!universe.includes('00')) universe.unshift('00');
   }
 
   const totalDraws = specificHistory.length || 1;
@@ -272,14 +277,19 @@ export const calculateDeterministicProbabilities = (
       reason += ` Favorable este día de semana.`;
     }
 
-    const animal = config?.type === 'animals' 
-      ? (ANIMAL_MAPPING[numStr] || 'Desconocido') 
-      : `Número ${numStr.padStart(2, '0')}`;
+    const animal = lotteryId === 'guacharo' || lotteryId === 'guacharito'
+      ? `Número ${numStr.padStart(2, '0')}`
+      : config?.type === 'animals' 
+        ? (ANIMAL_MAPPING[numStr] || 'Desconocido') 
+        : `Número ${numStr.padStart(2, '0')}`;
+
+    // Format probability as 2-digit integer (no decimals)
+    const formattedProbability = Math.max(1, Math.min(99, Math.floor(score)));
 
     results.push({
       number: numStr,
       animal,
-      probability: Math.max(0, Math.min(100, score)),
+      probability: formattedProbability,
       status,
       frequency: freq,
       daysSince,

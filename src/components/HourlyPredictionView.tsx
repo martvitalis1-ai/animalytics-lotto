@@ -177,7 +177,7 @@ export function HourlyPredictionView() {
                           ${getStatusColor(topPick.probability)}
                         `}>
                           <Zap className="w-3 h-3" />
-                          {topPick.probability}%
+                          {String(Math.floor(topPick.probability)).padStart(2, '0')}%
                         </span>
                       </div>
                     </div>
@@ -191,7 +191,7 @@ export function HourlyPredictionView() {
                       <div
                         key={pred.code}
                         className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg"
-                        title={`${pred.code} - ${pred.name} (${pred.probability}%) ${pred.statusEmoji}`}
+                        title={`${pred.code} - ${pred.name} (${String(Math.floor(pred.probability)).padStart(2, '0')}%) ${pred.statusEmoji}`}
                       >
                         {getAnimalEmoji(pred.code)}
                       </div>

@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Grid3X3, Clock, Calendar, Info, TrendingUp, AlertTriangle, Flame, Snowflake, Target, Lock } from "lucide-react";
-import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
+import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
+import { getAnimalByCode, getAnimalEmoji, getCodesForLottery } from '@/lib/animalData';
 import { 
   getCachedPredictions, 
   getTodayDate, 
@@ -218,7 +219,7 @@ export function HourlyMatrix() {
                         </p>
                         {lottery?.type === 'animals' && (
                           <p className="text-xs text-muted-foreground truncate">
-                            {result.animal_name || ANIMAL_MAPPING[result.result_number] || ''}
+                            {result.animal_name || getAnimalByCode(result.result_number)?.name || ''}
                           </p>
                         )}
                       </>
