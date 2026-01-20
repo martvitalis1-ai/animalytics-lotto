@@ -4,9 +4,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, Calendar, TrendingUp, FileSpreadsheet, Info, Loader2 } from "lucide-react";
-import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
+import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { calculateProbabilities } from '@/lib/probabilityEngine';
 import { getLotteryLogo } from "./LotterySelector";
+import { getAnimalByCode } from '@/lib/animalData';
 
 export function Verification() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -192,9 +193,12 @@ export function Verification() {
                           <span className="text-muted-foreground">--</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-sm">
+                      <td className="px-3 py-2 text-sm font-medium">
                         {hasResult ? (
-                          result.animal_name || ANIMAL_MAPPING[result.result_number] || '-'
+                          (() => {
+                            const animal = getAnimalByCode(result.result_number);
+                            return animal?.name || result.animal_name || `Número ${result.result_number}`;
+                          })()
                         ) : (
                           <span className="text-muted-foreground opacity-50">-</span>
                         )}
