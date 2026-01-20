@@ -103,8 +103,8 @@ export const calculateAdvancedProbability = (
   // Calculate raw probability
   let rawProbability = 35 + frequencyFactor + hourlyFactor + overdueFactor + randomFactor;
   
-  // Clamp to 35-98 range
-  const probability = Math.max(35, Math.min(98, Math.round(rawProbability)));
+  // Clamp to 35-98 range and format as 2-digit integer (no decimals)
+  const probability = Math.max(1, Math.min(99, Math.floor(rawProbability)));
   
   // Get status
   const { status, emoji } = getStatusFromProbability(probability);

@@ -12,6 +12,24 @@ import { getCodesForLottery, getAnimalEmoji, getAnimalName } from '@/lib/animalD
 import { generateHourlyPredictions } from '@/lib/advancedProbability';
 import { toast } from "sonner";
 
+// Import roulette images
+import ruletaLottoActivo from '@/assets/ruleta-lotto-activo.png';
+import ruletaLottoRey from '@/assets/ruleta-lotto-rey.png';
+import ruletaGranjita from '@/assets/ruleta-granjita.png';
+import ruletaSelvaPlus from '@/assets/ruleta-selva-plus.png';
+import ruletaGuacharo from '@/assets/ruleta-guacharo.png';
+import ruletaGuacharito from '@/assets/ruleta-guacharito.png';
+
+// Map lottery IDs to their respective roulette images
+const ROULETTE_IMAGES: Record<string, string> = {
+  'lotto_activo': ruletaLottoActivo,
+  'lotto_rey': ruletaLottoRey,
+  'granjita': ruletaGranjita,
+  'selva_plus': ruletaSelvaPlus,
+  'guacharo': ruletaGuacharo,
+  'guacharito': ruletaGuacharito
+};
+
 export function UniversalRoulette() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [lastNumber, setLastNumber] = useState('');
@@ -161,74 +179,29 @@ export function UniversalRoulette() {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Lottery logo in center */}
-        <div className="flex justify-center mb-4">
-          <img 
-            src={getLotteryLogo(selectedLottery)} 
-            alt={lottery?.name} 
-            className="w-20 h-20 object-contain drop-shadow-lg"
-          />
-        </div>
-
-        {/* Roulette Wheel */}
+        {/* Roulette Wheel with Real Images */}
         <div className="relative flex justify-center items-center">
           <div 
-            className={`relative rounded-full border-4 border-primary shadow-2xl overflow-hidden ${
-              isExtendedMode ? 'w-72 h-72' : 'w-64 h-64'
+            className={`relative rounded-full shadow-2xl overflow-hidden ${
+              isExtendedMode ? 'w-80 h-80' : 'w-72 h-72'
             }`}
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
-              background: `conic-gradient(
-                from 0deg,
-                ${rouletteNumbers.map((_, i) => {
-                  const color = i % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted))';
-                  const start = (i / rouletteNumbers.length) * 100;
-                  const end = ((i + 1) / rouletteNumbers.length) * 100;
-                  return `${color} ${start}% ${end}%`;
-                }).join(', ')}
-              )`
             }}
           >
-            {/* Number labels around the wheel with high contrast */}
-            {rouletteNumbers.map((num, idx) => {
-              const angle = (idx / rouletteNumbers.length) * 360 - 90;
-              const radius = isExtendedMode ? 120 : 100;
-              return (
-                <div
-                  key={num}
-                  className={`absolute font-black ${segmentStyle}`}
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    transform: `
-                      translate(-50%, -50%) 
-                      rotate(${angle}deg) 
-                      translateX(${radius}px) 
-                      rotate(${-angle}deg)
-                    `,
-                    // HIGH CONTRAST: White text with black shadow
-                    color: 'white',
-                    textShadow: '0 0 3px black, 0 0 3px black, 1px 1px 2px black',
-                    WebkitTextStroke: '0.5px black'
-                  }}
-                >
-                  {num === "0" ? "0" : num === "00" ? "00" : num.padStart(2, '0')}
-                </div>
-              );
-            })}
-            
-            {/* Center pointer */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-14 h-14 rounded-full bg-background border-2 border-primary shadow-xl flex items-center justify-center">
-                <Sparkles className="w-7 h-7 text-primary" />
-              </div>
-            </div>
+            {/* Real roulette image */}
+            <img 
+              src={ROULETTE_IMAGES[selectedLottery] || ruletaLottoActivo}
+              alt={`Ruleta ${lottery?.name}`}
+              className="w-full h-full object-contain"
+              draggable={false}
+            />
           </div>
           
           {/* Arrow indicator */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-            <div className="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-amber-500 drop-shadow-lg" />
+            <div className="w-0 h-0 border-l-[16px] border-r-[16px] border-t-[28px] border-l-transparent border-r-transparent border-t-amber-500 drop-shadow-lg animate-pulse" />
           </div>
         </div>
 

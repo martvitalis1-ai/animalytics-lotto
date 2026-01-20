@@ -170,7 +170,7 @@ export function RichAnimalCard({
           {showProbability && probability !== undefined && (
             <span className={`flex items-center gap-0.5 ${config.badge} rounded-full bg-primary/20 text-primary font-bold`}>
               <Zap className="w-3 h-3" />
-              {probability}%
+              {String(Math.floor(probability)).padStart(2, '0')}%
             </span>
           )}
         </div>
@@ -227,7 +227,7 @@ export function RichAnimalCardCompact({
       </div>
       {probability !== undefined && (
         <span className="ml-auto text-xs font-bold text-primary whitespace-nowrap">
-          {probability}%
+          {String(Math.floor(probability)).padStart(2, '0')}%
         </span>
       )}
     </div>
