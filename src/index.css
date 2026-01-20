@@ -161,4 +161,48 @@
   .btn-admin {
     @apply bg-foreground text-background hover:bg-foreground/90 font-semibold;
   }
+
+  /* Premium animations */
+  .animate-in {
+    animation: fade-in 0.3s ease-out, scale-in 0.2s ease-out;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-300 hover:shadow-lg hover:shadow-primary/20;
+  }
+
+  .card-premium {
+    @apply relative overflow-hidden;
+  }
+
+  .card-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full;
+    animation: shimmer 3s infinite;
+  }
+
+  /* Percentage badge styles */
+  .probability-badge {
+    @apply font-mono font-bold tabular-nums;
+  }
+
+  .probability-hot {
+    @apply bg-gradient-to-r from-red-500 to-orange-500 text-white;
+  }
+
+  .probability-strong {
+    @apply bg-gradient-to-r from-amber-500 to-yellow-500 text-white;
+  }
+
+  .probability-possible {
+    @apply bg-gradient-to-r from-blue-500 to-cyan-500 text-white;
+  }
+
+  .probability-cold {
+    @apply bg-gradient-to-r from-slate-500 to-gray-500 text-white;
+  }
 }

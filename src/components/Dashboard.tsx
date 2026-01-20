@@ -35,6 +35,8 @@ import { ExplosiveData } from "./ExplosiveData";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
 import { HourlyPredictionView } from "./HourlyPredictionView";
+import { ThemeToggle } from "./ThemeToggle";
+import { DatoRicardoSection } from "./DatoRicardoSection";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -118,6 +120,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
             
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <NotificationCenter />
               <ExportTools type="results" filename="resultados" />
               <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -193,9 +196,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <AIPredictive />
           </TabsContent>
 
-          {/* Datos Explosivos + Ruleta */}
-          <TabsContent value="explosivo" className="mt-4 space-y-6">
+          {/* Datos Explosivos + DatoRicardo */}
+          <TabsContent value="explosivo" className="mt-4 space-y-6 animate-fade-in">
             <ExplosiveData />
+            <DatoRicardoSection />
             <FrequencyHeatmap />
           </TabsContent>
 
