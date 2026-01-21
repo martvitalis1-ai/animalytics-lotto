@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
 import { Badge } from '@/components/ui/badge';
 import { Flame, Snowflake, Clock, Zap, TrendingUp } from 'lucide-react';
+import zamuroImage from '@/assets/zamuro-card.png';
 
 interface RichAnimalCardProps {
   code: string;
@@ -122,14 +123,24 @@ export function RichAnimalCard({
         </div>
       )}
       
-      {/* Animal emoji with special styling for Ballena */}
+      {/* Animal emoji/image with special styling for Ballena and Zamuro */}
       <div className={`
         relative flex items-center justify-center
         ${isBallena ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-background rounded-full p-1' : ''}
       `}>
-        <span className={`${config.emoji} drop-shadow-lg`} role="img" aria-label={animal?.name || 'animal'}>
-          {emoji}
-        </span>
+        {code === '28' ? (
+          <img 
+            src={zamuroImage} 
+            alt="Zamuro" 
+            className={`drop-shadow-lg object-contain ${
+              size === 'sm' ? 'w-8 h-8' : size === 'md' ? 'w-12 h-12' : 'w-16 h-16'
+            }`}
+          />
+        ) : (
+          <span className={`${config.emoji} drop-shadow-lg`} role="img" aria-label={animal?.name || 'animal'}>
+            {emoji}
+          </span>
+        )}
       </div>
       
       {/* Number badge with high contrast */}

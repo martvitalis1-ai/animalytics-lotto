@@ -129,7 +129,7 @@ export function UniversalRoulette() {
     // Animate rotation
     setRotation(prev => prev + targetRotation);
     
-    // Show result after animation
+    // Show result after animation (faster)
     setTimeout(() => {
       setResult(selectedNumber);
       setIsSpinning(false);
@@ -137,7 +137,7 @@ export function UniversalRoulette() {
       toast.success(`¡La ruleta ha hablado! 🎯`, {
         description: `Número sugerido: ${selectedNumber} - ${name}`
       });
-    }, 4000);
+    }, 2500);
   }, [isSpinning, history, selectedLottery, lastNumber, rouletteNumbers, maxNumber]);
 
   const resetRoulette = () => {
@@ -187,7 +187,7 @@ export function UniversalRoulette() {
             }`}
             style={{
               transform: `rotate(${rotation}deg)`,
-              transition: isSpinning ? 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
+              transition: isSpinning ? 'transform 2.5s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
             }}
           >
             {/* Real roulette image */}
