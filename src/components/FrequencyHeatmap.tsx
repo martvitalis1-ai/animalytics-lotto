@@ -282,8 +282,7 @@ export function FrequencyHeatmap() {
         ) : (
           <>
             <ScrollArea className="w-full h-[400px]">
-              <TooltipProvider>
-                <table className="w-full text-xs border-collapse">
+              <table className="w-full text-xs border-collapse">
                   <thead className="sticky top-0 z-20 bg-card">
                     <tr>
                       <th className="sticky left-0 z-30 bg-card p-2 text-left font-semibold border-b">
@@ -329,7 +328,6 @@ export function FrequencyHeatmap() {
                     })}
                   </tbody>
                 </table>
-              </TooltipProvider>
               <ScrollBar orientation="horizontal" />
               <ScrollBar orientation="vertical" />
             </ScrollArea>
