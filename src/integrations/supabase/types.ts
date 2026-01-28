@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_memory: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          memory_type: string | null
+          role: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          memory_type?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          memory_type?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       daily_predictions_cache: {
         Row: {
           cache_date: string
@@ -134,6 +167,126 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_meta: {
+        Row: {
+          consecutive_days_learning: number | null
+          gaps_detected: number[] | null
+          id: string
+          last_hit_date: string | null
+          last_processed_date: string | null
+          start_date: string | null
+          total_days_learned: number | null
+          updated_at: string
+        }
+        Insert: {
+          consecutive_days_learning?: number | null
+          gaps_detected?: number[] | null
+          id?: string
+          last_hit_date?: string | null
+          last_processed_date?: string | null
+          start_date?: string | null
+          total_days_learned?: number | null
+          updated_at?: string
+        }
+        Update: {
+          consecutive_days_learning?: number | null
+          gaps_detected?: number[] | null
+          id?: string
+          last_hit_date?: string | null
+          last_processed_date?: string | null
+          start_date?: string | null
+          total_days_learned?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      learning_records: {
+        Row: {
+          actual_result: string
+          created_at: string
+          draw_time: string
+          hit_patterns: string[] | null
+          id: string
+          learning_date: string
+          lottery_id: string
+          miss_patterns: string[] | null
+          processed: boolean | null
+        }
+        Insert: {
+          actual_result: string
+          created_at?: string
+          draw_time: string
+          hit_patterns?: string[] | null
+          id?: string
+          learning_date: string
+          lottery_id: string
+          miss_patterns?: string[] | null
+          processed?: boolean | null
+        }
+        Update: {
+          actual_result?: string
+          created_at?: string
+          draw_time?: string
+          hit_patterns?: string[] | null
+          id?: string
+          learning_date?: string
+          lottery_id?: string
+          miss_patterns?: string[] | null
+          processed?: boolean | null
+        }
+        Relationships: []
+      }
+      learning_state: {
+        Row: {
+          baseline_chance: number | null
+          consecutive_below_chance: number | null
+          created_at: string
+          hit_rate: number | null
+          hits: number | null
+          hypothesis_id: string
+          id: string
+          last_evaluated: string | null
+          lottery_id: string
+          misses: number | null
+          pattern_type: string
+          status: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          baseline_chance?: number | null
+          consecutive_below_chance?: number | null
+          created_at?: string
+          hit_rate?: number | null
+          hits?: number | null
+          hypothesis_id: string
+          id?: string
+          last_evaluated?: string | null
+          lottery_id: string
+          misses?: number | null
+          pattern_type: string
+          status?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          baseline_chance?: number | null
+          consecutive_below_chance?: number | null
+          created_at?: string
+          hit_rate?: number | null
+          hits?: number | null
+          hypothesis_id?: string
+          id?: string
+          last_evaluated?: string | null
+          lottery_id?: string
+          misses?: number | null
+          pattern_type?: string
+          status?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       lottery_results: {
         Row: {
           animal_name: string | null
@@ -161,6 +314,36 @@ export type Database = {
           id?: number
           lottery_type?: string
           result_number?: string
+        }
+        Relationships: []
+      }
+      top3_cache: {
+        Row: {
+          cache_date: string
+          created_at: string
+          id: string
+          last_recalculated: string
+          lottery_id: string
+          recalculation_reason: string | null
+          top3_numbers: Json
+        }
+        Insert: {
+          cache_date?: string
+          created_at?: string
+          id?: string
+          last_recalculated?: string
+          lottery_id: string
+          recalculation_reason?: string | null
+          top3_numbers: Json
+        }
+        Update: {
+          cache_date?: string
+          created_at?: string
+          id?: string
+          last_recalculated?: string
+          lottery_id?: string
+          recalculation_reason?: string | null
+          top3_numbers?: Json
         }
         Relationships: []
       }

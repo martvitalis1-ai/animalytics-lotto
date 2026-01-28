@@ -1,26 +1,33 @@
 import { useState, useEffect } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, UserPlus, Check, Ban, Users } from "lucide-react";
+import { Trash2, UserPlus, Check, Ban, Users, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  createAccessCode, 
+  getAllAccessCodes, 
+  toggleAccessCodeStatus, 
+  deleteAccessCode 
+} from "@/lib/accessControl";
 
 export function AdminUserManagement() {
   const [users, setUsers] = useState<any[]>([]);
   const [newCode, setNewCode] = useState('');
   const [newAlias, setNewAlias] = useState('');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadUsers = async () => {
-    const { data, error } = await supabase
-      .from('access_codes')
-      .select('*')
-      .order('created_at', { ascending: false });
+    setRefreshing(true);
+    const { codes, error } = await getAllAccessCodes();
     
     if (!error) {
-      setUsers(data || []);
+      setUsers(codes);
+    } else {
+      toast.error(`Error cargando usuarios: ${error}`);
     }
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -33,23 +40,23 @@ export function AdminUserManagement() {
       return;
     }
     
+    if (newCode.trim().length < 4) {
+      toast.error("El código debe tener al menos 4 caracteres");
+      return;
+    }
+    
     setLoading(true);
     
-    const { error } = await supabase.from('access_codes').insert({
-      code: newCode.toUpperCase(),
-      alias: newAlias || 'Usuario',
-      role: 'user',
-      is_active: true
-    });
+    const { success, error } = await createAccessCode(
+      newCode,
+      newAlias || 'Usuario',
+      'user'
+    );
     
-    if (error) {
-      if (error.code === '23505') {
-        toast.error("Este código ya existe");
-      } else {
-        toast.error("Error al crear");
-      }
+    if (!success) {
+      toast.error(error || "Error al crear el código");
     } else {
-      toast.success("Usuario creado");
+      toast.success("✅ Código creado exitosamente");
       setNewCode('');
       setNewAlias('');
       loadUsers();
@@ -64,14 +71,13 @@ export function AdminUserManagement() {
       return;
     }
     
-    const { error } = await supabase
-      .from('access_codes')
-      .update({ is_active: !currentStatus })
-      .eq('code', code);
+    const { success, error } = await toggleAccessCodeStatus(code, !currentStatus);
     
-    if (!error) {
+    if (success) {
       toast.success(currentStatus ? "Usuario bloqueado" : "Usuario activado");
       loadUsers();
+    } else {
+      toast.error(error || "Error al actualizar");
     }
   };
 
@@ -83,21 +89,36 @@ export function AdminUserManagement() {
     
     if (!confirm("¿Eliminar este usuario?")) return;
     
-    const { error } = await supabase.from('access_codes').delete().eq('code', code);
+    const { success, error } = await deleteAccessCode(code);
     
-    if (!error) {
+    if (success) {
       toast.success("Usuario eliminado");
       loadUsers();
+    } else {
+      toast.error(error || "Error al eliminar");
     }
   };
 
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-bold flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Gestión de Usuarios
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Gestión de Usuarios
+          </CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={loadUsers}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {users.length} código(s) registrado(s) • {users.filter(u => u.is_active).length} activo(s)
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
 import { Badge } from '@/components/ui/badge';
 import { Flame, Snowflake, Clock, Zap, TrendingUp } from 'lucide-react';
-import zamuroImage from '@/assets/zamuro-card.png';
+import zamuroImage from '@/assets/zamuro-new.png';
+import guacharitoImage from '@/assets/guacharito-bird.png';
 
 interface RichAnimalCardProps {
   code: string;
@@ -135,6 +136,16 @@ export function RichAnimalCard({
             className={`drop-shadow-lg object-contain ${
               size === 'sm' ? 'w-8 h-8' : size === 'md' ? 'w-12 h-12' : 'w-16 h-16'
             }`}
+            style={{ background: 'transparent' }}
+          />
+        ) : code === '99' ? (
+          <img 
+            src={guacharitoImage} 
+            alt="Guacharito" 
+            className={`drop-shadow-lg object-contain ${
+              size === 'sm' ? 'w-8 h-8' : size === 'md' ? 'w-12 h-12' : 'w-16 h-16'
+            }`}
+            style={{ background: 'transparent' }}
           />
         ) : (
           <span className={`${config.emoji} drop-shadow-lg`} role="img" aria-label={animal?.name || 'animal'}>

@@ -10,7 +10,8 @@ import {
   LogOut,
   FileText,
   Flame,
-  Dices
+  Dices,
+  BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ import { UniversalRoulette } from "./UniversalRoulette";
 import { HourlyPredictionView } from "./HourlyPredictionView";
 import { ThemeToggle } from "./ThemeToggle";
 import { DatoRicardoSection } from "./DatoRicardoSection";
+import { HypothesisAudit } from "./HypothesisAudit";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -234,6 +236,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <AdminUserManagement />
               <HistoryManager />
             </div>
+            <HypothesisAudit />
             <DatoRicardo />
           </TabsContent>
         </Tabs>

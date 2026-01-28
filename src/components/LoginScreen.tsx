@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Lock, Loader2, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { checkAccess } from "@/lib/accessControl";
 import { toast } from "sonner";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
@@ -15,8 +16,14 @@ export function LoginScreen({ onLogin }: LoginProps) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleLogin = async () => {
+    if (!termsAccepted) {
+      toast.error("Debes aceptar los términos para continuar");
+      return;
+    }
+    
     if (!code.trim()) {
       toast.error("Ingresa un código de acceso");
       return;
@@ -83,10 +90,30 @@ export function LoginScreen({ onLogin }: LoginProps) {
               </button>
             </div>
           </div>
+          
+          {/* Terms and Conditions - MANDATORY */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <Checkbox 
+              id="terms" 
+              checked={termsAccepted}
+              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <label 
+                htmlFor="terms" 
+                className="text-xs text-amber-700 dark:text-amber-400 cursor-pointer leading-relaxed"
+              >
+                <AlertTriangle className="w-3 h-3 inline mr-1" />
+                Esta app es de pronósticos estadísticos. Puede haber días buenos o malos. El uso es bajo mi total responsabilidad.
+              </label>
+            </div>
+          </div>
+          
           <Button 
-            className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-bold text-base shadow-lg transition-all active:scale-[0.98]"
+            className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
             onClick={handleLogin}
-            disabled={loading}
+            disabled={loading || !termsAccepted}
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
