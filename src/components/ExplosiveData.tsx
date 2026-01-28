@@ -95,26 +95,32 @@ export function ExplosiveData() {
           </div>
         ) : (
           <>
-            {/* Explosive Numbers Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              {explosiveNumbers.map((pred, idx) => (
-                <RichAnimalCard
-                  key={pred.code}
-                  code={pred.code}
-                  probability={pred.probability}
-                  status={pred.status}
-                  statusEmoji={pred.statusEmoji}
-                  rank={idx + 1}
-                  size="lg"
-                  reason={pred.reason}
-                  lotteryName={lottery?.name}
-                  className={`
-                    ${idx === 0 ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-500/30' : ''}
-                    animate-in fade-in slide-in-from-bottom-2
-                  `}
-                  showProbability
-                />
-              ))}
+            {/* Explosive Numbers Grid - Responsive fix */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {explosiveNumbers.length > 0 ? (
+                explosiveNumbers.map((pred, idx) => (
+                  <RichAnimalCard
+                    key={pred.code}
+                    code={pred.code}
+                    probability={pred.probability}
+                    status={pred.status}
+                    statusEmoji={pred.statusEmoji}
+                    rank={idx + 1}
+                    size="lg"
+                    reason={pred.reason}
+                    lotteryName={lottery?.name}
+                    className={`
+                      ${idx === 0 ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-500/30' : ''}
+                      animate-in fade-in slide-in-from-bottom-2
+                    `}
+                    showProbability
+                  />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-4 text-muted-foreground">
+                  Cargando análisis de hoy…
+                </div>
+              )}
             </div>
 
             {/* Status legend */}
@@ -146,7 +152,7 @@ export function ExplosiveData() {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {giftNumbers.map((pred) => (
                       <RichAnimalCard
                         key={pred.code}

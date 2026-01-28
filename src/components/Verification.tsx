@@ -226,9 +226,14 @@ export function Verification() {
                       <td className="px-3 py-2 text-center">
                         {hasResult ? (
                           result.isHit ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                              <CheckCircle className="w-3 h-3" /> ACIERTO
-                            </span>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                                <CheckCircle className="w-3 h-3" /> ACIERTO
+                              </span>
+                              <span className="text-[9px] text-muted-foreground">
+                                Pronóstico: Cerebro IA
+                              </span>
+                            </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs">
                               <XCircle className="w-3 h-3" /> Fallo

@@ -233,13 +233,20 @@ export function FrequencyHeatmap() {
           </div>
         </div>
         
-        {/* Legend */}
+        {/* Legend with tooltip */}
         <div className="flex flex-wrap gap-3 mt-3 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-red-500" />
-            <Flame className="w-3 h-3 text-red-500" />
-            <span>Caliente</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 cursor-help">
+                <div className="w-4 h-4 rounded bg-red-500" />
+                <Flame className="w-3 h-3 text-red-500" />
+                <span>Caliente</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs max-w-xs">Esta matriz analiza la repetición de animales en periodos específicos para detectar tendencias calientes y frías.</p>
+            </TooltipContent>
+          </Tooltip>
           <div className="flex items-center gap-1">
             <div className="w-4 h-4 rounded bg-orange-400" />
             <span>Posible</span>
@@ -260,6 +267,11 @@ export function FrequencyHeatmap() {
             <span>Sin datos</span>
           </div>
         </div>
+        
+        {/* Documentation tooltip */}
+        <p className="text-[10px] text-muted-foreground mt-2 italic">
+          ℹ️ Esta matriz analiza la repetición de animales en periodos específicos para detectar tendencias calientes y frías.
+        </p>
       </CardHeader>
       
       <CardContent>

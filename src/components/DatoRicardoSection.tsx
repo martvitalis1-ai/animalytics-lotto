@@ -69,7 +69,14 @@ export function DatoRicardoSection() {
   }
 
   if (predictions.length === 0) {
-    return null;
+    return (
+      <Card className="glass-card border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+        <CardContent className="py-6 text-center text-muted-foreground">
+          <MessageCircle className="w-6 h-6 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Cargando análisis de hoy…</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -118,11 +125,14 @@ export function DatoRicardoSection() {
                         return (
                           <div 
                             key={idx}
-                            className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded text-sm font-bold"
+                            className="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded text-sm font-bold"
                           >
+                            {animal && (
+                              <span className="text-base">{getAnimalByCode(num)?.name?.charAt(0) || ''}</span>
+                            )}
                             <span className="font-mono">{num.padStart(2, '0')}</span>
                             {animal && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground max-w-[60px] truncate">
                                 {animal.name}
                               </span>
                             )}

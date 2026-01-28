@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { getAnimalByCode, SPRITE_POSITIONS } from '@/lib/animalData';
 import animalSprite from '@/assets/animals-sprite-main.png';
+import zamuroImage from '@/assets/zamuro-new.png';
+import guacharitoImage from '@/assets/guacharito-bird.png';
 
 interface AnimalImageProps {
   code: string;
@@ -39,6 +41,39 @@ export function AnimalImage({
 
   // For "00" (Ballena), apply special styling to differentiate from "0" (Delfín)
   const isBallena = code === "00";
+  
+  // Special handling for Zamuro (28) and Guacharito (99)
+  if (code === "28") {
+    return (
+      <div 
+        className={`relative overflow-hidden rounded-lg ${sizeClasses[size]} ${className}`}
+        title="Zamuro"
+      >
+        <img 
+          src={zamuroImage} 
+          alt="Zamuro" 
+          className="w-full h-full object-contain"
+          style={{ background: 'transparent' }}
+        />
+      </div>
+    );
+  }
+  
+  if (code === "99") {
+    return (
+      <div 
+        className={`relative overflow-hidden rounded-lg ${sizeClasses[size]} ${className}`}
+        title="Guacharito"
+      >
+        <img 
+          src={guacharitoImage} 
+          alt="Guacharito" 
+          className="w-full h-full object-contain"
+          style={{ background: 'transparent' }}
+        />
+      </div>
+    );
+  }
   
   return (
     <div 
