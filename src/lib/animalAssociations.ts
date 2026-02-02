@@ -4,7 +4,7 @@
 // NO symbolism, NO narratives, ONLY measured data
 // ============================================================
 
-import { getHypothesisWeight } from './hypothesisEngine';
+import { getHypothesisWeightSync } from './hypothesisEngine';
 import type { PatternType } from './hypothesisEngine';
 
 // Association record
@@ -154,7 +154,7 @@ export const getAssociationCandidates = (
     for (const [windowName, _] of Object.entries(WINDOW_SIZES)) {
       const typedWindow = windowName as 'short' | 'medium' | 'long';
       const patternType: PatternType = `animal_association_${typedWindow}`;
-      const hypothesisWeight = getHypothesisWeight(patternType);
+      const hypothesisWeight = getHypothesisWeightSync(patternType);
       
       if (hypothesisWeight === 0) continue; // Skip deactivated patterns
       

@@ -8,8 +8,7 @@ import { getAnimalByCode, getAnimalName, getCodesForLottery } from './animalData
 import { generateExtendedMathPatterns } from './extendedMathPatterns';
 import { getAssociationCandidates } from './animalAssociations';
 import { 
-  loadHypotheses, 
-  getHypothesisWeight, 
+  getHypothesisWeightSync, 
   getMaxRangeForLottery,
   isValidLearningDate,
   LEARNING_START_DATE
@@ -63,7 +62,6 @@ export const generateExplainablePredictions = (
   drawTime: string,
   dateStr: string
 ): ExplainablePrediction[] => {
-  const hypotheses = loadHypotheses();
   const codes = getCodesForLottery(lotteryId);
   const maxNumber = getMaxRangeForLottery(lotteryId);
   
@@ -102,7 +100,7 @@ export const generateExplainablePredictions = (
             ? 'spatial_jump' 
             : 'spatial_neighbor';
         
-        const weight = getHypothesisWeight(patternType);
+        const weight = getHypothesisWeightSync(patternType);
         if (weight === 0) continue;
         
         const contribution = candidate.weight * weight;
@@ -112,7 +110,7 @@ export const generateExplainablePredictions = (
           patternName: candidate.source,
           weight,
           contribution,
-          hypothesis: hypotheses[patternType] || null,
+          hypothesis: null,
         });
       }
     }
@@ -133,7 +131,7 @@ export const generateExplainablePredictions = (
           weight: pattern.weight,
           contribution: pattern.weight,
           formula: pattern.formula,
-          hypothesis: hypotheses[pattern.patternType] || null,
+          hypothesis: null,
         });
       }
     }
@@ -150,7 +148,7 @@ export const generateExplainablePredictions = (
           patternName: assoc.source,
           weight: assoc.weight,
           contribution: assoc.weight,
-          hypothesis: hypotheses[assoc.patternType] || null,
+          hypothesis: null,
         });
       }
     }
@@ -160,7 +158,7 @@ export const generateExplainablePredictions = (
   const overdueNumbers = calculateOverdueNumbers(validHistory, lotteryId, maxNumber, 5);
   for (const overdue of overdueNumbers) {
     if (scores[overdue.code]) {
-      const weight = getHypothesisWeight('overdue');
+      const weight = getHypothesisWeightSync('overdue');
       if (weight === 0) continue;
       
       const contribution = overdue.weight * weight;
@@ -170,7 +168,7 @@ export const generateExplainablePredictions = (
         patternName: `Vencido: ${overdue.daysSince} días`,
         weight,
         contribution,
-        hypothesis: hypotheses['overdue'] || null,
+        hypothesis: null,
       });
       scores[overdue.code].isOverdue = true;
       scores[overdue.code].daysSince = overdue.daysSince;
@@ -182,7 +180,7 @@ export const generateExplainablePredictions = (
     const hourlyTrends = analyzeBestHours(validHistory, lotteryId, code);
     const currentHourTrend = hourlyTrends.find(t => t.time === drawTime);
     if (currentHourTrend && currentHourTrend.frequency >= 2) {
-      const weight = getHypothesisWeight('hourly_trend');
+      const weight = getHypothesisWeightSync('hourly_trend');
       if (weight === 0) continue;
       
       const contribution = (currentHourTrend.percentage / 100) * weight;
@@ -192,7 +190,7 @@ export const generateExplainablePredictions = (
         patternName: `Hora ${drawTime}: ${currentHourTrend.percentage}%`,
         weight,
         contribution,
-        hypothesis: hypotheses['hourly_trend'] || null,
+        hypothesis: null,
       });
     }
   }
@@ -206,7 +204,7 @@ export const generateExplainablePredictions = (
     const dailyTrends = analyzeBestDays(validHistory, lotteryId, code);
     const currentDayTrend = dailyTrends.find(t => t.day === currentDay);
     if (currentDayTrend && currentDayTrend.frequency >= 2) {
-      const weight = getHypothesisWeight('daily_trend');
+      const weight = getHypothesisWeightSync('daily_trend');
       if (weight === 0) continue;
       
       const contribution = (currentDayTrend.percentage / 100) * weight;
@@ -216,14 +214,14 @@ export const generateExplainablePredictions = (
         patternName: `${currentDay}: ${currentDayTrend.percentage}%`,
         weight,
         contribution,
-        hypothesis: hypotheses['daily_trend'] || null,
+        hypothesis: null,
       });
     }
   }
   
   // ========== 7. FREQUENCY ANALYSIS ==========
   const frequencyMap: Record<string, number> = {};
-  for (const draw of lotteryHistory.slice(0, 100)) {
+  for (const draw of lotteryHistory) {
     const num = draw.result_number?.toString().trim();
     if (num) frequencyMap[num] = (frequencyMap[num] || 0) + 1;
   }
@@ -232,7 +230,7 @@ export const generateExplainablePredictions = (
   
   for (const [code, freq] of Object.entries(frequencyMap)) {
     if (scores[code] && freq > avgFreq) {
-      const weight = getHypothesisWeight('frequency');
+      const weight = getHypothesisWeightSync('frequency');
       if (weight === 0) continue;
       
       const freqScore = Math.min(freq / avgFreq, 2) * 0.3;
@@ -243,7 +241,7 @@ export const generateExplainablePredictions = (
         patternName: `Frecuencia: ${freq}x (promedio: ${avgFreq.toFixed(1)})`,
         weight,
         contribution,
-        hypothesis: hypotheses['frequency'] || null,
+        hypothesis: null,
       });
     }
   }
