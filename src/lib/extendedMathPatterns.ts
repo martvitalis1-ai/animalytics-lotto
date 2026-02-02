@@ -4,7 +4,7 @@
 // Supports normalization for 38, 75, 99 ranges
 // ============================================================
 
-import { getMaxRangeForLottery, normalizeToRange, getHypothesisWeight } from './hypothesisEngine';
+import { getMaxRangeForLottery, normalizeToRange, getHypothesisWeightSync } from './hypothesisEngine';
 import type { PatternType } from './hypothesisEngine';
 
 export interface MathCandidate {
@@ -51,7 +51,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: sum2.toString(),
       formula: `Σ(${a}+${b})=${sum2}`,
-      weight: getHypothesisWeight('math_sum_2'),
+      weight: getHypothesisWeightSync('math_sum_2'),
       patternType: 'math_sum_2',
       rawValue: a + b,
     });
@@ -61,7 +61,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: diff2.toString(),
       formula: `Δ|${a}-${b}|=${diff2}`,
-      weight: getHypothesisWeight('math_diff_2'),
+      weight: getHypothesisWeightSync('math_diff_2'),
       patternType: 'math_diff_2',
       rawValue: Math.abs(a - b),
     });
@@ -71,7 +71,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: mult.toString(),
       formula: `×(${a % 10}*${b % 10})=${mult}`,
-      weight: getHypothesisWeight('math_mult'),
+      weight: getHypothesisWeightSync('math_mult'),
       patternType: 'math_mult',
       rawValue: (a % 10) * (b % 10),
     });
@@ -87,7 +87,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: normalizeToRange(digitSumA, maxRange).toString(),
       formula: `ΣDig(${a})=${digitSumA}`,
-      weight: getHypothesisWeight('math_digit_sum'),
+      weight: getHypothesisWeightSync('math_digit_sum'),
       patternType: 'math_digit_sum',
       rawValue: digitSumA,
     });
@@ -95,7 +95,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: normalizeToRange(digitSumB, maxRange).toString(),
       formula: `ΣDig(${b})=${digitSumB}`,
-      weight: getHypothesisWeight('math_digit_sum'),
+      weight: getHypothesisWeightSync('math_digit_sum'),
       patternType: 'math_digit_sum',
       rawValue: digitSumB,
     });
@@ -106,7 +106,7 @@ export const generateExtendedMathPatterns = (
       patterns.push({
         code: normalizeToRange(digitDiffA, maxRange).toString(),
         formula: `ΔDig(${a})=${digitDiffA}`,
-        weight: getHypothesisWeight('math_digit_diff'),
+        weight: getHypothesisWeightSync('math_digit_diff'),
         patternType: 'math_digit_diff',
         rawValue: digitDiffA,
       });
@@ -117,7 +117,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: rootA.toString(),
       formula: `√Dig(${a})=${rootA}`,
-      weight: getHypothesisWeight('math_digital_root'),
+      weight: getHypothesisWeightSync('math_digital_root'),
       patternType: 'math_digital_root',
       rawValue: rootA,
     });
@@ -128,7 +128,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: crossAB.toString(),
       formula: `Cross(${a % 10}${b % 10})=${crossAB}`,
-      weight: getHypothesisWeight('math_cross_digit'),
+      weight: getHypothesisWeightSync('math_cross_digit'),
       patternType: 'math_cross_digit',
       rawValue: crossAB,
     });
@@ -138,7 +138,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: crossBA.toString(),
       formula: `Cross(${b % 10}${a % 10})=${crossBA}`,
-      weight: getHypothesisWeight('math_cross_digit'),
+      weight: getHypothesisWeightSync('math_cross_digit'),
       patternType: 'math_cross_digit',
       rawValue: crossBA,
     });
@@ -148,7 +148,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: intermediate.toString(),
       formula: `ΣDig(${a})+ΣDig(${b})=${intermediate}`,
-      weight: getHypothesisWeight('math_digit_sum'),
+      weight: getHypothesisWeightSync('math_digit_sum'),
       patternType: 'math_digit_sum',
       rawValue: digitSumA + digitSumB,
     });
@@ -163,7 +163,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: sum3.toString(),
       formula: `Σ3(${a}+${b}+${c})=${sum3}`,
-      weight: getHypothesisWeight('math_sum_3'),
+      weight: getHypothesisWeightSync('math_sum_3'),
       patternType: 'math_sum_3',
       rawValue: a + b + c,
     });
@@ -173,7 +173,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: avg3.toString(),
       formula: `μ3(${a},${b},${c})=${avg3}`,
-      weight: getHypothesisWeight('math_sum_3'),
+      weight: getHypothesisWeightSync('math_sum_3'),
       patternType: 'math_sum_3',
       rawValue: Math.round((a + b + c) / 3),
     });
@@ -183,7 +183,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: diffCascade.toString(),
       formula: `Δ3|(${a}-${b})-${c}|=${diffCascade}`,
-      weight: getHypothesisWeight('math_diff_3'),
+      weight: getHypothesisWeightSync('math_diff_3'),
       patternType: 'math_diff_3',
       rawValue: Math.abs((a - b) - c),
     });
@@ -194,7 +194,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: totalDigitSum.toString(),
       formula: `ΣDig3(${a},${b},${c})=${totalDigitSum}`,
-      weight: getHypothesisWeight('math_digit_sum'),
+      weight: getHypothesisWeightSync('math_digit_sum'),
       patternType: 'math_digit_sum',
       rawValue: allDigits.reduce((x, y) => x + y, 0),
     });
@@ -204,7 +204,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: multUnits3.toString(),
       formula: `×3(${a % 10}*${b % 10}*${c % 10})=${multUnits3}`,
-      weight: getHypothesisWeight('math_mult'),
+      weight: getHypothesisWeightSync('math_mult'),
       patternType: 'math_mult',
       rawValue: (a % 10) * (b % 10) * (c % 10),
     });
@@ -216,7 +216,7 @@ export const generateExtendedMathPatterns = (
     patterns.push({
       code: sum4.toString(),
       formula: `Σ4(${nums.join('+')})=${sum4}`,
-      weight: getHypothesisWeight('math_sum_3') * 0.8,
+      weight: getHypothesisWeightSync('math_sum_3') * 0.8,
       patternType: 'math_sum_3',
       rawValue: nums.reduce((x, y) => x + y, 0),
     });

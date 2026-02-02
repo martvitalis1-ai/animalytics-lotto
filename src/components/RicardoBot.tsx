@@ -28,6 +28,8 @@ import {
   getExplosivePredictions,
   AdvancedPrediction 
 } from '@/lib/advancedProbability';
+import { buildMemoryContext, saveBotMemory, extractSaveMemoryCommand } from '@/lib/botMemory';
+import { LEARNING_START_DATE } from '@/lib/hypothesisEngine';
 
 type Message = {
   id: string;
@@ -43,22 +45,25 @@ export function RicardoBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [memoryContext, setMemoryContext] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  // Cargar historial - optimizado con throttling
+  // Cargar historial COMPLETO sin límites artificiales
   useEffect(() => {
     const loadHistory = async () => {
+      // Sin límite - cargar todo el historial desde la fecha de aprendizaje
       const { data } = await supabase
         .from('lottery_results')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(500);
+        .gte('draw_date', LEARNING_START_DATE)
+        .order('created_at', { ascending: false });
       
       if (data) {
         setHistory(data);
+        console.log(`[RicardoBot] Loaded ${data.length} results since ${LEARNING_START_DATE}`);
       }
     };
     loadHistory();
@@ -79,6 +84,17 @@ export function RicardoBot() {
       supabase.removeChannel(channel); 
     };
   }, []);
+
+  // Cargar memoria del bot al abrir
+  useEffect(() => {
+    if (isOpen) {
+      const loadMemory = async () => {
+        const context = await buildMemoryContext();
+        setMemoryContext(context);
+      };
+      loadMemory();
+    }
+  }, [isOpen]);
 
   // Mensaje de bienvenida
   useEffect(() => {
@@ -106,7 +122,7 @@ export function RicardoBot() {
     }
   }, [isOpen]);
 
-  // Llamar a la IA general
+  // Llamar a la IA general CON MEMORIA CONTEXTUAL
   const callGeneralAI = useCallback(async (userMessage: string): Promise<string> => {
     try {
       const conversationHistory = messages.slice(-6).map(m => ({
@@ -114,8 +130,13 @@ export function RicardoBot() {
         content: m.content
       }));
 
+      // Incluir contexto de memoria en el mensaje
       const response = await supabase.functions.invoke('ricardo-ai', {
-        body: { message: userMessage, conversationHistory }
+        body: { 
+          message: userMessage, 
+          conversationHistory,
+          memoryContext: memoryContext // Enviar memoria al backend
+        }
       });
 
       if (response.error) {
@@ -126,7 +147,7 @@ export function RicardoBot() {
     } catch (error) {
       return `${getRandomExpression()} ¡Coño! Hubo un error. Intenta de nuevo.`;
     }
-  }, [messages]);
+  }, [messages, memoryContext]);
 
   // Verificar si es sobre loterías
   const isLotteryRelated = useCallback((msg: string): boolean => {
@@ -146,10 +167,29 @@ export function RicardoBot() {
   const processMessage = useCallback(async (userMessage: string): Promise<string> => {
     const lowerMsg = userMessage.toLowerCase();
     
-    // Admin check
-    if (lowerMsg.includes(ADMIN_CODE.toLowerCase())) {
+    // Check for admin codes (both GANADOR85 and GANADOR2026)
+    const adminCodes = [ADMIN_CODE.toLowerCase(), 'ganador2026'];
+    const cleanInput = lowerMsg.trim().replace(/\s+/g, '');
+    
+    if (adminCodes.some(code => cleanInput.includes(code.replace(/\s+/g, '')))) {
       setIsAdmin(true);
       return `${getRandomExpression()} ¡Acceso de administrador activado! ¿Qué necesitas, jefe?`;
+    }
+
+    // Check for save memory command (admin only)
+    if (isAdmin) {
+      const memoryCommand = extractSaveMemoryCommand(userMessage);
+      if (memoryCommand.shouldSave) {
+        const saved = await saveBotMemory(memoryCommand.content, 'instruction');
+        if (saved) {
+          // Refresh memory context
+          const newContext = await buildMemoryContext();
+          setMemoryContext(newContext);
+          return `${getRandomExpression()} ¡Guardado en mi memoria permanente! Recordaré: "${memoryCommand.content}"`;
+        } else {
+          return `${getRandomExpression()} No pude guardar eso en mi memoria. Intenta de nuevo.`;
+        }
+      }
     }
 
     // Saludos
@@ -174,7 +214,7 @@ export function RicardoBot() {
           lowerMsg.includes(l.id) || lowerMsg.includes(l.name.toLowerCase())
         ) || LOTTERIES[0];
 
-        // Usar nuevo algoritmo con probabilidades variables
+        // Usar nuevo algoritmo con probabilidades variables y pesos aprendidos
         const predictions = getExplosivePredictions(targetLottery.id, history, today, 5);
 
         let response = `${getRandomExpression()} ¡Pronósticos para **${targetLottery.name}**!\n\n`;
@@ -182,7 +222,8 @@ export function RicardoBot() {
         
         predictions.forEach((p, i) => {
           const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '📍';
-          response += `${emoji} **${p.code}** - ${p.name} ${p.statusEmoji} (${p.probability}%)\n`;
+          const boostIcon = p.learnedBoost > 3 ? '📈' : p.learnedBoost < -3 ? '📉' : '';
+          response += `${emoji} **${p.code}** - ${p.name} ${p.statusEmoji} (${p.probability}%) ${boostIcon}\n`;
         });
 
         // Mostrar vencidos
@@ -191,7 +232,8 @@ export function RicardoBot() {
           response += `\n⚠️ **VENCIDOS:** ${overdue.slice(0, 3).map(p => `${p.code} (${p.daysSince}d)`).join(', ')}\n`;
         }
 
-        response += `\n💪 Algoritmo avanzado - Porcentajes únicos por número/hora`;
+        response += `\n💡 Análisis basado en ${history.length} resultados desde ${LEARNING_START_DATE}`;
+        response += `\n🧠 Pesos aprendidos aplicados`;
         response += `\n\n${getRandomTip()}`;
 
         return response;
@@ -219,7 +261,7 @@ export function RicardoBot() {
         top3.forEach((p, i) => {
           response += `${i + 1}. **${p.code}** - ${p.name} ${p.statusEmoji} (${p.probability}%)\n`;
         });
-        response += `\n💡 Porcentajes calculados con algoritmo determinístico`;
+        response += `\n💡 Porcentajes con pesos aprendidos del historial completo`;
         return response;
       }
 
@@ -248,7 +290,7 @@ export function RicardoBot() {
           const lastSeen = new Date(animalHistory[0].created_at);
           const daysSince = Math.ceil((Date.now() - lastSeen.getTime()) / (1000 * 60 * 60 * 24));
           
-          response += `📊 **Estadísticas:**\n`;
+          response += `📊 **Estadísticas (desde ${LEARNING_START_DATE}):**\n`;
           response += `• Apariciones: ${animalHistory.length} veces\n`;
           response += `• Último: hace ${daysSince} día(s)\n`;
         }
@@ -264,7 +306,8 @@ export function RicardoBot() {
           `🐾 **Animales:** "Cuéntame del Tigre"\n` +
           `📊 **Análisis:** "Análisis completo"\n` +
           `🌍 **General:** ¡Pregúntame lo que sea!\n\n` +
-          `💡 Uso probabilidades variables (35-98%) - ¡Nada de 67% fijo!`;
+          `💡 Uso probabilidades variables (35-98%) con pesos aprendidos\n` +
+          `🧠 Memoria persistente desde ${LEARNING_START_DATE}`;
       }
 
       // Análisis completo
@@ -272,6 +315,7 @@ export function RicardoBot() {
         if (history.length < 10) return getRandomResponse('noData');
 
         let response = `${getRandomExpression()} ¡Análisis completo del día!\n\n`;
+        response += `📊 **Base de datos:** ${history.length} resultados desde ${LEARNING_START_DATE}\n\n`;
         
         for (const lottery of LOTTERIES.slice(0, 3)) {
           const preds = getExplosivePredictions(lottery.id, history, today, 3);
@@ -284,9 +328,9 @@ export function RicardoBot() {
       }
     }
 
-    // IA general
+    // IA general con memoria contextual
     return await callGeneralAI(userMessage);
-  }, [isAdmin, history, today, isLotteryRelated, callGeneralAI]);
+  }, [isAdmin, history, today, isLotteryRelated, callGeneralAI, memoryContext]);
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
@@ -354,7 +398,7 @@ export function RicardoBot() {
                   Ricardo Bot
                   {isAdmin && <Lock className="w-3 h-3 text-amber-300" />}
                 </h3>
-                <p className="text-xs opacity-80">Experto en Animalitos • Prob. 35-98%</p>
+                <p className="text-xs opacity-80">Experto en Animalitos • Memoria Persistente</p>
               </div>
             </div>
           </div>
@@ -415,7 +459,7 @@ export function RicardoBot() {
               </Button>
             </form>
             <p className="text-[10px] text-muted-foreground text-center mt-2">
-              Prob. variables 35-98% • Sin el 67% fijo
+              🧠 Memoria persistente • Pesos aprendidos
             </p>
           </div>
         </div>

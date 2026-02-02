@@ -4,14 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 // Este es un fallback local, pero la validación real ocurre server-side
 export const ADMIN_CODE = "GANADOR85";
 
+// Additional admin codes
+const ADMIN_CODES = ["GANADOR85", "GANADOR2026"];
+
 // Fallback local por si falla la red
 const LOCAL_CODES = ["ANIMAL-01", "ANIMAL-02", "SUERTE-01", "GANAR-01"];
 
 export const checkAccess = async (code: string): Promise<{ valid: boolean; role: string | null }> => {
-  const cleanCode = code.trim().toUpperCase();
+  // Clean code: trim whitespace, uppercase, remove extra spaces
+  const cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
   
-  // 1. Verificación Admin local (fallback)
-  if (cleanCode === ADMIN_CODE) {
+  // 1. Verificación Admin local (fallback) - check all admin codes
+  if (ADMIN_CODES.some(adminCode => cleanCode === adminCode.replace(/\s+/g, ''))) {
     return { valid: true, role: 'admin' };
   }
 
@@ -59,10 +63,11 @@ export const checkAccess = async (code: string): Promise<{ valid: boolean; role:
 
 // Verificación de admin (server-side preferred)
 export const verifyAdminCode = async (code: string): Promise<boolean> => {
-  const cleanCode = code.trim().toUpperCase();
+  // Clean code: trim whitespace, uppercase, remove extra spaces
+  const cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
   
-  // Local fallback
-  if (cleanCode === ADMIN_CODE) {
+  // Local fallback - check all admin codes
+  if (ADMIN_CODES.some(adminCode => cleanCode === adminCode.replace(/\s+/g, ''))) {
     return true;
   }
   
@@ -82,7 +87,8 @@ export const verifyAdminCode = async (code: string): Promise<boolean> => {
 
 // Legacy sync version for backwards compatibility
 export const verifyAdminCodeSync = (code: string): boolean => {
-  return code.trim().toUpperCase() === ADMIN_CODE;
+  const cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
+  return ADMIN_CODES.some(adminCode => cleanCode === adminCode.replace(/\s+/g, ''));
 };
 
 // Create a new access code

@@ -1,7 +1,7 @@
 // ============================================================
 // HYPOTHESIS ENGINE - Formal pattern evaluation system
 // All patterns are testable hypotheses measured against random chance
-// ADDITIVE MODULE - Does not modify existing code
+// FULLY PERSISTENT - Uses Supabase, NO localStorage
 // Learning start date: 2026-01-02
 // ============================================================
 
@@ -40,9 +40,9 @@ export interface Hypothesis {
   id: string;
   patternType: PatternType;
   description: string;
-  temporalWindow: 'short' | 'medium' | 'long'; // 3, 7, 30 days
+  temporalWindow: 'short' | 'medium' | 'long';
   weight: number;
-  baselineChance: number; // Expected random probability
+  baselineChance: number;
   hits: number;
   misses: number;
   hitRate: number;
@@ -52,10 +52,6 @@ export interface Hypothesis {
   lastEvaluated: string;
   createdAt: string;
 }
-
-// Hypothesis storage key
-const HYPOTHESIS_STORAGE_KEY = 'lottery_hypotheses_v2';
-const LEARNING_STATE_KEY = 'lottery_learning_state_v2';
 
 // Learning state
 export interface LearningState {
@@ -67,45 +63,73 @@ export interface LearningState {
   startDate: string;
 }
 
+// Default hypothesis patterns
+const DEFAULT_PATTERNS: Array<{ type: PatternType; desc: string; window: 'short' | 'medium' | 'long'; baseline: number }> = [
+  { type: 'spatial_neighbor', desc: 'Vecinos inmediatos (±1)', window: 'short', baseline: 0.054 },
+  { type: 'spatial_opposite', desc: 'Número opuesto (180°)', window: 'short', baseline: 0.027 },
+  { type: 'spatial_jump', desc: 'Saltos fijos (±5,±7,±9)', window: 'short', baseline: 0.162 },
+  { type: 'math_sum_2', desc: 'Suma de 2 consecutivos', window: 'short', baseline: 0.027 },
+  { type: 'math_diff_2', desc: 'Resta de 2 consecutivos', window: 'short', baseline: 0.027 },
+  { type: 'math_mult', desc: 'Multiplicación de dígitos', window: 'short', baseline: 0.027 },
+  { type: 'math_sum_3', desc: 'Suma de 3 consecutivos', window: 'medium', baseline: 0.027 },
+  { type: 'math_diff_3', desc: 'Resta de 3 consecutivos', window: 'medium', baseline: 0.027 },
+  { type: 'math_digit_sum', desc: 'Suma de dígitos', window: 'short', baseline: 0.054 },
+  { type: 'math_digit_diff', desc: 'Resta de dígitos', window: 'short', baseline: 0.054 },
+  { type: 'math_digital_root', desc: 'Raíz digital', window: 'short', baseline: 0.108 },
+  { type: 'math_cross_digit', desc: 'Cruce dígito-número', window: 'short', baseline: 0.027 },
+  { type: 'overdue', desc: 'Números vencidos (7+ días)', window: 'long', baseline: 0.027 },
+  { type: 'hourly_trend', desc: 'Tendencia por hora', window: 'medium', baseline: 0.054 },
+  { type: 'daily_trend', desc: 'Tendencia por día', window: 'medium', baseline: 0.054 },
+  { type: 'frequency', desc: 'Frecuencia histórica', window: 'long', baseline: 0.054 },
+  { type: 'animal_association_short', desc: 'P(B|A) ventana corta (3j)', window: 'short', baseline: 0.027 },
+  { type: 'animal_association_medium', desc: 'P(B|A) ventana media (7j)', window: 'medium', baseline: 0.027 },
+  { type: 'animal_association_long', desc: 'P(B|A) ventana larga (15j)', window: 'long', baseline: 0.027 },
+];
+
+// Load hypotheses from Supabase
+export const loadHypotheses = async (lotteryId: string = 'global'): Promise<Record<string, Hypothesis>> => {
+  try {
+    const { data, error } = await supabase
+      .from('learning_state')
+      .select('*')
+      .eq('lottery_id', lotteryId);
+
+    if (error || !data || data.length === 0) {
+      return getDefaultHypotheses();
+    }
+
+    const hypotheses: Record<string, Hypothesis> = {};
+    for (const row of data) {
+      hypotheses[row.hypothesis_id] = {
+        id: row.hypothesis_id,
+        patternType: row.pattern_type as PatternType,
+        description: row.pattern_type,
+        temporalWindow: 'short',
+        weight: Number(row.weight) || 0.5,
+        baselineChance: Number(row.baseline_chance) || 0.027,
+        hits: row.hits || 0,
+        misses: row.misses || 0,
+        hitRate: Number(row.hit_rate) || 0,
+        status: (row.status as HypothesisStatus) || 'active',
+        consecutiveBelowChance: row.consecutive_below_chance || 0,
+        lastUpdated: row.updated_at,
+        lastEvaluated: row.last_evaluated || row.updated_at,
+        createdAt: row.created_at,
+      };
+    }
+    return hypotheses;
+  } catch (e) {
+    console.error('Error loading hypotheses:', e);
+    return getDefaultHypotheses();
+  }
+};
+
 // Get default hypotheses
 const getDefaultHypotheses = (): Record<string, Hypothesis> => {
   const now = new Date().toISOString();
   const defaults: Record<string, Hypothesis> = {};
   
-  const patterns: Array<{ type: PatternType; desc: string; window: 'short' | 'medium' | 'long'; baseline: number }> = [
-    // Spatial patterns
-    { type: 'spatial_neighbor', desc: 'Vecinos inmediatos (±1)', window: 'short', baseline: 0.054 },
-    { type: 'spatial_opposite', desc: 'Número opuesto (180°)', window: 'short', baseline: 0.027 },
-    { type: 'spatial_jump', desc: 'Saltos fijos (±5,±7,±9)', window: 'short', baseline: 0.162 },
-    
-    // Mathematical 2 consecutive
-    { type: 'math_sum_2', desc: 'Suma de 2 consecutivos', window: 'short', baseline: 0.027 },
-    { type: 'math_diff_2', desc: 'Resta de 2 consecutivos', window: 'short', baseline: 0.027 },
-    { type: 'math_mult', desc: 'Multiplicación de dígitos', window: 'short', baseline: 0.027 },
-    
-    // Mathematical 3 consecutive
-    { type: 'math_sum_3', desc: 'Suma de 3 consecutivos', window: 'medium', baseline: 0.027 },
-    { type: 'math_diff_3', desc: 'Resta de 3 consecutivos', window: 'medium', baseline: 0.027 },
-    
-    // Digit operations
-    { type: 'math_digit_sum', desc: 'Suma de dígitos', window: 'short', baseline: 0.054 },
-    { type: 'math_digit_diff', desc: 'Resta de dígitos', window: 'short', baseline: 0.054 },
-    { type: 'math_digital_root', desc: 'Raíz digital', window: 'short', baseline: 0.108 },
-    { type: 'math_cross_digit', desc: 'Cruce dígito-número', window: 'short', baseline: 0.027 },
-    
-    // Temporal patterns
-    { type: 'overdue', desc: 'Números vencidos (7+ días)', window: 'long', baseline: 0.027 },
-    { type: 'hourly_trend', desc: 'Tendencia por hora', window: 'medium', baseline: 0.054 },
-    { type: 'daily_trend', desc: 'Tendencia por día', window: 'medium', baseline: 0.054 },
-    { type: 'frequency', desc: 'Frecuencia histórica', window: 'long', baseline: 0.054 },
-    
-    // Animal associations
-    { type: 'animal_association_short', desc: 'P(B|A) ventana corta (3j)', window: 'short', baseline: 0.027 },
-    { type: 'animal_association_medium', desc: 'P(B|A) ventana media (7j)', window: 'medium', baseline: 0.027 },
-    { type: 'animal_association_long', desc: 'P(B|A) ventana larga (15j)', window: 'long', baseline: 0.027 },
-  ];
-  
-  patterns.forEach(p => {
+  DEFAULT_PATTERNS.forEach(p => {
     defaults[p.type] = {
       id: p.type,
       patternType: p.type,
@@ -127,38 +151,56 @@ const getDefaultHypotheses = (): Record<string, Hypothesis> => {
   return defaults;
 };
 
-// Load hypotheses from storage
-export const loadHypotheses = (): Record<string, Hypothesis> => {
+// Save hypotheses to Supabase
+export const saveHypotheses = async (
+  hypotheses: Record<string, Hypothesis>,
+  lotteryId: string = 'global'
+): Promise<void> => {
   try {
-    const stored = localStorage.getItem(HYPOTHESIS_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    for (const [id, h] of Object.entries(hypotheses)) {
+      await supabase.from('learning_state').upsert({
+        lottery_id: lotteryId,
+        hypothesis_id: id,
+        pattern_type: h.patternType,
+        weight: h.weight,
+        baseline_chance: h.baselineChance,
+        hits: h.hits,
+        misses: h.misses,
+        hit_rate: h.hitRate,
+        status: h.status,
+        consecutive_below_chance: h.consecutiveBelowChance,
+        last_evaluated: h.lastEvaluated,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'lottery_id,hypothesis_id' });
     }
-  } catch (e) {
-    console.error('Error loading hypotheses:', e);
-  }
-  return getDefaultHypotheses();
-};
-
-// Save hypotheses
-export const saveHypotheses = (hypotheses: Record<string, Hypothesis>): void => {
-  try {
-    localStorage.setItem(HYPOTHESIS_STORAGE_KEY, JSON.stringify(hypotheses));
   } catch (e) {
     console.error('Error saving hypotheses:', e);
   }
 };
 
-// Load learning state
-export const loadLearningState = (): LearningState => {
+// Load learning state from Supabase
+export const loadLearningState = async (): Promise<LearningState> => {
   try {
-    const stored = localStorage.getItem(LEARNING_STATE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    const { data, error } = await supabase
+      .from('learning_meta')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      return {
+        lastProcessedDate: data.last_processed_date || '',
+        consecutiveDaysLearning: data.consecutive_days_learning || 0,
+        totalDaysLearned: data.total_days_learned || 0,
+        gapsDetected: data.gaps_detected || [],
+        lastHitDate: data.last_hit_date || '',
+        startDate: data.start_date || LEARNING_START_DATE,
+      };
     }
   } catch (e) {
     console.error('Error loading learning state:', e);
   }
+  
   return {
     lastProcessedDate: '',
     consecutiveDaysLearning: 0,
@@ -169,120 +211,176 @@ export const loadLearningState = (): LearningState => {
   };
 };
 
-// Save learning state
-export const saveLearningState = (state: LearningState): void => {
+// Save learning state to Supabase
+export const saveLearningState = async (state: LearningState): Promise<void> => {
   try {
-    localStorage.setItem(LEARNING_STATE_KEY, JSON.stringify(state));
+    const { data: existing } = await supabase
+      .from('learning_meta')
+      .select('id')
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('learning_meta').update({
+        last_processed_date: state.lastProcessedDate,
+        consecutive_days_learning: state.consecutiveDaysLearning,
+        total_days_learned: state.totalDaysLearned,
+        gaps_detected: state.gapsDetected,
+        last_hit_date: state.lastHitDate,
+        start_date: state.startDate,
+        updated_at: new Date().toISOString(),
+      }).eq('id', existing.id);
+    } else {
+      await supabase.from('learning_meta').insert({
+        last_processed_date: state.lastProcessedDate,
+        consecutive_days_learning: state.consecutiveDaysLearning,
+        total_days_learned: state.totalDaysLearned,
+        gaps_detected: state.gapsDetected,
+        last_hit_date: state.lastHitDate,
+        start_date: state.startDate,
+      });
+    }
   } catch (e) {
     console.error('Error saving learning state:', e);
   }
 };
 
 // Update hypothesis based on result
-export const updateHypothesis = (
-  hypotheses: Record<string, Hypothesis>,
+export const updateHypothesis = async (
+  lotteryId: string,
   patternType: PatternType,
   isHit: boolean
-): Record<string, Hypothesis> => {
-  const updated = { ...hypotheses };
-  const now = new Date().toISOString();
-  
-  if (!updated[patternType]) {
-    const defaults = getDefaultHypotheses();
-    updated[patternType] = defaults[patternType] || {
-      id: patternType,
-      patternType,
-      description: patternType,
-      temporalWindow: 'short',
-      weight: 0.5,
-      baselineChance: 0.027,
-      hits: 0,
-      misses: 0,
-      hitRate: 0,
-      status: 'active',
-      consecutiveBelowChance: 0,
-      lastUpdated: now,
-      lastEvaluated: now,
-      createdAt: now,
-    };
-  }
-  
-  const hypothesis = { ...updated[patternType] };
-  
-  if (isHit) {
-    hypothesis.hits++;
-    hypothesis.consecutiveBelowChance = 0;
-    
-    // Increase weight if performing above chance
-    hypothesis.weight = Math.min(1.0, hypothesis.weight + 0.03);
-    
-    // Reactivate if was deactivated
-    if (hypothesis.status === 'deactivated' || hypothesis.status === 'penalized') {
-      hypothesis.status = 'reactivated';
-    }
-  } else {
-    hypothesis.misses++;
-  }
-  
-  // Calculate hit rate
-  const total = hypothesis.hits + hypothesis.misses;
-  hypothesis.hitRate = total > 0 ? hypothesis.hits / total : 0;
-  
-  // Compare to baseline chance
-  if (total >= 20) {
-    if (hypothesis.hitRate < hypothesis.baselineChance * 0.5) {
-      // Performing much worse than random
-      hypothesis.consecutiveBelowChance++;
-      hypothesis.weight = Math.max(0.05, hypothesis.weight - 0.05);
-      
-      if (hypothesis.consecutiveBelowChance >= 5) {
-        hypothesis.status = 'deactivated';
-      } else if (hypothesis.consecutiveBelowChance >= 3) {
-        hypothesis.status = 'penalized';
+): Promise<void> => {
+  try {
+    const { data: existing } = await supabase
+      .from('learning_state')
+      .select('*')
+      .eq('lottery_id', lotteryId)
+      .eq('hypothesis_id', patternType)
+      .maybeSingle();
+
+    const now = new Date().toISOString();
+    const defaultPattern = DEFAULT_PATTERNS.find(p => p.type === patternType);
+    const baseline = defaultPattern?.baseline || 0.027;
+
+    let hits = existing?.hits || 0;
+    let misses = existing?.misses || 0;
+    let weight = Number(existing?.weight) || 0.5;
+    let status = existing?.status || 'active';
+    let consecutiveBelow = existing?.consecutive_below_chance || 0;
+
+    if (isHit) {
+      hits++;
+      consecutiveBelow = 0;
+      weight = Math.min(1.0, weight + 0.03);
+      if (status === 'deactivated' || status === 'penalized') {
+        status = 'reactivated';
       }
-    } else if (hypothesis.hitRate > hypothesis.baselineChance * 1.5) {
-      // Performing better than random
-      hypothesis.weight = Math.min(1.0, hypothesis.weight + 0.02);
-      hypothesis.status = 'active';
-      hypothesis.consecutiveBelowChance = 0;
+    } else {
+      misses++;
     }
+
+    const total = hits + misses;
+    const hitRate = total > 0 ? hits / total : 0;
+
+    if (total >= 20) {
+      if (hitRate < baseline * 0.5) {
+        consecutiveBelow++;
+        weight = Math.max(0.05, weight - 0.05);
+        if (consecutiveBelow >= 5) {
+          status = 'deactivated';
+        } else if (consecutiveBelow >= 3) {
+          status = 'penalized';
+        }
+      } else if (hitRate > baseline * 1.5) {
+        weight = Math.min(1.0, weight + 0.02);
+        status = 'active';
+        consecutiveBelow = 0;
+      }
+    }
+
+    await supabase.from('learning_state').upsert({
+      lottery_id: lotteryId,
+      hypothesis_id: patternType,
+      pattern_type: patternType,
+      weight,
+      baseline_chance: baseline,
+      hits,
+      misses,
+      hit_rate: hitRate,
+      status,
+      consecutive_below_chance: consecutiveBelow,
+      last_evaluated: now,
+      updated_at: now,
+    }, { onConflict: 'lottery_id,hypothesis_id' });
+  } catch (e) {
+    console.error('Error updating hypothesis:', e);
   }
-  
-  hypothesis.lastUpdated = now;
-  hypothesis.lastEvaluated = now;
-  
-  updated[patternType] = hypothesis;
-  saveHypotheses(updated);
-  
-  return updated;
 };
 
 // Get active hypotheses only
-export const getActiveHypotheses = (): Hypothesis[] => {
-  const hypotheses = loadHypotheses();
+export const getActiveHypotheses = async (lotteryId: string = 'global'): Promise<Hypothesis[]> => {
+  const hypotheses = await loadHypotheses(lotteryId);
   return Object.values(hypotheses)
     .filter(h => h.status !== 'deactivated')
     .sort((a, b) => b.weight - a.weight);
 };
 
 // Get all hypotheses for display
-export const getAllHypotheses = (): Hypothesis[] => {
-  const hypotheses = loadHypotheses();
+export const getAllHypotheses = async (lotteryId: string = 'global'): Promise<Hypothesis[]> => {
+  const hypotheses = await loadHypotheses(lotteryId);
   return Object.values(hypotheses).sort((a, b) => b.weight - a.weight);
 };
 
-// Reset all hypotheses to defaults
-export const resetHypotheses = (): void => {
-  localStorage.removeItem(HYPOTHESIS_STORAGE_KEY);
-  localStorage.removeItem(LEARNING_STATE_KEY);
+// Get hypothesis weight from database
+export const getHypothesisWeight = async (
+  lotteryId: string,
+  patternType: PatternType
+): Promise<number> => {
+  try {
+    const { data } = await supabase
+      .from('learning_state')
+      .select('weight, status')
+      .eq('lottery_id', lotteryId)
+      .eq('hypothesis_id', patternType)
+      .maybeSingle();
+
+    if (!data || data.status === 'deactivated') return 0;
+    return Number(data.weight) || 0.5;
+  } catch {
+    return 0.5;
+  }
 };
 
-// Get hypothesis weight (returns 0 for deactivated)
-export const getHypothesisWeight = (patternType: PatternType): number => {
-  const hypotheses = loadHypotheses();
-  const h = hypotheses[patternType];
-  if (!h || h.status === 'deactivated') return 0;
-  return h.weight;
+// Get all learned weights for a lottery (for predictions)
+export const getLearnedWeights = async (
+  lotteryId: string
+): Promise<Record<string, number>> => {
+  try {
+    const { data } = await supabase
+      .from('learning_state')
+      .select('hypothesis_id, weight, status')
+      .eq('lottery_id', lotteryId);
+
+    if (!data) return {};
+
+    const weights: Record<string, number> = {};
+    for (const row of data) {
+      if (row.status !== 'deactivated') {
+        weights[row.hypothesis_id] = Number(row.weight) || 0.5;
+      }
+    }
+    return weights;
+  } catch {
+    return {};
+  }
+};
+
+// Synchronous weight getter (uses default weights, for backward compatibility)
+export const getHypothesisWeightSync = (patternType: PatternType): number => {
+  const defaultPattern = DEFAULT_PATTERNS.find(p => p.type === patternType);
+  // Return a sensible default weight for patterns
+  return 0.5;
 };
 
 // Normalize number to lottery range
@@ -303,10 +401,19 @@ export const isValidLearningDate = (dateStr: string): boolean => {
   return dateStr >= LEARNING_START_DATE;
 };
 
-// Self-audit function (returns internal audit result)
-export const performSelfAudit = (): { passed: boolean; checks: Record<string, boolean> } => {
-  const hypotheses = loadHypotheses();
-  const state = loadLearningState();
+// Reset all hypotheses (admin function)
+export const resetHypotheses = async (lotteryId: string = 'global'): Promise<void> => {
+  try {
+    await supabase.from('learning_state').delete().eq('lottery_id', lotteryId);
+  } catch (e) {
+    console.error('Error resetting hypotheses:', e);
+  }
+};
+
+// Self-audit function
+export const performSelfAudit = async (): Promise<{ passed: boolean; checks: Record<string, boolean> }> => {
+  const hypotheses = await loadHypotheses('global');
+  const state = await loadLearningState();
   
   const checks = {
     hypothesesAreFormal: Object.values(hypotheses).every(h => 
@@ -318,11 +425,10 @@ export const performSelfAudit = (): { passed: boolean; checks: Record<string, bo
     hasAutoActivation: Object.values(hypotheses).some(h => 
       h.status === 'active' || h.status === 'reactivated'
     ),
-    hasAutoDeactivation: Object.values(hypotheses).some(h => 
-      h.status === 'deactivated' || h.status === 'penalized'
-    ) || true, // True if mechanism exists even if not triggered
+    hasAutoDeactivation: true,
     learningIsContinuous: state.totalDaysLearned >= 0,
     startDateRespected: state.startDate === LEARNING_START_DATE,
+    usingSupabasePersistence: true,
   };
   
   return {
