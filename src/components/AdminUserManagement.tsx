@@ -8,8 +8,12 @@ import {
   createAccessCode, 
   getAllAccessCodes, 
   toggleAccessCodeStatus, 
-  deleteAccessCode 
+  deleteAccessCode,
+  ADMIN_CODE 
 } from "@/lib/accessControl";
+
+// Protected admin codes that cannot be deleted or modified
+const PROTECTED_CODES = ['GANADOR85', 'GANADOR2026'];
 
 export function AdminUserManagement() {
   const [users, setUsers] = useState<any[]>([]);
@@ -34,21 +38,44 @@ export function AdminUserManagement() {
     loadUsers();
   }, []);
 
+  const isProtectedCode = (code: string): boolean => {
+    const normalizedCode = code.trim().toUpperCase().replace(/\s+/g, '');
+    return PROTECTED_CODES.some(pc => normalizedCode === pc.replace(/\s+/g, ''));
+  };
+
   const createUser = async () => {
-    if (!newCode.trim()) {
+    const cleanCode = newCode.trim().toUpperCase();
+    
+    if (!cleanCode) {
       toast.error("Ingresa un código");
       return;
     }
     
-    if (newCode.trim().length < 4) {
+    if (cleanCode.length < 4) {
       toast.error("El código debe tener al menos 4 caracteres");
+      return;
+    }
+
+    // Check if trying to create a protected code
+    if (isProtectedCode(cleanCode)) {
+      toast.error("Este código está reservado para administradores");
+      return;
+    }
+
+    // Check if code already exists
+    const existingCode = users.find(u => 
+      u.code.trim().toUpperCase().replace(/\s+/g, '') === cleanCode.replace(/\s+/g, '')
+    );
+    
+    if (existingCode) {
+      toast.error("Este código ya existe");
       return;
     }
     
     setLoading(true);
     
     const { success, error } = await createAccessCode(
-      newCode,
+      cleanCode,
       newAlias || 'Usuario',
       'user'
     );
@@ -66,8 +93,8 @@ export function AdminUserManagement() {
   };
 
   const toggleActive = async (code: string, currentStatus: boolean) => {
-    if (code === 'GANADOR85') {
-      toast.error("No puedes desactivar al administrador");
+    if (isProtectedCode(code)) {
+      toast.error("No puedes modificar códigos de administrador");
       return;
     }
     
@@ -82,8 +109,8 @@ export function AdminUserManagement() {
   };
 
   const deleteUser = async (code: string) => {
-    if (code === 'GANADOR85') {
-      toast.error("No puedes eliminar al administrador");
+    if (isProtectedCode(code)) {
+      toast.error("No puedes eliminar códigos de administrador");
       return;
     }
     
@@ -139,51 +166,72 @@ export function AdminUserManagement() {
             disabled={loading}
             className="bg-foreground text-background hover:bg-foreground/90"
           >
-            <UserPlus className="w-4 h-4" />
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
           </Button>
         </div>
 
         <div className="space-y-2 max-h-80 overflow-y-auto">
-          {users.map((u) => (
-            <div 
-              key={u.code} 
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                u.is_active ? 'bg-card' : 'bg-muted/50 opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${u.is_active ? 'bg-primary' : 'bg-destructive'}`} />
-                <div>
-                  <p className="font-mono font-bold text-sm">{u.code}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {u.alias} · {u.role === 'admin' ? '👑 Admin' : 'Usuario'}
-                  </p>
+          {users.map((u) => {
+            const isProtected = isProtectedCode(u.code);
+            
+            return (
+              <div 
+                key={u.code} 
+                className={`flex items-center justify-between p-3 rounded-lg border ${
+                  u.is_active ? 'bg-card' : 'bg-muted/50 opacity-60'
+                } ${isProtected ? 'border-amber-500/50' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${
+                    isProtected ? 'bg-amber-500' : u.is_active ? 'bg-primary' : 'bg-destructive'
+                  }`} />
+                  <div>
+                    <p className="font-mono font-bold text-sm flex items-center gap-1">
+                      {u.code}
+                      {isProtected && <span className="text-amber-500 text-xs">👑</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {u.alias} · {u.role === 'admin' ? '👑 Admin' : 'Usuario'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => toggleActive(u.code, u.is_active)}
+                    className={`h-8 w-8 ${u.is_active ? 'text-primary' : 'text-destructive'}`}
+                    disabled={isProtected}
+                    title={isProtected ? 'Código protegido' : (u.is_active ? 'Desactivar' : 'Activar')}
+                  >
+                    {u.is_active ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => deleteUser(u.code)}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    disabled={isProtected}
+                    title={isProtected ? 'Código protegido' : 'Eliminar'}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-              
-              <div className="flex gap-1">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => toggleActive(u.code, u.is_active)}
-                  className={`h-8 w-8 ${u.is_active ? 'text-primary' : 'text-destructive'}`}
-                  disabled={u.code === 'GANADOR85'}
-                >
-                  {u.is_active ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => deleteUser(u.code)}
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  disabled={u.code === 'GANADOR85'}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
+          
+          {users.length === 0 && (
+            <p className="text-center text-muted-foreground text-sm py-4">
+              No hay códigos registrados
+            </p>
+          )}
         </div>
+        
+        <p className="text-xs text-muted-foreground text-center">
+          👑 Los códigos de administrador (GANADOR85, GANADOR2026) están protegidos
+        </p>
       </CardContent>
     </Card>
   );

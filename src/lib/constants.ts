@@ -1,18 +1,11 @@
-// Mapeo de animales por número - CORREGIDO: 0 es Delfín, 00 es Ballena
-export const ANIMAL_MAPPING: Record<string, string> = {
-  '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', 
-  '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', 
-  '9': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', 
-  '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', 
-  '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', 
-  '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', 
-  '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', 
-  '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'LAPA'
-};
+// Mapeo de animales por número - OFICIAL CORREGIDO
+// Importa mappings oficiales desde animalData.ts
+import { ANIMALS_STANDARD, ANIMALS_GUACHARO, ANIMALS_GUACHARITO } from './animalData';
 
-export const GUACHARO_MAPPING: Record<string, string> = { 
-  '0': 'DELFÍN', '00': 'BALLENA', '75': 'GUÁCHARO' 
-};
+// Re-export for backwards compatibility
+export const ANIMAL_MAPPING = ANIMALS_STANDARD;
+export const GUACHARO_MAPPING = ANIMALS_GUACHARO;
+export const GUACHARITO_MAPPING = ANIMALS_GUACHARITO;
 
 export const LOTTERIES = [
   { id: 'guacharo', name: 'Guácharo Activo', range: 75, type: 'numbers', mapping: GUACHARO_MAPPING, schedule: 'full' },
