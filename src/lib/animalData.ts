@@ -1,5 +1,9 @@
 // ============================================================
-// ANIMAL DATA - Full 0-99 Database for all lotteries
+// ANIMAL DATA - Complete Official Mappings for Venezuelan Lotteries
+// Corrected: 20=COCHINO (not Cerdo), 49=PEREZOSO (not Pereza)
+// Ranges: 0-36 (Lotto Activo, Granjita, Selva, LottoRey)
+//         0-75 (Guácharo Activo)
+//         0-99 (Guacharito)
 // ============================================================
 
 export interface AnimalInfo {
@@ -9,115 +13,160 @@ export interface AnimalInfo {
   category: string;
 }
 
+// ============================================================
+// OFFICIAL MAPPINGS BY LOTTERY TYPE
+// ============================================================
+
+// LOTTO ACTIVO, GRANJITA, SELVA PLUS, LOTTO REY (0, 00 to 36)
+export const ANIMALS_STANDARD: Record<string, string> = {
+  '0': 'DELFÍN',
+  '00': 'BALLENA',
+  '1': 'CARNERO',
+  '2': 'TORO',
+  '3': 'CIEMPIÉS',
+  '4': 'ALACRÁN',
+  '5': 'LEÓN',
+  '6': 'RANA',
+  '7': 'PERICO',
+  '8': 'RATÓN',
+  '9': 'ÁGUILA',
+  '10': 'TIGRE',
+  '11': 'GATO',
+  '12': 'CABALLO',
+  '13': 'MONO',
+  '14': 'PALOMA',
+  '15': 'ZORRO',
+  '16': 'OSO',
+  '17': 'PAVO',
+  '18': 'BURRO',
+  '19': 'CHIVO',
+  '20': 'COCHINO',
+  '21': 'GALLO',
+  '22': 'CAMELLO',
+  '23': 'CEBRA',
+  '24': 'IGUANA',
+  '25': 'GALLINA',
+  '26': 'VACA',
+  '27': 'PERRO',
+  '28': 'ZAMURO',
+  '29': 'ELEFANTE',
+  '30': 'CAIMÁN',
+  '31': 'LAPA',
+  '32': 'ARDILLA',
+  '33': 'PESCADO',
+  '34': 'VENADO',
+  '35': 'JIRAFA',
+  '36': 'CULEBRA',
+};
+
+// GUÁCHARO ACTIVO (0, 00 to 75)
+export const ANIMALS_GUACHARO: Record<string, string> = {
+  ...ANIMALS_STANDARD,
+  '37': 'TORTUGA',
+  '38': 'BÚFALO',
+  '39': 'LECHUZA',
+  '40': 'AVISPA',
+  '41': 'CANGURO',
+  '42': 'TUCÁN',
+  '43': 'MARIPOSA',
+  '44': 'CHIGÜIRE',
+  '45': 'GARZA',
+  '46': 'PUMA',
+  '47': 'PAVO REAL',
+  '48': 'PUERCOESPÍN',
+  '49': 'PEREZOSO',
+  '50': 'CANARIO',
+  '51': 'PELÍCANO',
+  '52': 'PULPO',
+  '53': 'CARACOL',
+  '54': 'GRILLO',
+  '55': 'OSO HORMIGUERO',
+  '56': 'TIBURÓN',
+  '57': 'PATO',
+  '58': 'HORMIGA',
+  '59': 'PANTERA',
+  '60': 'CAMALEÓN',
+  '61': 'PANDA',
+  '62': 'CACHICAMO',
+  '63': 'CANGREJO',
+  '64': 'GAVILÁN',
+  '65': 'ARAÑA',
+  '66': 'LOBO',
+  '67': 'AVESTRUZ',
+  '68': 'JAGUAR',
+  '69': 'CONEJO',
+  '70': 'BISONTE',
+  '71': 'GUACAMAYA',
+  '72': 'GORILA',
+  '73': 'HIPOPÓTAMO',
+  '74': 'TURPIAL',
+  '75': 'GUÁCHARO',
+};
+
+// GUACHARITO (0, 00 to 99)
+export const ANIMALS_GUACHARITO: Record<string, string> = {
+  ...ANIMALS_GUACHARO,
+  '76': 'HALCÓN',
+  '77': 'DELFÍN ROSADO',
+  '78': 'ANTÍLOPE',
+  '79': 'CIGÜEÑA',
+  '80': 'MURCIÉLAGO',
+  '81': 'CUERVO',
+  '82': 'CUCARACHA',
+  '83': 'ALCE',
+  '84': 'ESCORPIÓN',
+  '85': 'ORCA',
+  '86': 'BUEY',
+  '87': 'FOCA',
+  '88': 'PINGÜINO',
+  '89': 'ANGUILA',
+  '90': 'TEJÓN',
+  '91': 'MORROCOY',
+  '92': 'FLAMENCO',
+  '93': 'MAPACHE',
+  '94': 'CISNE',
+  '95': 'LINCE',
+  '96': 'CABALLITO DE MAR',
+  '97': 'MORSA',
+  '98': 'COCODRILO',
+  '99': 'GUACHARITO',
+};
+
+// Get the correct mapping for a lottery
+export const getAnimalMappingForLottery = (lotteryId: string): Record<string, string> => {
+  if (lotteryId === 'guacharito') return ANIMALS_GUACHARITO;
+  if (lotteryId === 'guacharo') return ANIMALS_GUACHARO;
+  return ANIMALS_STANDARD;
+};
+
 // Master array with full 0-99 support + "00" Ballena distinction
-export const ANIMALS_DATA: AnimalInfo[] = [
-  // --- GRUPO 1: CLÁSICOS (0-36) ---
-  { id: 0, code: "0", name: "DELFÍN", category: "acuatico" },
-  { id: 100, code: "00", name: "BALLENA", category: "acuatico" }, // ID 100 to avoid conflict
-  { id: 1, code: "1", name: "CARNERO", category: "granja" },
-  { id: 2, code: "2", name: "TORO", category: "granja" },
-  { id: 3, code: "3", name: "CIEMPIÉS", category: "insecto" },
-  { id: 4, code: "4", name: "ALACRÁN", category: "insecto" },
-  { id: 5, code: "5", name: "LEÓN", category: "selva" },
-  { id: 6, code: "6", name: "RANA", category: "acuatico" },
-  { id: 7, code: "7", name: "PERICO", category: "ave" },
-  { id: 8, code: "8", name: "RATÓN", category: "plaga" },
-  { id: 9, code: "9", name: "ÁGUILA", category: "ave" },
-  { id: 10, code: "10", name: "TIGRE", category: "selva" },
-  { id: 11, code: "11", name: "GATO", category: "domestico" },
-  { id: 12, code: "12", name: "CABALLO", category: "granja" },
-  { id: 13, code: "13", name: "MONO", category: "selva" },
-  { id: 14, code: "14", name: "PALOMA", category: "ave" },
-  { id: 15, code: "15", name: "ZORRO", category: "selva" },
-  { id: 16, code: "16", name: "OSO", category: "selva" },
-  { id: 17, code: "17", name: "PAVO", category: "ave" },
-  { id: 18, code: "18", name: "BURRO", category: "granja" },
-  { id: 19, code: "19", name: "CHIVO", category: "granja" },
-  { id: 20, code: "20", name: "CERDO", category: "granja" },
-  { id: 21, code: "21", name: "GALLO", category: "ave" },
-  { id: 22, code: "22", name: "CAMELLO", category: "desierto" },
-  { id: 23, code: "23", name: "CEBRA", category: "selva" },
-  { id: 24, code: "24", name: "IGUANA", category: "reptil" },
-  { id: 25, code: "25", name: "GALLINA", category: "ave" },
-  { id: 26, code: "26", name: "VACA", category: "granja" },
-  { id: 27, code: "27", name: "PERRO", category: "domestico" },
-  { id: 28, code: "28", name: "ZAMURO", category: "ave" },
-  { id: 29, code: "29", name: "ELEFANTE", category: "selva" },
-  { id: 30, code: "30", name: "CAIMÁN", category: "reptil" },
-  { id: 31, code: "31", name: "LAPA", category: "silvestre" },
-  { id: 32, code: "32", name: "ARDILLA", category: "silvestre" },
-  { id: 33, code: "33", name: "PESCADO", category: "acuatico" },
-  { id: 34, code: "34", name: "VENADO", category: "silvestre" },
-  { id: 35, code: "35", name: "JIRAFA", category: "selva" },
-  { id: 36, code: "36", name: "CULEBRA", category: "reptil" },
+export const ANIMALS_DATA: AnimalInfo[] = Object.entries(ANIMALS_GUACHARITO).map(([code, name]) => ({
+  id: code === '00' ? 100 : parseInt(code) || 0,
+  code,
+  name,
+  category: getCategoryForAnimal(name),
+}));
 
-  // --- GRUPO 2: EXTENDIDOS (37-75) ---
-  { id: 37, code: "37", name: "TORTUGA", category: "reptil" },
-  { id: 38, code: "38", name: "BÚFALO", category: "selva" },
-  { id: 39, code: "39", name: "LECHUZA", category: "ave" },
-  { id: 40, code: "40", name: "AVISPA", category: "insecto" },
-  { id: 41, code: "41", name: "CANGURO", category: "exotico" },
-  { id: 42, code: "42", name: "TUCÁN", category: "ave" },
-  { id: 43, code: "43", name: "MARIPOSA", category: "insecto" },
-  { id: 44, code: "44", name: "CHIGÜIRE", category: "silvestre" },
-  { id: 45, code: "45", name: "GARZA", category: "ave" },
-  { id: 46, code: "46", name: "PUMA", category: "selva" },
-  { id: 47, code: "47", name: "PAVO REAL", category: "ave" },
-  { id: 48, code: "48", name: "PUERCOESPÍN", category: "silvestre" },
-  { id: 49, code: "49", name: "PEREZA", category: "selva" },
-  { id: 50, code: "50", name: "CANARIO", category: "ave" },
-  { id: 51, code: "51", name: "PELÍCANO", category: "ave" },
-  { id: 52, code: "52", name: "PULPO", category: "acuatico" },
-  { id: 53, code: "53", name: "CARACOL", category: "molusco" },
-  { id: 54, code: "54", name: "GRILLO", category: "insecto" },
-  { id: 55, code: "55", name: "OSO HORMIGUERO", category: "silvestre" },
-  { id: 56, code: "56", name: "TIBURÓN", category: "acuatico" },
-  { id: 57, code: "57", name: "PATO", category: "ave" },
-  { id: 58, code: "58", name: "HORMIGA", category: "insecto" },
-  { id: 59, code: "59", name: "PANTERA", category: "selva" },
-  { id: 60, code: "60", name: "CAMALEÓN", category: "reptil" },
-  { id: 61, code: "61", name: "PANDA", category: "exotico" },
-  { id: 62, code: "62", name: "CACHICAMO", category: "silvestre" },
-  { id: 63, code: "63", name: "CANGREJO", category: "acuatico" },
-  { id: 64, code: "64", name: "GAVILÁN", category: "ave" },
-  { id: 65, code: "65", name: "ARAÑA", category: "insecto" },
-  { id: 66, code: "66", name: "LOBO", category: "selva" },
-  { id: 67, code: "67", name: "AVESTRUZ", category: "ave" },
-  { id: 68, code: "68", name: "JAGUAR", category: "selva" },
-  { id: 69, code: "69", name: "CONEJO", category: "domestico" },
-  { id: 70, code: "70", name: "BISONTE", category: "selva" },
-  { id: 71, code: "71", name: "GUACAMAYA", category: "ave" },
-  { id: 72, code: "72", name: "GORILA", category: "selva" },
-  { id: 73, code: "73", name: "HIPOPÓTAMO", category: "selva" },
-  { id: 74, code: "74", name: "TURPIAL", category: "ave" },
-  { id: 75, code: "75", name: "GUÁCHARO", category: "ave" },
-
-  // --- GRUPO 3: NUEVOS (76-99) ---
-  { id: 76, code: "76", name: "RINOCERONTE", category: "selva" },
-  { id: 77, code: "77", name: "PINGÜINO", category: "acuatico" },
-  { id: 78, code: "78", name: "ANTÍLOPE", category: "selva" },
-  { id: 79, code: "79", name: "CALAMAR", category: "acuatico" },
-  { id: 80, code: "80", name: "MURCIÉLAGO", category: "silvestre" },
-  { id: 81, code: "81", name: "CUERVO", category: "ave" },
-  { id: 82, code: "82", name: "CUCARACHA", category: "insecto" },
-  { id: 83, code: "83", name: "BÚHO", category: "ave" },
-  { id: 84, code: "84", name: "CAMARÓN", category: "acuatico" },
-  { id: 85, code: "85", name: "HÁMSTER", category: "domestico" },
-  { id: 86, code: "86", name: "BUEY", category: "granja" },
-  { id: 87, code: "87", name: "CABRA", category: "granja" },
-  { id: 88, code: "88", name: "ERIZO DE MAR", category: "acuatico" },
-  { id: 89, code: "89", name: "ANGUILA", category: "acuatico" },
-  { id: 90, code: "90", name: "HURÓN", category: "domestico" },
-  { id: 91, code: "91", name: "MORROCOY", category: "reptil" },
-  { id: 92, code: "92", name: "CISNE", category: "ave" },
-  { id: 93, code: "93", name: "GAVIOTA", category: "ave" },
-  { id: 94, code: "94", name: "PAUJIL", category: "ave" },
-  { id: 95, code: "95", name: "ESCARABAJO", category: "insecto" },
-  { id: 96, code: "96", name: "CABALLITO DE MAR", category: "acuatico" },
-  { id: 97, code: "97", name: "LORO", category: "ave" },
-  { id: 98, code: "98", name: "COCODRILO", category: "reptil" },
-  { id: 99, code: "99", name: "GUACHARITO", category: "ave" },
-];
+// Helper to get category
+function getCategoryForAnimal(name: string): string {
+  const categories: Record<string, string[]> = {
+    acuatico: ['DELFÍN', 'BALLENA', 'RANA', 'PESCADO', 'TIBURÓN', 'PULPO', 'CANGREJO', 'ANGUILA', 'CABALLITO DE MAR', 'DELFÍN ROSADO', 'MORSA', 'FOCA', 'ORCA'],
+    ave: ['PERICO', 'ÁGUILA', 'PALOMA', 'PAVO', 'GALLO', 'GALLINA', 'ZAMURO', 'LECHUZA', 'TUCÁN', 'GARZA', 'PAVO REAL', 'CANARIO', 'PELÍCANO', 'PATO', 'GAVILÁN', 'AVESTRUZ', 'GUACAMAYA', 'TURPIAL', 'GUÁCHARO', 'HALCÓN', 'CIGÜEÑA', 'CUERVO', 'FLAMENCO', 'CISNE'],
+    granja: ['CARNERO', 'TORO', 'CABALLO', 'BURRO', 'CHIVO', 'COCHINO', 'VACA', 'BUEY'],
+    selva: ['LEÓN', 'TIGRE', 'MONO', 'ZORRO', 'OSO', 'CEBRA', 'ELEFANTE', 'JIRAFA', 'BÚFALO', 'PUMA', 'PANTERA', 'JAGUAR', 'BISONTE', 'GORILA', 'HIPOPÓTAMO', 'LOBO', 'ALCE', 'LINCE'],
+    insecto: ['CIEMPIÉS', 'ALACRÁN', 'AVISPA', 'MARIPOSA', 'GRILLO', 'HORMIGA', 'ARAÑA', 'CUCARACHA', 'ESCORPIÓN'],
+    reptil: ['IGUANA', 'CAIMÁN', 'CULEBRA', 'TORTUGA', 'CAMALEÓN', 'MORROCOY', 'COCODRILO'],
+    silvestre: ['LAPA', 'ARDILLA', 'VENADO', 'CHIGÜIRE', 'PUERCOESPÍN', 'PEREZOSO', 'OSO HORMIGUERO', 'CACHICAMO', 'MURCIÉLAGO', 'TEJÓN', 'MAPACHE'],
+    exotico: ['CAMELLO', 'CANGURO', 'PANDA', 'ANTÍLOPE', 'PINGÜINO'],
+    domestico: ['GATO', 'PERRO', 'RATÓN', 'CONEJO', 'GUACHARITO'],
+    molusco: ['CARACOL'],
+  };
+  
+  for (const [cat, animals] of Object.entries(categories)) {
+    if (animals.includes(name)) return cat;
+  }
+  return 'otro';
+}
 
 // Create lookup map for fast access by code (string)
 const ANIMAL_BY_CODE = new Map<string, AnimalInfo>();
@@ -126,12 +175,26 @@ ANIMALS_DATA.forEach(animal => {
 });
 
 // Get animal by code (string comparison for 0/00 distinction)
-export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
+export const getAnimalByCode = (code: string, lotteryId?: string): AnimalInfo | undefined => {
   const normalizedCode = code?.toString().trim();
   if (!normalizedCode) return undefined;
   
+  // Use lottery-specific mapping if provided
+  if (lotteryId) {
+    const mapping = getAnimalMappingForLottery(lotteryId);
+    const name = mapping[normalizedCode] || mapping[parseInt(normalizedCode).toString()];
+    if (name) {
+      return {
+        id: normalizedCode === '00' ? 100 : parseInt(normalizedCode) || 0,
+        code: normalizedCode,
+        name,
+        category: getCategoryForAnimal(name),
+      };
+    }
+  }
+  
   // Exact match first for "0" and "00"
-  if (normalizedCode === "0" || normalizedCode === "00") {
+  if (normalizedCode === '0' || normalizedCode === '00') {
     return ANIMAL_BY_CODE.get(normalizedCode);
   }
   
@@ -141,8 +204,8 @@ export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
 };
 
 // Get animal name from code
-export const getAnimalName = (code: string): string => {
-  const animal = getAnimalByCode(code);
+export const getAnimalName = (code: string, lotteryId?: string): string => {
+  const animal = getAnimalByCode(code, lotteryId);
   return animal?.name || `Número ${code}`;
 };
 
@@ -160,15 +223,21 @@ export const getCodesForLottery = (lotteryId: string): string[] => {
   return ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
 };
 
+// Get max number for lottery
+export const getMaxNumberForLottery = (lotteryId: string): number => {
+  if (lotteryId === 'guacharito') return 99;
+  if (lotteryId === 'guacharo') return 75;
+  return 36;
+};
+
 // Emoji mapping for visual representation
-// ZAMURO (28) uses 🪶 (black feather) to differentiate from ÁGUILA (9)
 export const ANIMAL_EMOJIS: Record<string, string> = {
   "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛",
   "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭",
   "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵",
   "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏",
   "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓",
-  "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", // ZAMURO - Uses custom image via ZAMURO_IMAGE
+  "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅",
   "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟",
   "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬",
   "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋",
@@ -178,11 +247,11 @@ export const ANIMAL_EMOJIS: Record<string, string> = {
   "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀",
   "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆",
   "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛",
-  "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌",
-  "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉",
-  "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🦔",
-  "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦",
-  "94": "🦃", "95": "🪲", "96": "🐠", "97": "🦜", "98": "🐊",
+  "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐬", "78": "🦌",
+  "79": "🦢", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦌",
+  "84": "🦂", "85": "🐋", "86": "🐂", "87": "🦭", "88": "🐧",
+  "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦩", "93": "🦝",
+  "94": "🦢", "95": "🐆", "96": "🐠", "97": "🦭", "98": "🐊",
   "99": "🐣",
 };
 
@@ -222,7 +291,7 @@ export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
   "17": { row: 3, col: 3 },  // Pavo
   "18": { row: 3, col: 4 },  // Burro
   "19": { row: 4, col: 0 },  // Chivo
-  "20": { row: 4, col: 1 },  // Cerdo
+  "20": { row: 4, col: 1 },  // Cochino
   "21": { row: 4, col: 2 },  // Gallo
   "22": { row: 4, col: 3 },  // Camello
   "23": { row: 4, col: 4 },  // Cebra
@@ -255,4 +324,24 @@ export const getHeatStatusColor = (status: HeatStatus): string => {
     case 'overdue': return 'hsl(220, 10%, 60%)'; // Gray
     default: return 'hsl(220, 10%, 60%)';
   }
+};
+
+// Generate formatted string for display: "XX - Name"
+export const formatAnimalDisplay = (code: string, lotteryId?: string): string => {
+  const name = getAnimalName(code, lotteryId);
+  const displayCode = code === '0' ? '0' : code === '00' ? '00' : code.padStart(2, '0');
+  return `${displayCode} - ${name}`;
+};
+
+// Get complete animal list as formatted string for injection into prompts
+export const getFullAnimalListString = (lotteryId: string): string => {
+  const mapping = getAnimalMappingForLottery(lotteryId);
+  return Object.entries(mapping)
+    .sort((a, b) => {
+      if (a[0] === '00') return 1;
+      if (b[0] === '00') return -1;
+      return parseInt(a[0]) - parseInt(b[0]);
+    })
+    .map(([code, name]) => `${code}:${name}`)
+    .join(', ');
 };
