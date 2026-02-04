@@ -144,26 +144,25 @@ export function QuickPrediction() {
           Calcular Predicción
         </Button>
 
-        {/* Resultados de Fórmulas Matemáticas */}
+        {/* Resultados de Fórmulas Matemáticas - Oculto visualmente pero cálculos intactos */}
         {predictions.length > 0 && (
           <div className="space-y-3 pt-4 border-t">
             <div className="flex items-center gap-2">
               <Calculator className="w-4 h-4 text-amber-500" />
-              <h3 className="text-sm font-bold">Fórmulas Matemáticas</h3>
+              <h3 className="text-sm font-bold">Resultados Calculados</h3>
+              <span className="text-[10px] text-muted-foreground">({predictions.length} combinaciones)</span>
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
               {predictions.map((pred, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 bg-amber-500/10 rounded-lg">
-                  <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400 w-8">
+                <div key={idx} className="flex flex-col items-center p-2 bg-amber-500/10 rounded-lg">
+                  <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400">
                     {pred.number.padStart(2, '0')}
                   </span>
                   {lottery?.type === 'animals' && (
-                    <span className="text-xs text-amber-600 dark:text-amber-400">
-                      ({ANIMAL_MAPPING[pred.number] || ANIMAL_MAPPING[parseInt(pred.number).toString()] || ''})
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center truncate w-full">
+                      {ANIMAL_MAPPING[pred.number] || ANIMAL_MAPPING[parseInt(pred.number).toString()] || ''}
                     </span>
                   )}
-                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground flex-1">{pred.formula}</span>
                 </div>
               ))}
             </div>

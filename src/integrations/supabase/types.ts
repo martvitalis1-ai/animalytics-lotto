@@ -347,6 +347,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tracking_logs: {
+        Row: {
+          animal_name: string | null
+          created_at: string
+          draw_date: string
+          draw_time: string
+          id: string
+          lottery_type: string
+          notes: string | null
+          selected_number: string
+          user_code: string
+        }
+        Insert: {
+          animal_name?: string | null
+          created_at?: string
+          draw_date?: string
+          draw_time: string
+          id?: string
+          lottery_type: string
+          notes?: string | null
+          selected_number: string
+          user_code: string
+        }
+        Update: {
+          animal_name?: string | null
+          created_at?: string
+          draw_date?: string
+          draw_time?: string
+          id?: string
+          lottery_type?: string
+          notes?: string | null
+          selected_number?: string
+          user_code?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

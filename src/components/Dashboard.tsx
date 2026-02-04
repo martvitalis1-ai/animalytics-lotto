@@ -11,7 +11,10 @@ import {
   FileText,
   Flame,
   Dices,
-  BarChart3
+  BarChart3,
+  BookOpen,
+  Radar,
+  TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,10 +38,13 @@ import { QuickPrediction } from "./QuickPrediction";
 import { ExplosiveData } from "./ExplosiveData";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
-import { HourlyPredictionView } from "./HourlyPredictionView";
 import { ThemeToggle } from "./ThemeToggle";
 import { DatoRicardoSection } from "./DatoRicardoSection";
 import { HypothesisAudit } from "./HypothesisAudit";
+import { UserTrackingJournal } from "./UserTrackingJournal";
+import { PatternRadar } from "./PatternRadar";
+import { SequenceMatrixView } from "./SequenceMatrixView";
+import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -47,6 +53,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userRole, onLogout }: DashboardProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ia");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
@@ -122,6 +129,15 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/sports')}
+                className="hidden sm:flex items-center gap-1.5"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Deportes
+              </Button>
               <ThemeToggle />
               <NotificationCenter />
               <ExportTools type="results" filename="resultados" />
@@ -154,9 +170,17 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <Brain className="w-4 h-4" />
               <span className="hidden sm:inline">IA Predictiva</span>
             </TabsTrigger>
-            <TabsTrigger value="explosivo" className="flex items-center gap-1.5 data-[state=active]:bg-red-500 data-[state=active]:text-white active:scale-95 transition-transform">
+            <TabsTrigger value="explosivo" className="flex items-center gap-1.5 data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground active:scale-95 transition-transform">
               <Flame className="w-4 h-4" />
               <span className="hidden sm:inline">Explosivo</span>
+            </TabsTrigger>
+            <TabsTrigger value="radar" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
+              <Radar className="w-4 h-4" />
+              <span className="hidden sm:inline">Radar</span>
+            </TabsTrigger>
+            <TabsTrigger value="seguimiento" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Seguimiento</span>
             </TabsTrigger>
             <TabsTrigger value="ruleta" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <Dices className="w-4 h-4" />
@@ -190,10 +214,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </TabsTrigger>
           </TabsList>
 
-          {/* IA Predictiva - ahora es el tab por defecto */}
+          {/* IA Predictiva - sin fórmulas visibles, mantiene cálculos */}
           <TabsContent value="ia" className="mt-4 space-y-6">
             <QuickPrediction />
-            <HourlyPredictionView />
             <TrendAnalysis />
             <AIPredictive />
           </TabsContent>
@@ -205,10 +228,20 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <FrequencyHeatmap />
           </TabsContent>
 
-          {/* Ruleta Universal */}
+          {/* Radar de Patrones - NUEVO */}
+          <TabsContent value="radar" className="mt-4 space-y-6">
+            <PatternRadar />
+          </TabsContent>
+
+          {/* Mi Seguimiento - NUEVO */}
+          <TabsContent value="seguimiento" className="mt-4 space-y-6">
+            <UserTrackingJournal userCode={userRole} />
+          </TabsContent>
+
+          {/* Ruleta Universal con Matriz de Secuencias */}
           <TabsContent value="ruleta" className="mt-4 space-y-6">
             <UniversalRoulette />
-            <HourlyPredictionView />
+            <SequenceMatrixView />
           </TabsContent>
 
           <TabsContent value="resultados" className="mt-4">
@@ -220,6 +253,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           </TabsContent>
 
           <TabsContent value="matriz" className="mt-4 space-y-6">
+            <SequenceMatrixView />
             <HourlyMatrix />
             <FrequencyHeatmap />
           </TabsContent>
