@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,11 +10,9 @@ import {
   Loader2,
   Sparkles,
   Target,
-  Star,
-  ChevronRight
+  Star
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Team {
@@ -46,6 +44,8 @@ const SPORTS = [
   { id: 'soccer', name: 'Fútbol', icon: '⚽' },
   { id: 'baseball', name: 'Béisbol', icon: '⚾' },
   { id: 'basketball', name: 'Básquet', icon: '🏀' },
+  { id: 'hockey', name: 'Hockey', icon: '🏒' },
+  { id: 'football', name: 'NFL', icon: '🏈' },
 ];
 
 const LEAGUES: Record<string, { id: string; name: string; country: string }[]> = {
@@ -56,26 +56,46 @@ const LEAGUES: Record<string, { id: string; name: string; country: string }[]> =
     { id: 'bundesliga', name: 'Bundesliga', country: 'Alemania' },
     { id: 'ligue1', name: 'Ligue 1', country: 'Francia' },
     { id: 'libertadores', name: 'Copa Libertadores', country: 'Sudamérica' },
+    { id: 'champions', name: 'Champions League', country: 'Europa' },
   ],
   baseball: [
     { id: 'mlb', name: 'MLB', country: 'USA' },
     { id: 'lvbp', name: 'LVBP', country: 'Venezuela' },
+    { id: 'lmp', name: 'LMP', country: 'México' },
   ],
   basketball: [
     { id: 'nba', name: 'NBA', country: 'USA' },
     { id: 'euroleague', name: 'EuroLeague', country: 'Europa' },
+    { id: 'wnba', name: 'WNBA', country: 'USA' },
+  ],
+  hockey: [
+    { id: 'nhl', name: 'NHL', country: 'USA/Canada' },
+    { id: 'khl', name: 'KHL', country: 'Rusia' },
+  ],
+  football: [
+    { id: 'nfl', name: 'NFL', country: 'USA' },
+    { id: 'ncaa', name: 'NCAA Football', country: 'USA' },
   ],
 };
 
-// Mock data generator for today's matches
+// Generate matches with complete odds
 const generateMockMatches = (sport: string, league: string): Match[] => {
   const mockTeams: Record<string, string[][]> = {
     'laliga': [['Real Madrid', 'Barcelona'], ['Atlético Madrid', 'Sevilla'], ['Valencia', 'Athletic Bilbao']],
     'premier': [['Manchester City', 'Liverpool'], ['Arsenal', 'Chelsea'], ['Tottenham', 'Manchester United']],
     'seriea': [['Inter', 'AC Milan'], ['Juventus', 'Napoli'], ['Roma', 'Lazio']],
+    'bundesliga': [['Bayern Munich', 'Borussia Dortmund'], ['RB Leipzig', 'Bayer Leverkusen']],
+    'champions': [['Real Madrid', 'Man City'], ['Bayern Munich', 'PSG']],
+    'libertadores': [['Flamengo', 'River Plate'], ['Boca Juniors', 'Palmeiras']],
     'mlb': [['Yankees', 'Red Sox'], ['Dodgers', 'Giants'], ['Cubs', 'Cardinals']],
     'lvbp': [['Leones', 'Magallanes'], ['Tiburones', 'Caribes'], ['Águilas', 'Navegantes']],
+    'lmp': [['Yaquis', 'Tomateros'], ['Mayos', 'Venados']],
     'nba': [['Lakers', 'Celtics'], ['Warriors', 'Suns'], ['Nuggets', 'Bucks']],
+    'wnba': [['Aces', 'Liberty'], ['Storm', 'Sky']],
+    'nhl': [['Oilers', 'Panthers'], ['Rangers', 'Bruins']],
+    'khl': [['SKA', 'CSKA'], ['Ak Bars', 'Metallurg']],
+    'nfl': [['Chiefs', 'Eagles'], ['49ers', 'Cowboys'], ['Ravens', 'Bills']],
+    'ncaa': [['Alabama', 'Georgia'], ['Michigan', 'Ohio State']],
   };
 
   const teams = mockTeams[league] || [['Equipo A', 'Equipo B']];
@@ -298,17 +318,15 @@ export function SportsAnalytics() {
                         )}
                       </div>
 
-                      {/* Suggestion */}
-                      {match.suggestion && (
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-600 text-[10px] rounded-full font-medium">
-                            {match.probability}%
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            → {match.suggestion}
-                          </span>
-                        </div>
-                      )}
+                      {/* Odds */}
+                      <div className="flex flex-col items-end gap-0.5 text-[9px]">
+                        <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 rounded font-medium">
+                          {match.probability}%
+                        </span>
+                        <span className="text-muted-foreground">
+                          → {match.suggestion}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>

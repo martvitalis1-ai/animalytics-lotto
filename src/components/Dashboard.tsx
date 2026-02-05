@@ -43,7 +43,6 @@ import { DatoRicardoSection } from "./DatoRicardoSection";
 import { HypothesisAudit } from "./HypothesisAudit";
 import { UserTrackingJournal } from "./UserTrackingJournal";
 import { PatternRadar } from "./PatternRadar";
-import { SequenceMatrixView } from "./SequenceMatrixView";
 import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
@@ -241,7 +240,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           {/* Ruleta Universal con Matriz de Secuencias */}
           <TabsContent value="ruleta" className="mt-4 space-y-6">
             <UniversalRoulette />
-            <SequenceMatrixView />
           </TabsContent>
 
           <TabsContent value="resultados" className="mt-4">
@@ -253,7 +251,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           </TabsContent>
 
           <TabsContent value="matriz" className="mt-4 space-y-6">
-            <SequenceMatrixView />
             <HourlyMatrix />
             <FrequencyHeatmap />
           </TabsContent>
