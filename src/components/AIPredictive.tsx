@@ -19,6 +19,8 @@ import {
   getAccuracyStats,
   loadLearningData
 } from '@/lib/predictionCache';
+import { generateBrainPredictions, BrainPrediction } from '@/lib/brainEngine';
+import { LEARNING_START_DATE } from '@/lib/hypothesisEngine';
 
 export function AIPredictive() {
   const [predictions, setPredictions] = useState<Record<string, CachedPrediction>>({});
@@ -29,6 +31,45 @@ export function AIPredictive() {
   const [hourlyPredictions, setHourlyPredictions] = useState<Record<string, Record<string, CachedPrediction>>>({});
   const [accuracyStats, setAccuracyStats] = useState<{ overall: number; streak: number }>({ overall: 0, streak: 0 });
   const [cacheDate, setCacheDate] = useState<string>('');
+  const [brainPredictions, setBrainPredictions] = useState<Record<string, BrainPrediction[]>>({});
+  const [history, setHistory] = useState<any[]>([]);
+
+  // Load history with Supabase Realtime
+  useEffect(() => {
+    const loadHistory = async () => {
+      const { data } = await supabase
+        .from('lottery_results')
+        .select('*')
+        .gte('draw_date', LEARNING_START_DATE)
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        setHistory(data);
+        console.log(`[AIPredictive] Loaded ${data.length} results since ${LEARNING_START_DATE}`);
+      }
+    };
+    
+    loadHistory();
+    
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('ai-predictive-realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'lottery_results' 
+      }, (payload) => {
+        console.log('[AIPredictive] Realtime update received:', payload.eventType);
+        loadHistory();
+        // Auto-regenerate predictions on new data
+        setTimeout(() => generatePredictions(), 1000);
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   /**
    * Genera predicciones usando el sistema de cache determinístico
@@ -38,25 +79,25 @@ export function AIPredictive() {
     setLoading(true);
     
     try {
-      const { data: history } = await supabase
-        .from('lottery_results')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(500);
-      
-      if (history && history.length > 0) {
+      if (history && history.length > 10) {
         const allPredictions: Record<string, CachedPrediction> = {};
         const allHourlyPredictions: Record<string, Record<string, CachedPrediction>> = {};
+        const allBrainPredictions: Record<string, BrainPrediction[]> = {};
         
-        // Generar predicciones con cache determinístico
+        // Generate predictions with cache determinístico + Brain Engine
         for (const lottery of LOTTERIES) {
           const { general, hourly } = getAllCachedPredictions(history, lottery.id);
           allPredictions[lottery.id] = general;
           allHourlyPredictions[lottery.id] = hourly;
+          
+          // Brain Engine V6.0 predictions
+          const brainPreds = await generateBrainPredictions(lottery.id, history, 5);
+          allBrainPredictions[lottery.id] = brainPreds;
         }
         
         setPredictions(allPredictions);
         setHourlyPredictions(allHourlyPredictions);
+        setBrainPredictions(allBrainPredictions);
         setLastUpdate(new Date());
         setCacheDate(getTodayDate());
         
@@ -111,7 +152,7 @@ export function AIPredictive() {
     }
     
     setLoading(false);
-  }, []);
+  }, [history]);
 
   /**
    * Cargar predicciones de Ricardo
@@ -170,8 +211,10 @@ export function AIPredictive() {
   }, [generatePredictions]);
 
   useEffect(() => {
-    loadOrGeneratePredictions();
-    loadRicardoPredictions();
+    if (history.length > 0) {
+      loadOrGeneratePredictions();
+      loadRicardoPredictions();
+    }
     
     // Verificar cambio de día
     const checkDateChange = setInterval(() => {
@@ -182,7 +225,7 @@ export function AIPredictive() {
     }, 60000); // Verificar cada minuto
     
     return () => clearInterval(checkDateChange);
-  }, [loadOrGeneratePredictions, loadRicardoPredictions, cacheDate, generatePredictions]);
+  }, [loadOrGeneratePredictions, loadRicardoPredictions, cacheDate, generatePredictions, history.length]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

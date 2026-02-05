@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Sparkles, Brain, ArrowRight, Loader2 } from "lucide-react";
+import { Calculator, Sparkles, Brain, Loader2, Zap, Trophy } from "lucide-react";
 import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
 import { calculateCrossFormulas, calculateProbabilities } from '@/lib/probabilityEngine';
 import { getLotteryLogo } from "./LotterySelector";
 import { supabase } from "@/integrations/supabase/client";
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
 
 export function QuickPrediction() {
   const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
@@ -144,60 +145,78 @@ export function QuickPrediction() {
           Calcular Predicción
         </Button>
 
-        {/* Resultados de Fórmulas Matemáticas - Oculto visualmente pero cálculos intactos */}
+        {/* Resultados Finales TOP 5 - Sin fórmulas, solo resultados */}
         {predictions.length > 0 && (
-          <div className="space-y-3 pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-amber-500" />
-              <h3 className="text-sm font-bold">Resultados Calculados</h3>
-              <span className="text-[10px] text-muted-foreground">({predictions.length} combinaciones)</span>
+          <div className="space-y-3 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-bold">Top 5 Calculados</h3>
+              </div>
+              <span className="text-[10px] text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
+                {predictions.length} procesados
+              </span>
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-              {predictions.map((pred, idx) => (
-                <div key={idx} className="flex flex-col items-center p-2 bg-amber-500/10 rounded-lg">
-                  <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400">
-                    {pred.number.padStart(2, '0')}
-                  </span>
-                  {lottery?.type === 'animals' && (
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center truncate w-full">
-                      {ANIMAL_MAPPING[pred.number] || ANIMAL_MAPPING[parseInt(pred.number).toString()] || ''}
+            <div className="grid grid-cols-5 gap-2">
+              {predictions.slice(0, 5).map((pred, idx) => {
+                const emoji = getAnimalEmoji(pred.number);
+                const name = getAnimalName(pred.number);
+                return (
+                  <div 
+                    key={idx} 
+                    className={`flex flex-col items-center p-3 rounded-lg border transition-all ${
+                      idx === 0 
+                        ? 'bg-amber-500/20 border-amber-500/50' 
+                        : 'bg-muted/30 border-border'
+                    }`}
+                  >
+                    <span className="text-2xl mb-1">{emoji}</span>
+                    <span className={`font-mono font-black text-xl ${
+                      idx === 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
+                    }`}>
+                      {pred.number.padStart(2, '0')}
                     </span>
-                  )}
-                </div>
-              ))}
+                    <span className="text-[9px] text-muted-foreground text-center truncate w-full mt-0.5">
+                      {name}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Predicciones de IA */}
         {aiPredictions.length > 0 && (
-          <div className="space-y-3 pt-4 border-t">
+          <div className="space-y-3 pt-4 border-t border-border">
             <div className="flex items-center gap-2">
               <Brain className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-bold">Predicción IA Combinada</h3>
+              <Zap className="w-3 h-3 text-amber-500" />
             </div>
             <div className="grid gap-2">
               {aiPredictions.map((pred, idx) => (
                 <div 
                   key={idx} 
-                  className={`flex items-center gap-2 p-2 rounded-lg ${
-                    idx === 0 ? 'bg-primary/20 border border-primary/30' : 'bg-muted/50'
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                    idx === 0 ? 'bg-primary/10 border-2 border-primary/30' : 'bg-muted/30 border border-border'
                   }`}
                 >
+                  <span className="text-2xl">{getAnimalEmoji(pred.number)}</span>
                   <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
                     idx === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20'
                   }`}>
                     {idx + 1}
                   </span>
-                  <span className="font-mono font-black text-xl w-8">
+                  <span className="font-mono font-black text-xl">
                     {pred.number.padStart(2, '0')}
                   </span>
-                  {lottery?.type === 'animals' && (
-                    <span className="text-xs text-muted-foreground">
-                      ({ANIMAL_MAPPING[pred.number] || ANIMAL_MAPPING[parseInt(pred.number).toString()] || ''})
-                    </span>
-                  )}
-                  <span className="text-xs text-muted-foreground flex-1 text-right">{pred.reason}</span>
+                  <span className="text-sm font-medium">
+                    {getAnimalName(pred.number)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground flex-1 text-right line-clamp-1">
+                    {pred.reason}
+                  </span>
                 </div>
               ))}
             </div>

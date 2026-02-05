@@ -12,7 +12,9 @@ import {
   Clock, 
   Save,
   Loader2,
-  History
+  History,
+  Ticket,
+  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
@@ -170,17 +172,67 @@ export function UserTrackingJournal({ userCode = 'anonymous' }: UserTrackingJour
     }
   };
 
+  // Ticket Digital Dinámico Design
+  const TicketPreview = () => {
+    if (!selectedNumber) return null;
+    
+    return (
+      <div className="relative p-4 bg-gradient-to-br from-primary/20 via-background to-accent/20 rounded-xl border-2 border-primary/50 shadow-lg animate-in fade-in zoom-in">
+        {/* Ticket Header */}
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-primary/30">
+          <div className="flex items-center gap-2">
+            <Ticket className="w-5 h-5 text-primary" />
+            <span className="font-bold text-sm">TICKET DE SEGUIMIENTO</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground">
+            {new Date().toLocaleDateString()}
+          </span>
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex items-center justify-center gap-4">
+          <span className="text-5xl">{previewAnimalEmoji}</span>
+          <div className="text-center">
+            <span className="font-mono font-black text-4xl text-primary block">
+              {selectedNumber === '0' ? '0' : selectedNumber === '00' ? '00' : selectedNumber.padStart(2, '0')}
+            </span>
+            <span className="text-lg font-bold uppercase tracking-wide">{previewAnimalName}</span>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="mt-3 pt-2 border-t border-dashed border-primary/30 flex items-center justify-between text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <img src={getLotteryLogo(selectedLottery)} alt="" className="w-4 h-4" />
+            <span>{lottery?.name}</span>
+          </div>
+          <span>{selectedTime}</span>
+        </div>
+        
+        {/* Decorative corner cuts */}
+        <div className="absolute -top-1 -left-1 w-3 h-3 bg-background rounded-full border border-primary/30" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-background rounded-full border border-primary/30" />
+        <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-background rounded-full border border-primary/30" />
+        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-background rounded-full border border-primary/30" />
+      </div>
+    );
+  };
+
   return (
-    <Card className="glass-card border-2 border-primary/30">
+    <Card className="glass-card border-2 border-primary/30 overflow-hidden">
+      {/* Decorative header stripe */}
+      <div className="h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+      
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/70">
             <BookOpen className="w-5 h-5 text-primary-foreground" />
           </div>
           Mi Seguimiento
+          <Sparkles className="w-4 h-4 text-amber-500 ml-auto" />
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Registra tus selecciones y analiza tu historial personal
+          Ticket Digital Dinámico • Registra y analiza tus selecciones
         </p>
       </CardHeader>
 
@@ -260,20 +312,8 @@ export function UserTrackingJournal({ userCode = 'anonymous' }: UserTrackingJour
             </div>
           </div>
 
-          {/* Animal Preview - Instant */}
-          {selectedNumber && (
-            <div className="flex items-center justify-center p-3 bg-primary/10 rounded-lg border border-primary/30 animate-in fade-in slide-in-from-bottom-2">
-              <div className="flex items-center gap-3">
-                <span className="text-4xl">{previewAnimalEmoji}</span>
-                <div className="text-center">
-                  <span className="font-mono font-black text-2xl text-primary block">
-                    {selectedNumber === '0' ? '0' : selectedNumber === '00' ? '00' : selectedNumber.padStart(2, '0')}
-                  </span>
-                  <span className="text-sm font-bold">{previewAnimalName}</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Ticket Digital Preview */}
+          <TicketPreview />
 
           {/* Notes */}
           <div className="space-y-1.5">

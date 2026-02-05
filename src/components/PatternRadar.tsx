@@ -32,7 +32,31 @@ interface Alert {
   probability: number;
   reason: string;
   timestamp: Date;
+  dismissed?: boolean;
+  missCount?: number;
 }
+
+// Storage key for dismissed alerts
+const DISMISSED_ALERTS_KEY = 'radar_dismissed_alerts';
+
+// Load dismissed alerts from localStorage
+const loadDismissedAlerts = (): Record<string, number> => {
+  try {
+    const stored = localStorage.getItem(DISMISSED_ALERTS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+// Save dismissed alerts to localStorage
+const saveDismissedAlerts = (dismissed: Record<string, number>) => {
+  try {
+    localStorage.setItem(DISMISSED_ALERTS_KEY, JSON.stringify(dismissed));
+  } catch (e) {
+    console.warn('Failed to save dismissed alerts');
+  }
+};
 
 export function PatternRadar() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -41,6 +65,24 @@ export function PatternRadar() {
   const [currentAlert, setCurrentAlert] = useState<Alert | null>(null);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [lastScan, setLastScan] = useState<Date | null>(null);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Record<string, number>>(loadDismissedAlerts());
+
+  // Descarte logic: If number didn't appear, don't show again unless >90%
+  const shouldShowAlert = useCallback((alertId: string, probability: number): boolean => {
+    const missCount = dismissedAlerts[alertId] || 0;
+    
+    // If dismissed once and probability < 90%, don't show
+    if (missCount > 0 && probability < 90) {
+      return false;
+    }
+    
+    // If dismissed multiple times, only show if probability > 95%
+    if (missCount >= 2 && probability < 95) {
+      return false;
+    }
+    
+    return true;
+  }, [dismissedAlerts]);
 
   const runPatternScan = useCallback(async () => {
     setLoading(true);
@@ -82,6 +124,13 @@ export function PatternRadar() {
         // Check for high probability patterns (>85%)
         for (const successor of successors.slice(0, 5)) {
           if (successor.percentage >= 85) {
+              const alertId = `${lottery.id}-${successor.code}-succ`;
+              
+              // Apply descarte logic
+              if (!shouldShowAlert(alertId, successor.percentage)) {
+                continue;
+              }
+              
             // Find next applicable draw time
             for (const time of drawTimes) {
               const match = time.match(/(\d{2}):(\d{2})\s*(AM|PM)/i);
@@ -179,7 +228,8 @@ export function PatternRadar() {
       // Show popup for the highest alert if enabled
       if (alertsEnabled && newAlerts.length > 0) {
         const topAlert = newAlerts[0];
-        if (topAlert.probability >= 85) {
+        // Only show popup for >90% probability (recurrence logic)
+        if (topAlert.probability >= 90) {
           setCurrentAlert(topAlert);
           setShowPopup(true);
         }
@@ -201,6 +251,12 @@ export function PatternRadar() {
   }, [runPatternScan]);
 
   const dismissAlert = (id: string) => {
+    // Update miss count for descarte logic
+    const newDismissed = { ...dismissedAlerts };
+    newDismissed[id] = (newDismissed[id] || 0) + 1;
+    setDismissedAlerts(newDismissed);
+    saveDismissedAlerts(newDismissed);
+    
     setAlerts(prev => prev.filter(a => a.id !== id));
     if (currentAlert?.id === id) {
       setShowPopup(false);
