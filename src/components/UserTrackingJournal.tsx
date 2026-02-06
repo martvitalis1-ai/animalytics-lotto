@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BookOpen, 
-  Plus, 
   Trash2, 
   Calendar, 
   Clock, 
@@ -14,14 +13,15 @@ import {
   Loader2,
   History,
   Ticket,
-  Sparkles
+  Sparkles,
+  Printer
 } from "lucide-react";
 import { toast } from "sonner";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
 import { getAnimalName, getAnimalEmoji, getMaxNumberForLottery } from '@/lib/animalData';
-import { RichAnimalCard } from './RichAnimalCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThermalTicketGrid } from './ThermalTicket';
 
 interface TrackingLog {
   id: string;
@@ -341,11 +341,11 @@ export function UserTrackingJournal({ userCode = 'anonymous' }: UserTrackingJour
           </Button>
         </div>
 
-        {/* History List */}
-        <div className="space-y-2">
+        {/* History - Thermal Ticket Grid */}
+        <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <History className="w-4 h-4" />
-            Historial Reciente
+            <Printer className="w-4 h-4" />
+            Mis Tickets Digitales
           </div>
 
           {loading ? (
@@ -355,58 +355,14 @@ export function UserTrackingJournal({ userCode = 'anonymous' }: UserTrackingJour
           ) : logs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No hay registros aún</p>
-              <p className="text-xs">Comienza a registrar tus selecciones</p>
+              <p className="text-sm">No hay tickets aún</p>
+              <p className="text-xs">Registra tus selecciones para ver los tickets</p>
             </div>
           ) : (
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2 pr-4">
-                {logs.map((log) => {
-                  const lotteryInfo = LOTTERIES.find(l => l.id === log.lottery_type);
-                  return (
-                    <div
-                      key={log.id}
-                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors group"
-                    >
-                      <span className="text-2xl">{getAnimalEmoji(log.selected_number)}</span>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-lg">
-                            {log.selected_number === '0' ? '0' : log.selected_number === '00' ? '00' : log.selected_number.padStart(2, '0')}
-                          </span>
-                          <span className="text-sm font-medium">{log.animal_name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                          {lotteryInfo && (
-                            <img src={getLotteryLogo(log.lottery_type)} alt="" className="w-3 h-3" />
-                          )}
-                          <span>{lotteryInfo?.name || log.lottery_type}</span>
-                          <span>•</span>
-                          <span>{log.draw_date}</span>
-                          <span>•</span>
-                          <span>{log.draw_time}</span>
-                        </div>
-                        {log.notes && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                            📝 {log.notes}
-                          </p>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                        onClick={() => handleDelete(log.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <ThermalTicketGrid 
+              tickets={logs} 
+              onDelete={handleDelete}
+            />
           )}
         </div>
       </CardContent>

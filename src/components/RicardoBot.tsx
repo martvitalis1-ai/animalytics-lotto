@@ -93,22 +93,45 @@ export function RicardoBot() {
     sessionStorage.setItem(SESSION_ADMIN_KEY, isAdmin ? 'true' : 'false');
   }, [isAdmin]);
 
-  // Load COMPLETE history without limits
+  // Load COMPLETE history + learning_state without limits
   useEffect(() => {
-    const loadHistory = async () => {
-      // NO LIMIT - Load complete history since learning start date
-      const { data } = await supabase
-        .from('lottery_results')
-        .select('*')
-        .gte('draw_date', LEARNING_START_DATE)
-        .order('created_at', { ascending: false });
+    const loadData = async () => {
+      // Re-initialize Supabase connection
+      console.log('[RicardoBot] Initializing connection and loading data...');
       
-      if (data) {
-        setHistory(data);
-        console.log(`[RicardoBot] Loaded ${data.length} results since ${LEARNING_START_DATE} (NO LIMIT)`);
+      // NO LIMIT - Load complete history since learning start date
+      const [historyResult, learningResult, memoryResult] = await Promise.all([
+        supabase
+          .from('lottery_results')
+          .select('*')
+          .gte('draw_date', LEARNING_START_DATE)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('learning_state')
+          .select('*')
+          .eq('status', 'active')
+          .order('weight', { ascending: false })
+          .limit(50),
+        supabase
+          .from('bot_memory')
+          .select('*')
+          .eq('is_active', true)
+      ]);
+      
+      if (historyResult.data) {
+        setHistory(historyResult.data);
+        console.log(`[RicardoBot] Loaded ${historyResult.data.length} results since ${LEARNING_START_DATE}`);
+      }
+      
+      if (learningResult.data) {
+        console.log(`[RicardoBot] Loaded ${learningResult.data.length} learning states`);
+      }
+      
+      if (memoryResult.data) {
+        console.log(`[RicardoBot] Loaded ${memoryResult.data.length} bot memories`);
       }
     };
-    loadHistory();
+    loadData();
 
     let updateTimeout: NodeJS.Timeout;
     const channel = supabase
@@ -116,7 +139,7 @@ export function RicardoBot() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => {
         clearTimeout(updateTimeout);
         updateTimeout = setTimeout(() => {
-          loadHistory();
+          loadData();
         }, 2000);
       })
       .subscribe();
