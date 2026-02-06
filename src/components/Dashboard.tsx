@@ -43,6 +43,7 @@ import { DatoRicardoSection } from "./DatoRicardoSection";
 import { HypothesisAudit } from "./HypothesisAudit";
 import { UserTrackingJournal } from "./UserTrackingJournal";
 import { PatternRadar } from "./PatternRadar";
+import { SequenceMatrixView } from "./SequenceMatrixView";
 import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
@@ -237,7 +238,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <UserTrackingJournal userCode={userRole} />
           </TabsContent>
 
-          {/* Ruleta Universal con Matriz de Secuencias */}
+          {/* Ruleta Universal - Sin matrices en esta zona */}
           <TabsContent value="ruleta" className="mt-4 space-y-6">
             <UniversalRoulette />
           </TabsContent>
@@ -250,7 +251,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <Verification />
           </TabsContent>
 
+          {/* Matriz consolidada con secuencias */}
           <TabsContent value="matriz" className="mt-4 space-y-6">
+            <SequenceMatrixView />
             <HourlyMatrix />
             <FrequencyHeatmap />
           </TabsContent>

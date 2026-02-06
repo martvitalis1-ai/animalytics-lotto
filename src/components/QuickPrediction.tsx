@@ -1,20 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Sparkles, Brain, Loader2, Zap, Trophy } from "lucide-react";
-import { LOTTERIES, ANIMAL_MAPPING, getDrawTimesForLottery } from '@/lib/constants';
-import { calculateCrossFormulas, calculateProbabilities } from '@/lib/probabilityEngine';
+import { Calculator, Sparkles, Brain, Loader2, Zap, Trophy, Lock } from "lucide-react";
+import { LOTTERIES, ANIMAL_MAPPING } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { generateUniBrainPredictions, UniBrainPrediction } from '@/lib/unibrain';
+import { LEARNING_START_DATE } from '@/lib/hypothesisEngine';
 
 export function QuickPrediction() {
   const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
   const [lastResults, setLastResults] = useState<string[]>(['', '', '', '']);
-  const [predictions, setPredictions] = useState<{ number: string; formula: string }[]>([]);
-  const [aiPredictions, setAiPredictions] = useState<{ number: string; reason: string }[]>([]);
+  const [predictions, setPredictions] = useState<UniBrainPrediction[]>([]);
   const [loading, setLoading] = useState(false);
 
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
@@ -33,32 +33,22 @@ export function QuickPrediction() {
 
     setLoading(true);
 
-    // Fórmulas matemáticas cruzadas
-    const mathPredictions = calculateCrossFormulas(validResults);
-    setPredictions(mathPredictions.slice(0, 8));
-
-    // Obtener historial y calcular probabilidades con IA
+    // Obtener historial completo desde LEARNING_START_DATE
     const { data: history } = await supabase
       .from('lottery_results')
       .select('*')
-      .eq('lottery_type', selectedLottery)
-      .order('created_at', { ascending: false })
-      .limit(200);
+      .gte('draw_date', LEARNING_START_DATE)
+      .order('created_at', { ascending: false });
 
     if (history) {
-      const aiResults = calculateProbabilities(history, selectedLottery);
+      // UNIBRAIN V5.1 - Algoritmo unificado con Regla del 19
+      const uniBrainPreds = await generateUniBrainPredictions(
+        validResults,
+        selectedLottery,
+        history
+      );
       
-      // Combinar con las fórmulas matemáticas para dar peso extra
-      const mathNumbers = new Set(mathPredictions.map(p => p.number));
-      const boostedResults = aiResults.map(r => ({
-        ...r,
-        probability: mathNumbers.has(r.number) ? r.probability + 20 : r.probability
-      })).sort((a, b) => b.probability - a.probability);
-
-      setAiPredictions(boostedResults.slice(0, 5).map(r => ({
-        number: r.number,
-        reason: r.reason || `Probabilidad: ${r.probability.toFixed(1)}%`
-      })));
+      setPredictions(uniBrainPreds);
     }
 
     setLoading(false);
@@ -151,74 +141,61 @@ export function QuickPrediction() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold">Top 5 Calculados</h3>
+                <h3 className="text-sm font-bold">Top 5 UNIBRAIN</h3>
+                <Lock className="w-3 h-3 text-primary" />
               </div>
               <span className="text-[10px] text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-                {predictions.length} procesados
+                Algoritmo V5.1
               </span>
             </div>
+            
+            {/* Grid de resultados - Solo números, sin fórmulas */}
             <div className="grid grid-cols-5 gap-2">
-              {predictions.slice(0, 5).map((pred, idx) => {
-                const emoji = getAnimalEmoji(pred.number);
-                const name = getAnimalName(pred.number);
-                return (
-                  <div 
-                    key={idx} 
-                    className={`flex flex-col items-center p-3 rounded-lg border transition-all ${
-                      idx === 0 
-                        ? 'bg-amber-500/20 border-amber-500/50' 
-                        : 'bg-muted/30 border-border'
-                    }`}
-                  >
-                    <span className="text-2xl mb-1">{emoji}</span>
-                    <span className={`font-mono font-black text-xl ${
-                      idx === 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
-                    }`}>
-                      {pred.number.padStart(2, '0')}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground text-center truncate w-full mt-0.5">
-                      {name}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Predicciones de IA */}
-        {aiPredictions.length > 0 && (
-          <div className="space-y-3 pt-4 border-t border-border">
-            <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-bold">Predicción IA Combinada</h3>
-              <Zap className="w-3 h-3 text-amber-500" />
-            </div>
-            <div className="grid gap-2">
-              {aiPredictions.map((pred, idx) => (
+              {predictions.slice(0, 5).map((pred, idx) => (
                 <div 
                   key={idx} 
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                    idx === 0 ? 'bg-primary/10 border-2 border-primary/30' : 'bg-muted/30 border border-border'
+                  className={`flex flex-col items-center p-3 rounded-lg border transition-all ${
+                    idx === 0 
+                      ? 'bg-amber-500/20 border-amber-500/50' 
+                      : pred.confidence === 'HIGH'
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'bg-muted/30 border-border'
                   }`}
                 >
-                  <span className="text-2xl">{getAnimalEmoji(pred.number)}</span>
-                  <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
-                    idx === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20'
+                  <span className="text-2xl mb-1">{pred.emoji}</span>
+                  <span className={`font-mono font-black text-xl ${
+                    idx === 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
                   }`}>
-                    {idx + 1}
+                    {pred.code.padStart(2, '0')}
                   </span>
-                  <span className="font-mono font-black text-xl">
-                    {pred.number.padStart(2, '0')}
+                  <span className="text-[9px] text-muted-foreground text-center truncate w-full mt-0.5">
+                    {pred.name}
                   </span>
-                  <span className="text-sm font-medium">
-                    {getAnimalName(pred.number)}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground flex-1 text-right line-clamp-1">
-                    {pred.reason}
+                  {/* Indicador de confianza sin mostrar fórmula */}
+                  <span className={`text-[8px] mt-1 px-1.5 py-0.5 rounded ${
+                    pred.confidence === 'HIGH' 
+                      ? 'bg-primary/20 text-primary' 
+                      : pred.confidence === 'MEDIUM'
+                        ? 'bg-muted text-muted-foreground'
+                        : 'bg-muted/50 text-muted-foreground/70'
+                  }`}>
+                    {pred.probability}%
                   </span>
                 </div>
               ))}
+            </div>
+
+            {/* Leyenda sin revelar fórmulas */}
+            <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                Procesado con UNIBRAIN
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Zap className="w-3 h-3 text-amber-500" />
+                Regla del 19 activa
+              </span>
             </div>
           </div>
         )}
