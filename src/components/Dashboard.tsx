@@ -14,7 +14,8 @@ import {
   BarChart3,
   BookOpen,
   Radar,
-  TrendingUp
+  TrendingUp,
+  Trophy
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,10 @@ import { HypothesisAudit } from "./HypothesisAudit";
 import { UserTrackingJournal } from "./UserTrackingJournal";
 import { PatternRadar } from "./PatternRadar";
 import { SequenceMatrixView } from "./SequenceMatrixView";
+import { AdminImageUpload } from "./AdminImageUpload";
+import { DataMapDisplay } from "./DataMapDisplay";
+import { HourlyPredictionView } from "./HourlyPredictionView";
+import { SportsAnalytics } from "./SportsAnalytics";
 import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
@@ -129,15 +134,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/sports')}
-                className="hidden sm:flex items-center gap-1.5"
-              >
-                <TrendingUp className="w-4 h-4" />
-                Deportes
-              </Button>
               <ThemeToggle />
               <NotificationCenter />
               <ExportTools type="results" filename="resultados" />
@@ -186,6 +182,11 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <Dices className="w-4 h-4" />
               <span className="hidden sm:inline">Ruleta</span>
             </TabsTrigger>
+            {/* DEPORTES - En la navegación principal */}
+            <TabsTrigger value="deportes" className="flex items-center gap-1.5 data-[state=active]:bg-emerald-500 data-[state=active]:text-white active:scale-95 transition-transform">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden sm:inline">Deportes</span>
+            </TabsTrigger>
             <TabsTrigger value="resultados" className="flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground active:scale-95 transition-transform">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Resultados</span>
@@ -214,8 +215,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </TabsTrigger>
           </TabsList>
 
-          {/* IA Predictiva - sin fórmulas visibles, mantiene cálculos */}
+          {/* IA Predictiva - con vista dinámica por hora */}
           <TabsContent value="ia" className="mt-4 space-y-6">
+            <HourlyPredictionView />
             <QuickPrediction />
             <TrendAnalysis />
             <AIPredictive />
@@ -238,9 +240,15 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <UserTrackingJournal userCode={userRole} />
           </TabsContent>
 
-          {/* Ruleta Universal - Sin matrices en esta zona */}
+          {/* Ruleta Universal - Con mapa de datos */}
           <TabsContent value="ruleta" className="mt-4 space-y-6">
             <UniversalRoulette />
+            <DataMapDisplay />
+          </TabsContent>
+
+          {/* DEPORTES - Nueva sección */}
+          <TabsContent value="deportes" className="mt-4 space-y-6">
+            <SportsAnalytics />
           </TabsContent>
 
           <TabsContent value="resultados" className="mt-4">
@@ -268,8 +276,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="admin" className="mt-4 space-y-4">
             <div className="grid gap-4 lg:grid-cols-2">
               <AdminUserManagement />
-              <HistoryManager />
+              <AdminImageUpload />
             </div>
+            <HistoryManager />
             <HypothesisAudit />
             <DatoRicardo />
           </TabsContent>

@@ -10,7 +10,10 @@ import {
   Loader2,
   Sparkles,
   Target,
-  Star
+  Star,
+  ArrowUp,
+  ArrowDown,
+  Minus
 } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,14 +25,25 @@ interface Team {
   trend?: 'up' | 'down' | 'neutral';
 }
 
+interface MatchOdds {
+  homeWin: number;
+  draw: number;
+  awayWin: number;
+  over: number;
+  under: number;
+  overLine: number;
+}
+
 interface Match {
   id: string;
   homeTeam: Team;
   awayTeam: Team;
   time: string;
   league: string;
-  probability?: number;
-  suggestion?: string;
+  odds: MatchOdds;
+  probability: number;
+  suggestion: string;
+  suggestedMarket: 'home' | 'draw' | 'away' | 'over' | 'under';
 }
 
 interface StrategicPick {
@@ -38,6 +52,7 @@ interface StrategicPick {
   sport: string;
   probability: number;
   reason: string;
+  market: string;
 }
 
 const SPORTS = [
@@ -86,13 +101,13 @@ const generateMockMatches = (sport: string, league: string): Match[] => {
     'seriea': [['Inter', 'AC Milan'], ['Juventus', 'Napoli'], ['Roma', 'Lazio']],
     'bundesliga': [['Bayern Munich', 'Borussia Dortmund'], ['RB Leipzig', 'Bayer Leverkusen']],
     'champions': [['Real Madrid', 'Man City'], ['Bayern Munich', 'PSG']],
-    'libertadores': [['Flamengo', 'River Plate'], ['Boca Juniors', 'Palmeiras']],
+    'libertadores': [['Flamengo', 'River Plate'], ['Boca Juniors', 'Palmeiras'], ['Atlético Mineiro', 'Fluminense']],
     'mlb': [['Yankees', 'Red Sox'], ['Dodgers', 'Giants'], ['Cubs', 'Cardinals']],
     'lvbp': [['Leones', 'Magallanes'], ['Tiburones', 'Caribes'], ['Águilas', 'Navegantes']],
     'lmp': [['Yaquis', 'Tomateros'], ['Mayos', 'Venados']],
     'nba': [['Lakers', 'Celtics'], ['Warriors', 'Suns'], ['Nuggets', 'Bucks']],
     'wnba': [['Aces', 'Liberty'], ['Storm', 'Sky']],
-    'nhl': [['Oilers', 'Panthers'], ['Rangers', 'Bruins']],
+    'nhl': [['Oilers', 'Panthers'], ['Rangers', 'Bruins'], ['Avalanche', 'Golden Knights']],
     'khl': [['SKA', 'CSKA'], ['Ak Bars', 'Metallurg']],
     'nfl': [['Chiefs', 'Eagles'], ['49ers', 'Cowboys'], ['Ravens', 'Bills']],
     'ncaa': [['Alabama', 'Georgia'], ['Michigan', 'Ohio State']],
@@ -100,16 +115,76 @@ const generateMockMatches = (sport: string, league: string): Match[] => {
 
   const teams = mockTeams[league] || [['Equipo A', 'Equipo B']];
   const times = ['2:00 PM', '4:00 PM', '7:00 PM', '9:00 PM'];
+  const hasDrawOption = sport === 'soccer';
 
-  return teams.map((pair, idx) => ({
-    id: `${league}-${idx}`,
-    homeTeam: { name: pair[0], trend: Math.random() > 0.5 ? 'up' : 'neutral' },
-    awayTeam: { name: pair[1], trend: Math.random() > 0.5 ? 'up' : 'down' },
-    time: times[idx] || times[0],
-    league: LEAGUES[sport]?.find(l => l.id === league)?.name || league,
-    probability: Math.round(50 + Math.random() * 35),
-    suggestion: Math.random() > 0.5 ? pair[0] : pair[1],
-  }));
+  return teams.map((pair, idx) => {
+    // Generate realistic odds
+    const homeStrength = 40 + Math.random() * 30;
+    const awayStrength = 30 + Math.random() * 30;
+    const drawProb = hasDrawOption ? 15 + Math.random() * 15 : 0;
+    
+    const total = homeStrength + awayStrength + drawProb;
+    const homeWin = Math.round((homeStrength / total) * 100);
+    const awayWin = Math.round((awayStrength / total) * 100);
+    const draw = hasDrawOption ? 100 - homeWin - awayWin : 0;
+
+    // Over/Under line based on sport
+    const overLines: Record<string, number> = {
+      soccer: 2.5,
+      basketball: 220.5,
+      baseball: 8.5,
+      hockey: 5.5,
+      football: 45.5,
+    };
+    const overLine = overLines[sport] || 2.5;
+    const overProb = 45 + Math.random() * 15;
+    const underProb = 100 - overProb;
+
+    // Determine best suggestion
+    let suggestion = pair[0];
+    let suggestedMarket: 'home' | 'draw' | 'away' | 'over' | 'under' = 'home';
+    let maxProb = homeWin;
+
+    if (awayWin > maxProb) {
+      suggestion = pair[1];
+      suggestedMarket = 'away';
+      maxProb = awayWin;
+    }
+    if (hasDrawOption && draw > maxProb) {
+      suggestion = 'Empate';
+      suggestedMarket = 'draw';
+      maxProb = draw;
+    }
+    if (overProb > maxProb) {
+      suggestion = `Alta (>${overLine})`;
+      suggestedMarket = 'over';
+      maxProb = Math.round(overProb);
+    }
+    if (underProb > maxProb + 5) {
+      suggestion = `Baja (<${overLine})`;
+      suggestedMarket = 'under';
+      maxProb = Math.round(underProb);
+    }
+
+    return {
+      id: `${league}-${idx}`,
+      homeTeam: { name: pair[0], trend: Math.random() > 0.5 ? 'up' : 'neutral' },
+      awayTeam: { name: pair[1], trend: Math.random() > 0.5 ? 'up' : 'down' },
+      time: times[idx] || times[0],
+      league: LEAGUES[sport]?.find(l => l.id === league)?.name || league,
+      odds: {
+        homeWin,
+        draw,
+        awayWin,
+        over: Math.round(overProb),
+        under: Math.round(underProb),
+        overLine,
+      },
+      probability: maxProb,
+      suggestion,
+      suggestedMarket,
+    };
+  });
 };
 
 export function SportsAnalytics() {
@@ -122,10 +197,10 @@ export function SportsAnalytics() {
 
   const currentSport = SPORTS.find(s => s.id === selectedSport);
   const availableLeagues = LEAGUES[selectedSport] || [];
+  const hasDrawOption = selectedSport === 'soccer';
 
   const loadMatches = useCallback(() => {
     setLoading(true);
-    // Simulate API call with mock data
     setTimeout(() => {
       const mockMatches = generateMockMatches(selectedSport, selectedLeague);
       setMatches(mockMatches);
@@ -137,7 +212,6 @@ export function SportsAnalytics() {
     loadMatches();
   }, [loadMatches]);
 
-  // Reset league when sport changes
   useEffect(() => {
     const leagues = LEAGUES[selectedSport];
     if (leagues && leagues.length > 0) {
@@ -148,10 +222,8 @@ export function SportsAnalytics() {
   const generateAIAnalysis = async () => {
     setAnalyzingAI(true);
     try {
-      // Generate strategic picks based on "analysis"
       const picks: StrategicPick[] = [];
       
-      // Pick from each sport
       for (const sport of SPORTS) {
         const sportLeagues = LEAGUES[sport.id];
         if (sportLeagues && sportLeagues.length > 0) {
@@ -163,14 +235,25 @@ export function SportsAnalytics() {
               (a.probability || 0) > (b.probability || 0) ? a : b
             );
             
+            const marketLabels: Record<string, string> = {
+              home: `Gana ${bestMatch.homeTeam.name}`,
+              away: `Gana ${bestMatch.awayTeam.name}`,
+              draw: 'Empate',
+              over: `Alta (>${bestMatch.odds.overLine})`,
+              under: `Baja (<${bestMatch.odds.overLine})`,
+            };
+            
             picks.push({
-              team: bestMatch.suggestion || bestMatch.homeTeam.name,
+              team: bestMatch.suggestion,
               league: bestMatch.league,
               sport: sport.name,
-              probability: bestMatch.probability || 70,
+              probability: bestMatch.probability,
+              market: marketLabels[bestMatch.suggestedMarket],
               reason: `Tendencia positiva en últimos 5 partidos. ${
                 sport.id === 'soccer' ? 'Defensa sólida como visitante.' :
                 sport.id === 'baseball' ? 'Pitcheo dominante esta temporada.' :
+                sport.id === 'hockey' ? 'Power play efectivo al 28%.' :
+                sport.id === 'football' ? 'Línea ofensiva dominante.' :
                 'Porcentaje de tiros alto en cuartos finales.'
               }`,
             });
@@ -178,7 +261,6 @@ export function SportsAnalytics() {
         }
       }
 
-      // Sort by probability and take top 5
       picks.sort((a, b) => b.probability - a.probability);
       setStrategicPicks(picks.slice(0, 5));
       
@@ -188,6 +270,23 @@ export function SportsAnalytics() {
       toast.error('Error al generar análisis');
     }
     setAnalyzingAI(false);
+  };
+
+  const getMarketColor = (market: string, isActive: boolean) => {
+    if (!isActive) return 'bg-muted text-muted-foreground';
+    if (market.includes('Gana') || market === 'home' || market === 'away') {
+      return 'bg-emerald-500/20 text-emerald-600 border-emerald-500/50';
+    }
+    if (market.includes('Empate') || market === 'draw') {
+      return 'bg-amber-500/20 text-amber-600 border-amber-500/50';
+    }
+    if (market.includes('Alta') || market === 'over') {
+      return 'bg-blue-500/20 text-blue-600 border-blue-500/50';
+    }
+    if (market.includes('Baja') || market === 'under') {
+      return 'bg-purple-500/20 text-purple-600 border-purple-500/50';
+    }
+    return 'bg-muted text-muted-foreground';
   };
 
   return (
@@ -217,7 +316,7 @@ export function SportsAnalytics() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Análisis estadístico de tendencias deportivas • Fútbol, Béisbol, Básquet
+            Análisis estadístico • Hockey (NHL), NFL, NBA, MLB, Fútbol (Libertadores/Champions)
           </p>
         </CardHeader>
 
@@ -263,7 +362,7 @@ export function SportsAnalytics() {
             </div>
           </div>
 
-          {/* Today's Matches */}
+          {/* Today's Matches with Full Odds */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Calendar className="w-4 h-4 text-muted-foreground" />
@@ -289,42 +388,83 @@ export function SportsAnalytics() {
                 <p className="text-sm">No hay encuentros programados</p>
               </div>
             ) : (
-              <ScrollArea className="h-[250px]">
-                <div className="space-y-2 pr-4">
+              <ScrollArea className="h-[350px]">
+                <div className="space-y-3 pr-4">
                   {matches.map((match) => (
                     <div
                       key={match.id}
-                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
-                      {/* Home Team */}
-                      <div className="flex-1 text-right">
-                        <span className="font-medium">{match.homeTeam.name}</span>
-                        {match.homeTeam.trend === 'up' && (
-                          <span className="ml-1 text-emerald-500">↑</span>
+                      {/* Match Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="text-right flex-1">
+                            <span className="font-medium">{match.homeTeam.name}</span>
+                            {match.homeTeam.trend === 'up' && (
+                              <ArrowUp className="inline w-3 h-3 ml-1 text-emerald-500" />
+                            )}
+                          </div>
+                          <div className="px-3 py-1 bg-card rounded-lg">
+                            <span className="text-xs text-muted-foreground">{match.time}</span>
+                            <div className="text-lg font-bold">VS</div>
+                          </div>
+                          <div className="flex-1">
+                            <span className="font-medium">{match.awayTeam.name}</span>
+                            {match.awayTeam.trend === 'up' && (
+                              <ArrowUp className="inline w-3 h-3 ml-1 text-emerald-500" />
+                            )}
+                            {match.awayTeam.trend === 'down' && (
+                              <ArrowDown className="inline w-3 h-3 ml-1 text-red-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Odds Grid */}
+                      <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                        <div className={`p-2 rounded border ${match.suggestedMarket === 'home' ? 'bg-emerald-500/20 border-emerald-500' : 'bg-muted/50 border-border'}`}>
+                          <div className="text-[10px] text-muted-foreground">Gana Local</div>
+                          <div className={`font-bold ${match.suggestedMarket === 'home' ? 'text-emerald-600' : ''}`}>
+                            {match.odds.homeWin}%
+                          </div>
+                        </div>
+                        {hasDrawOption && (
+                          <div className={`p-2 rounded border ${match.suggestedMarket === 'draw' ? 'bg-amber-500/20 border-amber-500' : 'bg-muted/50 border-border'}`}>
+                            <div className="text-[10px] text-muted-foreground">Empate</div>
+                            <div className={`font-bold ${match.suggestedMarket === 'draw' ? 'text-amber-600' : ''}`}>
+                              {match.odds.draw}%
+                            </div>
+                          </div>
                         )}
+                        <div className={`p-2 rounded border ${match.suggestedMarket === 'away' ? 'bg-emerald-500/20 border-emerald-500' : 'bg-muted/50 border-border'}`}>
+                          <div className="text-[10px] text-muted-foreground">Gana Visitante</div>
+                          <div className={`font-bold ${match.suggestedMarket === 'away' ? 'text-emerald-600' : ''}`}>
+                            {match.odds.awayWin}%
+                          </div>
+                        </div>
                       </div>
 
-                      {/* VS */}
-                      <div className="text-center px-3">
-                        <span className="text-xs text-muted-foreground block">{match.time}</span>
-                        <span className="text-lg font-bold">VS</span>
+                      {/* Over/Under */}
+                      <div className="grid grid-cols-2 gap-2 text-center">
+                        <div className={`p-2 rounded border ${match.suggestedMarket === 'over' ? 'bg-blue-500/20 border-blue-500' : 'bg-muted/50 border-border'}`}>
+                          <div className="text-[10px] text-muted-foreground">Alta (&gt;{match.odds.overLine})</div>
+                          <div className={`font-bold ${match.suggestedMarket === 'over' ? 'text-blue-600' : ''}`}>
+                            {match.odds.over}%
+                          </div>
+                        </div>
+                        <div className={`p-2 rounded border ${match.suggestedMarket === 'under' ? 'bg-purple-500/20 border-purple-500' : 'bg-muted/50 border-border'}`}>
+                          <div className="text-[10px] text-muted-foreground">Baja (&lt;{match.odds.overLine})</div>
+                          <div className={`font-bold ${match.suggestedMarket === 'under' ? 'text-purple-600' : ''}`}>
+                            {match.odds.under}%
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Away Team */}
-                      <div className="flex-1">
-                        <span className="font-medium">{match.awayTeam.name}</span>
-                        {match.awayTeam.trend === 'up' && (
-                          <span className="ml-1 text-emerald-500">↑</span>
-                        )}
-                      </div>
-
-                      {/* Odds */}
-                      <div className="flex flex-col items-end gap-0.5 text-[9px]">
-                        <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 rounded font-medium">
-                          {match.probability}%
-                        </span>
-                        <span className="text-muted-foreground">
-                          → {match.suggestion}
+                      {/* Suggestion */}
+                      <div className="mt-2 pt-2 border-t border-border flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Sugerencia IA:</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${getMarketColor(match.suggestedMarket, true)}`}>
+                          {match.suggestion} ({match.probability}%)
                         </span>
                       </div>
                     </div>
@@ -371,9 +511,10 @@ export function SportsAnalytics() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold">{pick.team}</span>
                       {idx === 0 && <Star className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                      <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded">{pick.market}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                       <span>{pick.sport}</span>
