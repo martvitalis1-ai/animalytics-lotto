@@ -75,7 +75,15 @@ export function FrequencyHeatmap() {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
 
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
-  const drawTimes = useMemo(() => DRAW_TIMES_FULL.slice(1, -1), []); // 9AM to 6PM
+  
+  // FIXED: Time range 8:00 AM to 7:30 PM
+  const drawTimes = useMemo(() => {
+    return [
+      '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+      '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
+      '06:00 PM', '07:00 PM', '07:30 PM'
+    ];
+  }, []);
   
   // Get appropriate number range for lottery - MEMOIZED
   const numberRange = useMemo(() => {
@@ -282,51 +290,91 @@ export function FrequencyHeatmap() {
           <>
             <ScrollArea className="w-full h-[400px]">
               <table className="w-full text-xs border-collapse">
-                  <thead className="sticky top-0 z-20 bg-card">
-                    <tr>
-                      <th className="sticky left-0 z-30 bg-card p-2 text-left font-semibold border-b">
-                        #
+                <thead className="sticky top-0 z-20 bg-card">
+                  <tr>
+                    <th 
+                      className="p-2 text-left font-semibold border-b min-w-[40px]"
+                      style={{ 
+                        position: 'sticky', 
+                        left: 0, 
+                        zIndex: 30, 
+                        backgroundColor: 'hsl(var(--card))',
+                        borderRight: '2px solid hsl(var(--border))',
+                        boxShadow: '2px 0 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      #
+                    </th>
+                    <th 
+                      className="p-2 text-left font-semibold border-b min-w-[80px]"
+                      style={{ 
+                        position: 'sticky', 
+                        left: 40, 
+                        zIndex: 30, 
+                        backgroundColor: 'hsl(var(--card))',
+                        borderRight: '2px solid hsl(var(--border))',
+                        boxShadow: '2px 0 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      Animal
+                    </th>
+                    {drawTimes.map(time => (
+                      <th key={time} className="p-1 text-center font-medium border-b min-w-[45px]">
+                        {time.replace(':00 ', '').replace(' ', '')}
                       </th>
-                      <th className="sticky left-10 z-30 bg-card p-2 text-left font-semibold border-b">
-                        Animal
-                      </th>
-                      {drawTimes.map(time => (
-                        <th key={time} className="p-1 text-center font-medium border-b min-w-[45px]">
-                          {time.replace(':00 ', '').replace(' ', '')}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleNumbers.map(num => {
-                      const animal = getAnimalByCode(num);
-                      const emoji = getAnimalEmoji(num);
-                      return (
-                        <tr key={num} className="hover:bg-muted/30">
-                          <td className="sticky left-0 z-10 bg-card p-1 font-mono font-bold border-b text-sm">
-                            {num === "0" ? "0" : num === "00" ? "00" : num.padStart(2, '0')}
-                          </td>
-                          <td className="sticky left-10 z-10 bg-card p-1 border-b">
-                            <div className="flex items-center gap-1">
-                              <span className="text-lg">{emoji}</span>
-                              <span className="truncate max-w-20 text-[10px] font-medium">
-                                {animal?.name || `#${num}`}
-                              </span>
-                            </div>
-                          </td>
-                          {drawTimes.map(time => {
-                            const cell = heatData[num]?.[time] || { count: 0, level: 'none' as HeatLevel };
-                            return (
-                              <td key={time} className="p-0.5 border-b">
-                                <HeatCell cell={cell} animal={animal} num={num} time={time} />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleNumbers.map(num => {
+                    const animal = getAnimalByCode(num);
+                    const emoji = getAnimalEmoji(num);
+                    return (
+                      <tr key={num} className="hover:bg-muted/30">
+                        <td 
+                          className="p-1 font-mono font-bold border-b text-sm"
+                          style={{ 
+                            position: 'sticky', 
+                            left: 0, 
+                            zIndex: 10, 
+                            backgroundColor: 'hsl(var(--card))',
+                            borderRight: '2px solid hsl(var(--border))',
+                            boxShadow: '2px 0 4px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {num === "0" ? "0" : num === "00" ? "00" : num.padStart(2, '0')}
+                        </td>
+                        <td 
+                          className="p-1 border-b"
+                          style={{ 
+                            position: 'sticky', 
+                            left: 40, 
+                            zIndex: 10, 
+                            backgroundColor: 'hsl(var(--card))',
+                            borderRight: '2px solid hsl(var(--border))',
+                            boxShadow: '2px 0 4px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg">{emoji}</span>
+                            <span className="truncate max-w-20 text-[10px] font-medium">
+                              {animal?.name || `#${num}`}
+                            </span>
+                          </div>
+                        </td>
+                        {drawTimes.map(time => {
+                          const cell = heatData[num]?.[time] || { count: 0, level: 'none' as HeatLevel };
+                          return (
+                            <td key={time} className="p-0.5 border-b">
+                              <HeatCell cell={cell} animal={animal} num={num} time={time} />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
               <ScrollBar orientation="horizontal" />
               <ScrollBar orientation="vertical" />
             </ScrollArea>

@@ -362,6 +362,7 @@ export function UserTrackingJournal({ userCode = 'anonymous' }: UserTrackingJour
             <ThermalTicketGrid 
               tickets={logs} 
               onDelete={handleDelete}
+              onUpdate={loadLogs}
             />
           )}
         </div>
