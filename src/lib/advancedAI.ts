@@ -32,75 +32,111 @@ export type WeekdayTrend = {
   frequency: number;
 };
 
-// Análisis avanzado con machine learning simulado
+/**
+ * DEFINE EL UNIVERSO LEGAL DE CADA LOTERÍA
+ * Esto evita que animales de una lotería salgan en otra.
+ */
+const getLegalPool = (lotteryId: string): string[] => {
+  const id = lotteryId.toLowerCase();
+  
+  // Loterías de 38 animales (0, 00, 01-36)
+  if (['lotto_activo', 'granjita', 'lotto_rey', 'selva_plus'].includes(id)) {
+    const pool = ['0', '00'];
+    for (let i = 1; i <= 36; i++) {
+      pool.push(i.toString().padStart(2, '0'));
+    }
+    return pool;
+  }
+  
+  // Guácharo Activo (37-75)
+  if (id === 'guacharo' || id === 'guacharo_activo') {
+    return Array.from({ length: 39 }, (_, i) => (i + 37).toString());
+  }
+  
+  // Guacharito (76-99)
+  if (id === 'guacharito') {
+    return Array.from({ length: 24 }, (_, i) => (i + 76).toString());
+  }
+
+  return [];
+};
+
+// Análisis avanzado con machine learning corregido
 export const analyzeAdvancedPatterns = (
   history: any[],
   lotteryId: string
 ): TrendAnalysis => {
-  const lotteryHistory = history.filter(h => h.lottery_type === lotteryId);
+  const legalPool = getLegalPool(lotteryId);
+  
+  // Filtramos el historial: Solo la lotería seleccionada Y números que pertenezcan a su rango legal
+  const lotteryHistory = history.filter(h => 
+    h.lottery_type === lotteryId && 
+    legalPool.includes(h.result_number?.toString().trim())
+  );
+
   const lottery = LOTTERIES.find(l => l.id === lotteryId);
   
-  // Análisis de frecuencia
   const frequencyMap = new Map<string, number>();
   const lastSeenMap = new Map<string, Date>();
   const hourlyMap = new Map<string, Map<string, number>>();
   const weekdayMap = new Map<number, Map<string, number>>();
   
+  // Inicializamos el mapa de frecuencia con 0 para TODO el pool legal
+  // Esto asegura que los números que NUNCA han salido se detecten como fríos correctamente
+  legalPool.forEach(num => frequencyMap.set(num, 0));
+
   lotteryHistory.forEach(draw => {
     const num = draw.result_number?.toString().trim();
     if (!num) return;
     
-    // Frecuencia general
     frequencyMap.set(num, (frequencyMap.get(num) || 0) + 1);
     
-    // Última vez visto
     const drawDate = new Date(draw.created_at || draw.draw_date);
     if (!lastSeenMap.has(num) || drawDate > lastSeenMap.get(num)!) {
       lastSeenMap.set(num, drawDate);
     }
     
-    // Por hora
     const hour = draw.draw_time;
     if (!hourlyMap.has(hour)) hourlyMap.set(hour, new Map());
     const hourMap = hourlyMap.get(hour)!;
     hourMap.set(num, (hourMap.get(num) || 0) + 1);
     
-    // Por día de semana
     const weekday = drawDate.getDay();
     if (!weekdayMap.has(weekday)) weekdayMap.set(weekday, new Map());
     const dayMap = weekdayMap.get(weekday)!;
     dayMap.set(num, (dayMap.get(num) || 0) + 1);
   });
   
-  // Clasificar números
-  const avgFreq = lotteryHistory.length / (lottery?.range || 36);
+  const avgFreq = lotteryHistory.length / legalPool.length;
   const now = new Date();
   
   const hotNumbers: string[] = [];
   const coldNumbers: string[] = [];
   const overdueNumbers: string[] = [];
   
-  frequencyMap.forEach((freq, num) => {
+  // Clasificar basado EXCLUSIVAMENTE en el pool legal
+  legalPool.forEach(num => {
+    const freq = frequencyMap.get(num) || 0;
     const lastSeen = lastSeenMap.get(num);
     const daysSince = lastSeen 
       ? Math.ceil((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24))
-      : 30;
+      : 99; // Si nunca ha salido, le ponemos un valor alto
     
-    if (freq > avgFreq * 1.5 && daysSince <= 3) {
+    if (freq > avgFreq * 1.2 && freq > 0) {
       hotNumbers.push(num);
-    } else if (freq < avgFreq * 0.5 || daysSince > 10) {
+    } else if (freq < avgFreq * 0.8) {
       coldNumbers.push(num);
     }
     
-    if (daysSince > 5 && freq > 0) {
+    // Si es legal pero tiene mucho tiempo sin salir
+    if (daysSince > 4) {
       overdueNumbers.push(num);
     }
   });
   
-  // Detectar patrones
-  const patterns: PatternInfo[] = detectPatterns(lotteryHistory);
+  // Detectar patrones limitados al pool legal
+  const patterns: PatternInfo[] = detectPatterns(lotteryHistory, legalPool);
   
-  // Tendencias por hora
   const hourlyTrends: HourlyTrend[] = [];
   hourlyMap.forEach((numMap, hour) => {
     const sorted = Array.from(numMap.entries())
@@ -116,7 +152,6 @@ export const analyzeAdvancedPatterns = (
     }
   });
   
-  // Tendencias por día
   const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const weekdayTrends: WeekdayTrend[] = [];
   weekdayMap.forEach((numMap, day) => {
@@ -131,7 +166,6 @@ export const analyzeAdvancedPatterns = (
     });
   });
   
-  // Generar recomendación
   const recommendation = generateRecommendation(
     hotNumbers,
     coldNumbers,
@@ -140,14 +174,13 @@ export const analyzeAdvancedPatterns = (
     lottery?.type === 'animals'
   );
   
-  // Calcular confianza
   const confidence = Math.min(95, 40 + (lotteryHistory.length / 10) + (patterns.length * 5));
   
   return {
     lotteryId,
     lotteryName: lottery?.name || lotteryId,
-    hotNumbers: hotNumbers.slice(0, 5),
-    coldNumbers: coldNumbers.slice(0, 5),
+    hotNumbers: hotNumbers.sort((a, b) => (frequencyMap.get(b) || 0) - (frequencyMap.get(a) || 0)).slice(0, 5),
+    coldNumbers: coldNumbers.sort((a, b) => (frequencyMap.get(a) || 0) - (frequencyMap.get(b) || 0)).slice(0, 5),
     overdueNumbers: overdueNumbers.slice(0, 5),
     patterns,
     hourlyTrends: hourlyTrends.sort((a, b) => b.frequency - a.frequency).slice(0, 5),
@@ -157,59 +190,34 @@ export const analyzeAdvancedPatterns = (
   };
 };
 
-// Detectar patrones en el historial
-const detectPatterns = (history: any[]): PatternInfo[] => {
+const detectPatterns = (history: any[], legalPool: string[]): PatternInfo[] => {
   const patterns: PatternInfo[] = [];
-  const recentResults = history.slice(0, 20).map(h => h.result_number);
+  const recentResults = history.slice(0, 20).map(h => h.result_number?.toString());
   
-  // Detectar repeticiones
   const repeats = new Map<string, number>();
   recentResults.forEach(num => {
-    repeats.set(num, (repeats.get(num) || 0) + 1);
+    if (num) repeats.set(num, (repeats.get(num) || 0) + 1);
   });
   
   repeats.forEach((count, num) => {
     if (count >= 2) {
       patterns.push({
         type: 'repeat',
-        description: `El ${num} (${ANIMAL_MAPPING[num] || 'Número'}) ha salido ${count} veces en los últimos 20 sorteos`,
+        description: `El ${num} (${ANIMAL_MAPPING[num] || 'Animal'}) ha salido ${count} veces recientemente`,
         numbers: [num],
         probability: Math.min(80, 30 + count * 15)
       });
     }
   });
   
-  // Detectar secuencias
-  for (let i = 0; i < recentResults.length - 2; i++) {
-    const a = parseInt(recentResults[i]);
-    const b = parseInt(recentResults[i + 1]);
-    const c = parseInt(recentResults[i + 2]);
-    
-    if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
-      if (b === a + 1 && c === b + 1) {
-        patterns.push({
-          type: 'sequence',
-          description: `Secuencia ascendente detectada: ${a}-${b}-${c}`,
-          numbers: [a.toString(), b.toString(), c.toString()],
-          probability: 45
-        });
-      }
-    }
-  }
+  // Gap Detection: Solo buscar números faltantes DENTRO del pool legal
+  const seenInRecent = new Set(recentResults);
+  const missing = legalPool.filter(num => !seenInRecent.has(num));
   
-  // Detectar gaps (números que no han salido en mucho tiempo)
-  const allNumbers = new Set(recentResults);
-  const missing: string[] = [];
-  for (let i = 0; i <= 36; i++) {
-    if (!allNumbers.has(i.toString()) && !allNumbers.has(i.toString().padStart(2, '0'))) {
-      missing.push(i.toString());
-    }
-  }
-  
-  if (missing.length > 0 && missing.length <= 10) {
+  if (missing.length > 0) {
     patterns.push({
       type: 'gap',
-      description: `Números que no han salido recientemente: ${missing.slice(0, 5).join(', ')}`,
+      description: `Animales del rango legal que no han salido recientemente: ${missing.slice(0, 3).join(', ')}`,
       numbers: missing.slice(0, 5),
       probability: 55
     });
@@ -218,7 +226,6 @@ const detectPatterns = (history: any[]): PatternInfo[] => {
   return patterns.sort((a, b) => b.probability - a.probability).slice(0, 5);
 };
 
-// Generar recomendación en texto
 const generateRecommendation = (
   hot: string[],
   cold: string[],
@@ -229,39 +236,34 @@ const generateRecommendation = (
   const parts: string[] = [];
   
   if (hot.length > 0) {
-    const animals = isAnimals ? hot.map(n => ANIMAL_MAPPING[n]).filter(Boolean).join(', ') : '';
-    parts.push(`🔥 CALIENTES: ${hot.slice(0, 3).join(', ')}${animals ? ` (${animals})` : ''} - Han estado saliendo con frecuencia.`);
+    const animals = isAnimals ? hot.slice(0, 2).map(n => ANIMAL_MAPPING[n]).filter(Boolean).join(', ') : '';
+    parts.push(`🔥 CALIENTES: ${hot.slice(0, 2).join(', ')} ${animals ? `(${animals})` : ''}`);
   }
   
   if (overdue.length > 0) {
-    const animals = isAnimals ? overdue.slice(0, 3).map(n => ANIMAL_MAPPING[n]).filter(Boolean).join(', ') : '';
-    parts.push(`⏰ VENCIDOS: ${overdue.slice(0, 3).join(', ')}${animals ? ` (${animals})` : ''} - Estadísticamente les toca.`);
+    const animals = isAnimals ? overdue.slice(0, 2).map(n => ANIMAL_MAPPING[n]).filter(Boolean).join(', ') : '';
+    parts.push(`⏰ VENCIDOS: ${overdue.slice(0, 2).join(', ')} ${animals ? `(${animals})` : ''}`);
   }
   
   if (patterns.length > 0) {
-    const bestPattern = patterns[0];
-    parts.push(`📊 PATRÓN: ${bestPattern.description} (${bestPattern.probability}% probabilidad).`);
+    parts.push(`📊 TIP: ${patterns[0].description}`);
   }
   
-  return parts.join('\n\n') || 'Analizando datos... Se necesitan más resultados para generar recomendaciones precisas.';
+  return parts.join(' | ') || 'Analizando tendencias...';
 };
 
-// Generar pronóstico por hora específica
 export const generateHourlyForecast = (
   history: any[],
   lotteryId: string,
   drawTime: string
 ): { numbers: string[]; confidence: number; reason: string } => {
+  const legalPool = getLegalPool(lotteryId);
   const hourlyHistory = history.filter(
-    h => h.lottery_type === lotteryId && h.draw_time === drawTime
+    h => h.lottery_type === lotteryId && h.draw_time === drawTime && legalPool.includes(h.result_number?.toString())
   );
   
-  if (hourlyHistory.length < 5) {
-    return {
-      numbers: [],
-      confidence: 0,
-      reason: 'Datos insuficientes para esta hora'
-    };
+  if (hourlyHistory.length < 3) {
+    return { numbers: [], confidence: 0, reason: 'Datos insuficientes' };
   }
   
   const frequencyMap = new Map<string, number>();
@@ -275,16 +277,11 @@ export const generateHourlyForecast = (
     .slice(0, 5);
   
   const numbers = sorted.map(([n]) => n);
-  const confidence = Math.min(90, 30 + (hourlyHistory.length * 2));
-  
-  const lottery = LOTTERIES.find(l => l.id === lotteryId);
-  const animalsText = lottery?.type === 'animals'
-    ? numbers.map(n => `${n}(${ANIMAL_MAPPING[n]})`).join(', ')
-    : numbers.join(', ');
+  const confidence = Math.min(90, 30 + (hourlyHistory.length * 3));
   
   return {
     numbers,
     confidence,
-    reason: `Basado en ${hourlyHistory.length} sorteos a las ${drawTime}. Números más frecuentes: ${animalsText}`
+    reason: `Frecuencia histórica a las ${drawTime}`
   };
 };
