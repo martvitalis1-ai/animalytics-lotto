@@ -7,62 +7,78 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Manejo de CORS para Lovable
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
-    const { message, lottery_type = 'granjita' } = await req.json();
+    const { message, lottery_type = 'lotto_activo' } = await req.json();
 
-    // 1. Conexión a la Base de Datos
+    // 1. Conexión a tu Base de Datos
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // 2. OBTENER DATOS REALES PARA EL ANÁLISIS
-    // A. Últimos 4 resultados para la suma cruzada
-    const { data: last4 } = await supabase
+    // 2. CONSULTA AL CEREBRO ANALÍTICO (La vista que creamos)
+    // Buscamos el pronóstico matemático y de secuencia para la lotería consultada
+    const { data: analisis, error: dbError } = await supabase
+      .from('super_pronostico_final')
+      .select('*')
+      .eq('lottery_type', lottery_type)
+      .maybeSingle();
+
+    if (dbError) console.error("Error en DB:", dbError);
+
+    // 3. OBTENER ÚLTIMOS RESULTADOS (Para que Ricardo sepa qué salió)
+    const { data: historia } = await supabase
       .from('lottery_results')
-      .select('result_number, animal_name')
+      .select('result_number, animal_name, draw_time')
       .eq('lottery_type', lottery_type)
       .order('draw_date', { ascending: false })
       .order('draw_time', { ascending: false })
-      .limit(4);
-
-    // B. Consultar la Matriz de Secuencia
-    const ultimoAnimal = last4?.[0]?.result_number;
-    const { data: sugeridos } = await supabase
-      .from('matriz_inteligente')
-      .select('siguiente, frecuencia')
-      .eq('lottery_type', lottery_type)
-      .eq('actual', ultimoAnimal)
       .limit(3);
 
-    // 3. CÁLCULO DE VIBRACIÓN (Suma Cruzada 1ero + 4to)
-    let vibracion = "No disponible";
-    if (last4 && last4.length === 4) {
-      const suma = (parseInt(last4[0].result_number) + parseInt(last4[3].result_number)) % 100;
-      vibracion = suma.toString().padStart(2, '0');
+    // 4. CONSTRUIR EL CONTEXTO PARA RICARDO
+    let contextoAnalitico = "";
+    if (analisis) {
+      contextoAnalitico = `
+        ANÁLISIS TÉCNICO DE LA IA:
+        - Último animal: ${analisis.ultimo_animal}
+        - Favorito por Secuencia Histórica: ${analisis.favorito_secuencia} (${analisis.probabilidad_secuencia}% de probabilidad)
+        - Resultado de Suma por Desglose: ${analisis.suma_desglose}
+        - Resultado de Suma Directa: ${analisis.suma_directa}
+        - Nivel de Confianza: ${analisis.analisis_ia}
+      `;
     }
 
-    // 4. CONSTRUIR EL PROMPT CON DATOS REALES
-    const context = `
-      CONTEXTO REAL DE LA LOTERÍA ${lottery_type.toUpperCase()}:
-      - Últimos resultados: ${last4?.map(r => r.result_number + ' (' + r.animal_name + ')').join(', ')}
-      - Según la historia desde enero, después del ${ultimoAnimal} suelen salir: ${sugeridos?.map(s => s.siguiente).join(', ')}
-      - El número vibracional por suma cruzada hoy es: ${vibracion}
+    const resultadosRecientes = historia?.map(h => `${h.draw_time}: ${h.result_number}-${h.animal_name}`).join(", ") || "No hay resultados recientes";
+
+    // 5. PROMPT CON PERSONALIDAD VENEZOLANA
+    const systemPrompt = `
+      Eres Ricardo, el experto número 1 en loterías de animalitos en Venezuela. 
+      Tu misión es dar datos basados en el estudio profundo que acabas de leer.
+
+      PERSONALIDAD:
+      - Hablas como un venezolano de confianza: "¡Epa mi pana!", "¡Fino!", "Échale bola", "Ese animal está de taquilla".
+      - Eres carismático y seguro de tus datos.
+
+      DATOS PARA EL PRONÓSTICO:
+      ${contextoAnalitico}
+      Resultados recientes de hoy: ${resultadosRecientes}
+
+      REGLAS:
+      1. Si el "Nivel de Confianza" es "🔥 TRIPLE FIJO 🔥", dalo con mucha fuerza.
+      2. Explica brevemente la matemática (Suma de desglose o secuencia).
+      3. Si el usuario te pregunta algo general, responde con tu chispa venezolana.
     `;
 
-    const systemPrompt = `Eres Ricardo, experto en animalitos. 
-    Usa el siguiente contexto para dar tus pronósticos. No adivines, usa los números que te doy.
-    ${context}
-    Habla como venezolano: "¡Epa chamo!", "¡Fino!", "Échale bola". 
-    Si te piden un dato, explica que te basas en la Matriz de Secuencia y la Suma Cruzada.`;
-
-    // 5. LLAMADA A LA IA
+    // 6. LLAMADA A GEMINI (Lovable Gateway)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -71,18 +87,19 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
 
-    const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
+    const aiData = await response.json();
+    const ricardoResponse = aiData.choices?.[0]?.message?.content || "¡Chamo, dame un chance que me quedé sin señal!";
 
-    return new Response(JSON.stringify({ response: aiResponse }), {
+    return new Response(JSON.stringify({ response: ricardoResponse }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error) {
+    console.error("Error en Ricardo AI:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
