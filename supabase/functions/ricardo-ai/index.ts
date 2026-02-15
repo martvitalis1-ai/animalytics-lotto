@@ -17,28 +17,54 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // CONSULTA AL CEREBRO ANALÍTICO
+    // 1. CONSULTA AL CEREBRO DE ALTA EFECTIVIDAD
     const { data: estudio } = await supabase
       .from('super_pronostico_final')
       .select('*')
       .eq('lottery_type', lottery_type)
       .maybeSingle();
 
-    const context = estudio ? `
-      RESULTADOS DEL ESTUDIO PROFUNDO (Desde Enero):
-      - Último animal que salió: ${estudio.ultimo_animal}
-      - Por Secuencia Histórica toca: ${estudio.favorito_secuencia}
-      - Por Desglose Matemático toca: ${estudio.suma_desglose}
-      - Por Suma Directa toca: ${estudio.suma_directa}
-      - Nivel detectado: ${estudio.nivel_confianza}
-    ` : "No hay datos suficientes todavía.";
+    // 2. LOGICA DE DECISIÓN (EL FILTRO DEL 40%)
+    let analisisCritico = "";
+    let recomendacionIA = "";
 
-    const systemPrompt = `Eres Ricardo, el experto número 1 de Venezuela. 
-    Usa el siguiente contexto real para dar tu pronóstico. 
-    No inventes, usa estos números. Habla coloquial: "¡Epa mi pana!", "Échale bola".
-    ${context}
-    Si la secuencia y la matemática coinciden, di que es un TRIPLE FIJO DE TAQUILLA.`;
+    if (estudio) {
+      const score = estudio.power_score || 0;
+      
+      analisisCritico = `
+        DATOS TÉCNICOS:
+        - Score de Poder: ${score}/100
+        - Animal de Secuencia: ${estudio.favorito_secuencia}
+        - Animal por Desglose: ${estudio.suma_desglose}
+        - Estatus: ${estudio.nivel_confianza}
+      `;
 
+      if (score >= 80) {
+        recomendacionIA = "Este es un DATO DE ORO. Coinciden secuencia, matemática y hora. Es nuestra mayor probabilidad (40%+).";
+      } else if (score >= 70) {
+        recomendacionIA = "Es un TRIPLE FIJO muy fuerte. Las estadísticas están alineadas.";
+      } else {
+        recomendacionIA = "Atención: El score es bajo (${score}). Es un sorteo difícil. Recomiendo jugar con mucha cautela o esperar al próximo sorteo.";
+      }
+    }
+
+    // 3. EL SYSTEM PROMPT RECARGADO
+    const systemPrompt = `
+      Eres Ricardo, el analista de loterías más efectivo de Venezuela. 
+      Tu meta absoluta es el 40% de efectividad. 
+      
+      REGLAS DE ORO:
+      1. Tu respuesta debe basarse EN EL SCORE DE PODER que recibes.
+      2. Si el score es > 80, di que es un "Dato de Oro" con mucha seguridad.
+      3. Si el score es < 70, advierte al usuario que el sorteo está difícil ("está rudo") y que juegue poco.
+      4. Habla como un venezolano carismático: "¡Epa mi pana!", "¡Mándale plomo!", "Taquilla segura".
+      
+      CONTEXTO ACTUAL:
+      ${analisisCritico}
+      ${recomendacionIA}
+    `;
+
+    // 4. LLAMADA A LA IA
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -47,8 +73,11 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-pro",
-        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: message }],
-        temperature: 0.8,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
       }),
     });
 
