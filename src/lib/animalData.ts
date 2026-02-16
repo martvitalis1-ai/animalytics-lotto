@@ -1,6 +1,6 @@
 // ============================================================
 // ANIMAL DATA - Complete Official Mappings for Venezuelan Lotteries
-// Corrected: 20=COCHINO (not Cerdo), 49=PEREZOSO (not Pereza)
+// Corrected: 20=COCHINO, 49=PEREZOSO, 76-99=Official User List
 // Ranges: 0-36 (Lotto Activo, Granjita, Selva, LottoRey)
 //         0-75 (Guácharo Activo)
 //         0-99 (Guacharito)
@@ -103,7 +103,7 @@ export const ANIMALS_GUACHARO: Record<string, string> = {
   '75': 'GUÁCHARO',
 };
 
-// GUACHARITO (0, 00 to 99) - NOMBRES CORREGIDOS SEGÚN TU LISTA
+// GUACHARITO (0, 00 to 99) - UPDATED NAMES FROM USER LIST
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   ...ANIMALS_GUACHARO,
   '76': 'RINOCERONTE',
@@ -150,8 +150,8 @@ export const ANIMALS_DATA: AnimalInfo[] = Object.entries(ANIMALS_GUACHARITO).map
 // Helper to get category
 function getCategoryForAnimal(name: string): string {
   const categories: Record<string, string[]> = {
-    acuatico: ['DELFÍN', 'BALLENA', 'RANA', 'PESCADO', 'TIBURÓN', 'PULPO', 'CANGREJO', 'ANGUILA', 'CABALLITO DE MAR', 'PINGÜINO', 'ERIZO DE MAR', 'CALAMAR'],
-    ave: ['PERICO', 'ÁGUILA', 'PALOMA', 'PAVO', 'GALLO', 'GALLINA', 'ZAMURO', 'LECHUZA', 'TUCÁN', 'GARZA', 'PAVO REAL', 'CANARIO', 'PELÍCANO', 'PATO', 'GAVILÁN', 'AVESTRUZ', 'GUACAMAYA', 'TURPIAL', 'GUÁCHARO', 'CUERVO', 'BÚHO', 'CISNE', 'GAVIOTA', 'PAUJÍ', 'LORO'],
+    acuatico: ['DELFÍN', 'BALLENA', 'RANA', 'PESCADO', 'TIBURÓN', 'PULPO', 'CANGREJO', 'ANGUILA', 'CABALLITO DE MAR', 'PINGÜINO', 'ERIZO DE MAR', 'CALAMAR', 'CISNE'],
+    ave: ['PERICO', 'ÁGUILA', 'PALOMA', 'PAVO', 'GALLO', 'GALLINA', 'ZAMURO', 'LECHUZA', 'TUCÁN', 'GARZA', 'PAVO REAL', 'CANARIO', 'PELÍCANO', 'PATO', 'GAVILÁN', 'AVESTRUZ', 'GUACAMAYA', 'TURPIAL', 'GUÁCHARO', 'CUERVO', 'BÚHO', 'GAVIOTA', 'PAUJÍ', 'LORO'],
     granja: ['CARNERO', 'TORO', 'CABALLO', 'BURRO', 'CHIVO', 'COCHINO', 'VACA', 'BUEY', 'CABRA'],
     selva: ['LEÓN', 'TIGRE', 'MONO', 'ZORRO', 'OSO', 'CEBRA', 'ELEFANTE', 'JIRAFA', 'BÚFALO', 'PUMA', 'PANTERA', 'JAGUAR', 'BISONTE', 'GORILA', 'HIPOPÓTAMO', 'LOBO', 'RINOCERONTE'],
     insecto: ['CIEMPIÉS', 'ALACRÁN', 'AVISPA', 'MARIPOSA', 'GRILLO', 'HORMIGA', 'ARAÑA', 'CUCARACHA', 'ESCARABAJO'],
@@ -168,11 +168,13 @@ function getCategoryForAnimal(name: string): string {
   return 'otro';
 }
 
+// Create lookup map for fast access by code (string)
 const ANIMAL_BY_CODE = new Map<string, AnimalInfo>();
 ANIMALS_DATA.forEach(animal => {
   ANIMAL_BY_CODE.set(animal.code, animal);
 });
 
+// Get animal by code (string comparison for 0/00 distinction)
 export const getAnimalByCode = (code: string, lotteryId?: string): AnimalInfo | undefined => {
   const normalizedCode = code?.toString().trim();
   if (!normalizedCode) return undefined;
@@ -198,11 +200,13 @@ export const getAnimalByCode = (code: string, lotteryId?: string): AnimalInfo | 
   return ANIMAL_BY_CODE.get(numericCode);
 };
 
+// Get animal name from code
 export const getAnimalName = (code: string, lotteryId?: string): string => {
   const animal = getAnimalByCode(code, lotteryId);
   return animal?.name || `Número ${code}`;
 };
 
+// Get codes for specific lottery ranges
 export const getCodesForLottery = (lotteryId: string): string[] => {
   if (lotteryId === 'guacharo') {
     return ['0', '00', ...Array.from({ length: 75 }, (_, i) => (i + 1).toString())];
@@ -213,13 +217,14 @@ export const getCodesForLottery = (lotteryId: string): string[] => {
   return ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
 };
 
+// Get max number for lottery
 export const getMaxNumberForLottery = (lotteryId: string): number => {
   if (lotteryId === 'guacharito') return 99;
   if (lotteryId === 'guacharo') return 75;
   return 36;
 };
 
-// Emoji mapping - SE MANTIENE EXACTO AL QUE ME PASASTE
+// Emoji mapping for visual representation
 export const ANIMAL_EMOJIS: Record<string, string> = {
   "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛",
   "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭",
@@ -244,6 +249,7 @@ export const ANIMAL_EMOJIS: Record<string, string> = {
   "99": "🐣",
 };
 
+// Get emoji for animal code
 export const getAnimalEmoji = (code: string): string => {
   const normalizedCode = code?.toString().trim();
   if (!normalizedCode) return "❓";
@@ -254,14 +260,72 @@ export const getAnimalEmoji = (code: string): string => {
   return ANIMAL_EMOJIS[numericCode] || "🔢";
 };
 
+// Sprite coordinates mapping (row, column in the sprite sheet)
+export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
+  "0": { row: 0, col: 0 },   // Delfín
+  "00": { row: 0, col: 1 },  // Ballena
+  "1": { row: 0, col: 2 },   // Carnero
+  "2": { row: 0, col: 3 },   // Toro
+  "3": { row: 0, col: 4 },   // Ciempiés
+  "4": { row: 1, col: 0 },   // Alacrán
+  "5": { row: 1, col: 1 },   // León
+  "6": { row: 1, col: 2 },   // Rana
+  "7": { row: 1, col: 3 },   // Perico
+  "8": { row: 1, col: 4 },   // Ratón
+  "9": { row: 2, col: 0 },   // Águila
+  "10": { row: 2, col: 1 },  // Tigre
+  "11": { row: 2, col: 2 },  // Gato
+  "12": { row: 2, col: 3 },  // Caballo
+  "13": { row: 2, col: 4 },  // Mono
+  "14": { row: 3, col: 0 },  // Paloma
+  "15": { row: 3, col: 1 },  // Zorro
+  "16": { row: 3, col: 2 },  // Oso
+  "17": { row: 3, col: 3 },  // Pavo
+  "18": { row: 3, col: 4 },  // Burro
+  "19": { row: 4, col: 0 },  // Chivo
+  "20": { row: 4, col: 1 },  // Cochino
+  "21": { row: 4, col: 2 },  // Gallo
+  "22": { row: 4, col: 3 },  // Camello
+  "23": { row: 4, col: 4 },  // Cebra
+  "24": { row: 5, col: 0 },  // Iguana
+  "25": { row: 5, col: 1 },  // Gallina
+  "26": { row: 5, col: 2 },  // Vaca
+  "27": { row: 5, col: 3 },  // Perro
+  "28": { row: 5, col: 4 },  // Zamuro
+  "29": { row: 6, col: 0 },  // Elefante
+  "30": { row: 6, col: 1 },  // Caimán
+  "31": { row: 6, col: 2 },  // Lapa
+  "32": { row: 6, col: 3 },  // Ardilla
+  "33": { row: 6, col: 4 },  // Pescado
+  "34": { row: 7, col: 0 },  // Venado
+  "35": { row: 7, col: 1 },  // Jirafa
+  "36": { row: 7, col: 2 },  // Culebra
+};
+
+// Full list of all codes for iteration
+export const ALL_ANIMAL_CODES = ANIMALS_DATA.map(a => a.code);
+
+// Heat status types
 export type HeatStatus = 'hot' | 'warm' | 'cold' | 'overdue';
 
+export const getHeatStatusColor = (status: HeatStatus): string => {
+  switch (status) {
+    case 'hot': return 'hsl(0, 84%, 60%)'; // Red
+    case 'warm': return 'hsl(30, 92%, 50%)'; // Orange
+    case 'cold': return 'hsl(210, 100%, 50%)'; // Blue
+    case 'overdue': return 'hsl(220, 10%, 60%)'; // Gray
+    default: return 'hsl(220, 10%, 60%)';
+  }
+};
+
+// Generate formatted string for display: "XX - Name"
 export const formatAnimalDisplay = (code: string, lotteryId?: string): string => {
   const name = getAnimalName(code, lotteryId);
   const displayCode = code === '0' ? '0' : code === '00' ? '00' : code.padStart(2, '0');
   return `${displayCode} - ${name}`;
 };
 
+// Get complete animal list as formatted string for injection into prompts
 export const getFullAnimalListString = (lotteryId: string): string => {
   const mapping = getAnimalMappingForLottery(lotteryId);
   return Object.entries(mapping)
