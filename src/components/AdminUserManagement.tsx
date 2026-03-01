@@ -12,8 +12,8 @@ import {
   ADMIN_CODE 
 } from "@/lib/accessControl";
 
-// No protected codes - admin has full control
-const PROTECTED_CODES: string[] = [];
+// Protected admin codes that cannot be deleted or modified
+const PROTECTED_CODES = ['GANADOR85', 'GANADOR2026'];
 
 export function AdminUserManagement() {
   const [users, setUsers] = useState<any[]>([]);
@@ -230,7 +230,7 @@ export function AdminUserManagement() {
         </div>
         
         <p className="text-xs text-muted-foreground text-center">
-          👑 Control total de códigos de acceso
+          👑 Los códigos de administrador (GANADOR85, GANADOR2026) están protegidos
         </p>
       </CardContent>
     </Card>
