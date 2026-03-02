@@ -14,112 +14,121 @@ export function HourlyPredictionView() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastDrawTime, setLastDrawTime] = useState<string | null>(null);
-  const [lastDrawResult, setLastDrawResult] = useState<string | null>(null);
 
-  const lottery = LOTTERIES.find(l => l.id === selectedLottery);
-  const drawTimes = getDrawTimesForLottery(selectedLottery);
-  const today = new Date().toISOString().split('T')[0];
+  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // ABSORCIÓN TOTAL: Jalamos 1000 resultados para que nunca diga que no hay historial
+      // ABSORCIÓN TOTAL: Jalamos historial para estadísticas y racha
       const { data } = await supabase
         .from('lottery_results')
         .select('*')
+        .eq('lottery_type', selectedLottery)
         .order('draw_date', { ascending: false })
-        .order('draw_time', { ascending: false })
-        .limit(1000);
+        .order('created_at', { ascending: false })
+        .limit(500);
 
-      if (data) {
+      if (data && data.length > 0) {
         setHistory(data);
-        const todayResults = data.filter(d => d.lottery_type === selectedLottery);
-        if (todayResults.length > 0) {
-          setLastDrawTime(todayResults[0].draw_time);
-          setLastDrawResult(todayResults[0].result_number);
-        }
+        // Detectamos la hora real del último sorteo guardado
+        setLastDrawTime(data[0].draw_time);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error:', error);
     }
     setLoading(false);
   }, [selectedLottery]);
 
   useEffect(() => {
     loadData();
-    const channel = supabase.channel('hourly-realtime')
+    const channel = supabase.channel('hourly-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
-  const parseTimeToMinutes = (time: string): number => {
-    const match = time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (!match) return 0;
-    let hours = parseInt(match[1]);
-    const minutes = parseInt(match[2]);
-    const ampm = match[3].toUpperCase();
-    if (ampm === 'PM' && hours !== 12) hours += 12;
-    if (ampm === 'AM' && hours === 12) hours = 0;
-    return hours * 60 + minutes;
-  };
+  // LÓGICA DE DETECCIÓN DEL PRÓXIMO SORTEO REAL
+  const nextDrawTime = useMemo(() => {
+    if (!lastDrawTime) return drawTimes[0];
 
-  const nextDrawInfo = useMemo(() => {
-    if (!lastDrawTime) return { nextTime: drawTimes[0], message: null };
-    const lastMinutes = parseTimeToMinutes(lastDrawTime);
+    // Convertimos hora (01:00 PM) a minutos para comparar
+    const toMin = (t: string) => {
+      const [h, m_ampm] = t.split(':');
+      const [m, ampm] = m_ampm.split(' ');
+      let hours = parseInt(h);
+      if (ampm === 'PM' && hours !== 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + parseInt(m);
+    };
+
+    const lastMin = toMin(lastDrawTime);
+    
+    // Buscamos en la lista oficial de horarios el que sigue después del último
     for (const time of drawTimes) {
-      if (parseTimeToMinutes(time) > lastMinutes) return { nextTime: time, message: null };
+      if (toMin(time) > lastMin) return time;
     }
-    return { nextTime: drawTimes[0], message: 'Próximo bloque' };
+    
+    return drawTimes[0]; // Si ya pasaron todos, volvemos al primero (mañana)
   }, [lastDrawTime, drawTimes]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    const forecasts = generateDayForecast(selectedLottery, [nextDrawInfo.nextTime || drawTimes[0]], history, today);
+    const forecasts = generateDayForecast(selectedLottery, [nextDrawTime], history, new Date().toISOString().split('T')[0]);
     return forecasts[0] || null;
-  }, [history, selectedLottery, nextDrawInfo.nextTime, today, drawTimes]);
+  }, [history, selectedLottery, nextDrawTime]);
 
   return (
-    <Card className="glass-card border-2 border-primary/30">
-      <CardHeader className="pb-2">
+    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden">
+      <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg font-black uppercase tracking-tighter">
-            <Clock className="w-5 h-5 text-primary" /> Siguiente Hora
+          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter italic">
+            <Clock className="w-6 h-6 text-primary" /> SIGUIENTE HORA
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[150px] h-8 text-xs font-bold"><SelectValue /></SelectTrigger>
-              <SelectContent>{LOTTERIES.map((l) => (<SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>))}</SelectContent>
+              <SelectTrigger className="w-[180px] h-9 bg-background font-black text-xs border-primary/30">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LOTTERIES.map(l => (
+                  <SelectItem key={l.id} value={l.id} className="font-bold">
+                    <div className="flex items-center gap-2">
+                       <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-            <Button onClick={loadData} variant="outline" size="icon" className="h-8 w-8">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
+            <Button onClick={loadData} variant="ghost" size="icon"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        {nextPrediction ? (
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-full font-black text-xl animate-pulse">
-                {nextDrawInfo.nextTime} <ChevronRight className="w-5 h-5" /> <span>PRÓXIMO</span>
-              </div>
-            </div>
-            {nextPrediction.topPick && (
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-background to-accent/20 border-2 border-primary/50 shadow-xl text-center">
-                <span className="text-7xl block mb-2">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
-                <div className="font-mono font-black text-6xl text-primary">{nextPrediction.topPick.code.padStart(2, '0')}</div>
-                <div className="text-xl font-black uppercase mt-1">{nextPrediction.topPick.name}</div>
-                <div className="mt-2 inline-block px-4 py-1 bg-red-500 text-white rounded-lg font-bold">
-                  <Zap className="w-4 h-4 inline mr-1" /> {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
-                </div>
-                <p className="text-[10px] font-bold text-muted-foreground mt-4 uppercase bg-muted/50 p-2 rounded">{nextPrediction.topPick.reason}</p>
-              </div>
-            )}
+      
+      <CardContent className="pt-6">
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center gap-3 px-8 py-3 bg-emerald-500 text-white rounded-full font-black text-2xl shadow-xl animate-pulse">
+            {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
-        ) : (
-          <div className="py-12 text-center opacity-50 font-bold uppercase tracking-widest">Sincronizando con Supabase...</div>
-        )}
+
+          {nextPrediction?.topPick && (
+            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/10 via-background to-primary/10 border-4 border-primary/20 relative shadow-2xl">
+              <span className="text-8xl block drop-shadow-2xl mb-4">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
+              <div className="font-mono font-black text-7xl text-primary leading-none tracking-tighter">
+                {nextPrediction.topPick.code.padStart(2, '0')}
+              </div>
+              <h3 className="text-3xl font-black uppercase mt-2">{nextPrediction.topPick.name}</h3>
+              
+              <div className="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-destructive text-white rounded-2xl font-black text-xl shadow-lg">
+                <Zap className="w-5 h-5 fill-current" /> {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
+              </div>
+
+              <p className="mt-6 text-[11px] font-black text-muted-foreground uppercase tracking-widest border-t pt-4">
+                TENDENCIA FUERTE. APARECIÓ {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X EN LA HISTORIA
+              </p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
