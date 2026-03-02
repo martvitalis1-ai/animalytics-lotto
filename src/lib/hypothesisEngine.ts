@@ -2,13 +2,13 @@
 // HYPOTHESIS ENGINE - Formal pattern evaluation system
 // All patterns are testable hypotheses measured against random chance
 // FULLY PERSISTENT - Uses Supabase, NO localStorage
-// Learning start date: 2026-01-02
+// Learning start date: 2025-11-01
 // ============================================================
 
 import { supabase } from '@/integrations/supabase/client';
 
 // Learning system start date - no data before this is considered
-export const LEARNING_START_DATE = '2026-01-02';
+export const LEARNING_START_DATE = '2025-11-01';
 
 // Hypothesis status
 export type HypothesisStatus = 'active' | 'penalized' | 'deactivated' | 'reactivated';
