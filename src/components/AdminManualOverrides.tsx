@@ -29,6 +29,7 @@ export function AdminManualOverrides() {
   const today = new Date().toISOString().split('T')[0];
 
   const loadPicks = useCallback(async () => {
+    // ABSORCIÓN TOTAL: Jalamos los picks del búnker
     const { data } = await supabase
       .from('admin_picks')
       .select('*')
@@ -47,20 +48,21 @@ export function AdminManualOverrides() {
     setLoading(true);
     const animalName = getAnimalName(selectedAnimal) || '';
     
-    const { error } = await supabase.from('admin_picks').insert({
+    // USAMOS UPSERT PARA EVITAR EL ERROR 42P10
+    const { error } = await supabase.from('admin_picks').upsert({
       lottery_type: selectedLottery,
       pick_type: pickType,
       animal_code: selectedAnimal,
       animal_name: animalName,
       notes: notes || null,
       pick_date: today
-    });
+    }, { onConflict: 'lottery_type,pick_type,pick_date,animal_code' });
 
     if (error) {
-      toast.error("Error al guardar");
+      toast.error("Error al guardar en el búnker");
       console.error(error);
     } else {
-      toast.success(`${pickType === 'explosivo' ? '💥 Explosivo' : '🎁 Regalo'} agregado: ${selectedAnimal} - ${animalName}`);
+      toast.success(`${pickType === 'explosivo' ? '💥 Explosivo' : '🎁 Regalo'} agregado con éxito`);
       setSelectedAnimal('');
       setNotes('');
       loadPicks();
@@ -69,58 +71,60 @@ export function AdminManualOverrides() {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('admin_picks').delete().eq('id', id);
-    toast.success("Eliminado");
-    loadPicks();
+    const { error } = await supabase.from('admin_picks').delete().eq('id', id);
+    if (!error) {
+      toast.success("Eliminado del registro");
+      loadPicks();
+    }
   };
 
   const explosivos = picks.filter(p => p.pick_type === 'explosivo');
   const regalos = picks.filter(p => p.pick_type === 'regalo');
 
   return (
-    <Card className="glass-card border-2 border-destructive/30">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-bold flex items-center gap-2">
-          <Flame className="w-5 h-5 text-destructive" />
+    <Card className="glass-card border-2 border-destructive/30 shadow-xl animate-in fade-in duration-500">
+      <CardHeader className="pb-3 bg-destructive/5 border-b">
+        <CardTitle className="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
+          <Flame className="w-6 h-6 text-destructive animate-pulse" />
           Control Manual: Explosivos y Regalos
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Los valores definidos aquí se muestran directamente a los usuarios
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          Establece los animales que verán los usuarios en la sección explosiva
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 pt-4">
         {/* Form */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end bg-muted/20 p-4 rounded-2xl border border-dashed border-primary/20">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Lotería</label>
+            <label className="text-[10px] font-black uppercase text-muted-foreground">Lotería</label>
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg">
+              <SelectTrigger className="bg-background font-bold"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-popover border-2 shadow-2xl">
                 {LOTTERIES.map(l => (
-                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                  <SelectItem key={l.id} value={l.id} className="font-bold">{l.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+            <label className="text-[10px] font-black uppercase text-muted-foreground">Tipo de Dato</label>
             <Select value={pickType} onValueChange={(v) => setPickType(v as any)}>
-              <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg">
-                <SelectItem value="explosivo">💥 Explosivo</SelectItem>
-                <SelectItem value="regalo">🎁 Regalo</SelectItem>
+              <SelectTrigger className="bg-background font-bold"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-popover border-2 shadow-2xl">
+                <SelectItem value="explosivo" className="font-bold text-red-600">💥 Explosivo</SelectItem>
+                <SelectItem value="regalo" className="font-bold text-emerald-600">🎁 Regalo</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Animal (00-99)</label>
+            <label className="text-[10px] font-black uppercase text-muted-foreground">Elegir Animal</label>
             <Select value={selectedAnimal} onValueChange={setSelectedAnimal}>
-              <SelectTrigger className="bg-background"><SelectValue placeholder="Elegir..." /></SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg max-h-60">
+              <SelectTrigger className="bg-background font-bold"><SelectValue placeholder="Animal..." /></SelectTrigger>
+              <SelectContent className="bg-popover border-2 shadow-2xl max-h-80">
                 {ANIMAL_OPTIONS.map(a => (
-                  <SelectItem key={a.code} value={a.code}>
+                  <SelectItem key={a.code} value={a.code} className="font-bold text-sm">
                     {a.emoji} {a.code.padStart(2, '0')} - {a.name}
                   </SelectItem>
                 ))}
@@ -129,69 +133,75 @@ export function AdminManualOverrides() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">Nota</label>
+            <label className="text-[10px] font-black uppercase text-muted-foreground">Nota Maliciosa</label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Opcional..."
-              className="bg-background"
+              className="bg-background font-bold"
             />
           </div>
 
-          <Button onClick={handleAdd} disabled={loading} className="bg-destructive hover:bg-destructive/90">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+          <Button onClick={handleAdd} disabled={loading} className="bg-destructive hover:bg-destructive/90 h-10 font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5 mr-1" />}
             Agregar
           </Button>
         </div>
 
         {/* Current picks */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Explosivos */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold flex items-center gap-1">
-              <Flame className="w-4 h-4 text-red-500" /> Explosivos Hoy ({explosivos.length})
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3 p-4 bg-red-500/5 rounded-3xl border-2 border-red-500/10">
+            <h4 className="text-sm font-black flex items-center gap-2 uppercase tracking-tighter text-red-600">
+              <Flame className="w-5 h-5" /> Explosivos Activos ({explosivos.length})
             </h4>
-            {explosivos.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">Sin explosivos definidos</p>
-            ) : (
-              explosivos.map(p => (
-                <div key={p.id} className="flex items-center justify-between p-2 bg-red-500/10 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{getAnimalEmoji(p.animal_code)}</span>
-                    <span className="font-mono font-bold">{p.animal_code.padStart(2, '0')}</span>
-                    <span className="text-sm">{p.animal_name}</span>
-                    <span className="text-xs text-muted-foreground">({LOTTERIES.find(l => l.id === p.lottery_type)?.name})</span>
+            <div className="space-y-2">
+              {explosivos.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground font-bold italic uppercase py-4 text-center">No hay explosivos definidos para hoy</p>
+              ) : (
+                explosivos.map(p => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-card border-2 border-red-500/20 rounded-2xl shadow-sm hover:scale-[1.02] transition-transform">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl drop-shadow-sm">{getAnimalEmoji(p.animal_code)}</span>
+                      <div>
+                        <p className="font-mono font-black text-lg leading-none">{p.animal_code.padStart(2, '0')}</p>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{p.animal_name}</p>
+                        <p className="text-[8px] font-bold text-primary">{LOTTERIES.find(l => l.id === p.lottery_type)?.name}</p>
+                      </div>
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)} className="h-8 w-8 text-destructive hover:bg-red-500/20">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)} className="h-7 w-7 text-destructive">
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
 
-          {/* Regalos */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold flex items-center gap-1">
-              <Gift className="w-4 h-4 text-amber-500" /> Regalos Hoy ({regalos.length})
+          <div className="space-y-3 p-4 bg-emerald-500/5 rounded-3xl border-2 border-emerald-500/10">
+            <h4 className="text-sm font-black flex items-center gap-2 uppercase tracking-tighter text-emerald-600">
+              <Gift className="w-5 h-5" /> Regalos del Jefe ({regalos.length})
             </h4>
-            {regalos.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">Sin regalos definidos</p>
-            ) : (
-              regalos.map(p => (
-                <div key={p.id} className="flex items-center justify-between p-2 bg-amber-500/10 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{getAnimalEmoji(p.animal_code)}</span>
-                    <span className="font-mono font-bold">{p.animal_code.padStart(2, '0')}</span>
-                    <span className="text-sm">{p.animal_name}</span>
-                    <span className="text-xs text-muted-foreground">({LOTTERIES.find(l => l.id === p.lottery_type)?.name})</span>
+            <div className="space-y-2">
+              {regalos.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground font-bold italic uppercase py-4 text-center">No hay regalos definidos para hoy</p>
+              ) : (
+                regalos.map(p => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-card border-2 border-emerald-500/20 rounded-2xl shadow-sm hover:scale-[1.02] transition-transform">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl drop-shadow-sm">{getAnimalEmoji(p.animal_code)}</span>
+                      <div>
+                        <p className="font-mono font-black text-lg leading-none">{p.animal_code.padStart(2, '0')}</p>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{p.animal_name}</p>
+                        <p className="text-[8px] font-bold text-primary">{LOTTERIES.find(l => l.id === p.lottery_type)?.name}</p>
+                      </div>
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)} className="h-8 w-8 text-destructive hover:bg-red-500/20">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)} className="h-7 w-7 text-destructive">
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
