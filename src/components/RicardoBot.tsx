@@ -22,35 +22,53 @@ export function RicardoBot() {
   const [fullContext, setFullContext] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. ABSORCIÓN TOTAL DE SUPABASE (Historial + Configuración Admin)
+  // 1. ABSORCIÓN TOTAL (Historial + Explosivos + Pronósticos Ricardo)
   const absorbKnowledge = useCallback(async () => {
     try {
-      // Jalamos los últimos 50 resultados para que la IA vea rachas
-      const { data: results } = await supabase
-        .from('lottery_results')
-        .select('lottery_name, result_number, draw_time, draw_date')
-        .order('draw_date', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      // Jalamos lo que el Admin puso manualmente (Explosivos/Regalos)
-      const { data: overrides } = await supabase
-        .from('admin_manual_overrides')
-        .select('*');
-
-      let contextString = "INFORMACIÓN ACTUAL DEL BÚNKER:\n";
+      console.log("🕵️ Ricardo IA absorbiendo el búnker...");
       
-      if (overrides && overrides.length > 0) {
-        contextString += "DATOS FIJOS DEL JEFE:\n";
-        overrides.forEach(o => {
+      const today = new Date().toISOString().split('T')[0];
+
+      // JALAMOS TODO: Resultados, Explosivos y Pronósticos de Ricardo
+      const [resultsRes, overridesRes, predictionsRes] = await Promise.all([
+        supabase
+          .from('lottery_results')
+          .select('lottery_name, result_number, draw_time, draw_date')
+          .order('draw_date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(100), // Aumentamos a 100 para que vea rachas largas
+        supabase
+          .from('admin_manual_overrides')
+          .select('*'),
+        supabase
+          .from('dato_ricardo_predictions')
+          .select('lottery_type, predicted_numbers, draw_time, notes')
+          .eq('prediction_date', today)
+      ]);
+
+      let contextString = "ESTADO ACTUAL DEL BÚNKER (USA ESTO PARA RESPONDER):\n\n";
+      
+      // Absorción de Explosivos/Regalos
+      if (overridesRes.data && overridesRes.data.length > 0) {
+        contextString += "🔥 DATOS FIJOS DEL JEFE (MANDO MANUAL):\n";
+        overridesRes.data.forEach(o => {
           contextString += `- EL ${o.type.toUpperCase()} ES: ${o.number} (${o.animal_name})\n`;
         });
       }
 
-      if (results && results.length > 0) {
-        contextString += "\nÚLTIMOS RESULTADOS:\n";
-        results.forEach(r => {
-          contextString += `- ${r.lottery_name} ${r.draw_time} (${r.draw_date}): salió el ${r.result_number}\n`;
+      // Absorción de Pronósticos de Ricardo (Lo que tú pones en el Admin)
+      if (predictionsRes.data && predictionsRes.data.length > 0) {
+        contextString += "\n📋 PRONÓSTICOS DEL JEFE RICARDO PARA HOY:\n";
+        predictionsRes.data.forEach(p => {
+          contextString += `- En ${p.lottery_type} para las ${p.draw_time} recomendó: ${p.predicted_numbers.join(', ')}. Nota: ${p.notes || 'Sin nota'}\n`;
+        });
+      }
+
+      // Absorción de Historial
+      if (resultsRes.data && resultsRes.data.length > 0) {
+        contextString += "\n📊 ÚLTIMOS SORTEOS (RACHAS):\n";
+        resultsRes.data.forEach(r => {
+          contextString += `- ${r.lottery_name} | ${r.draw_date} | ${r.draw_time}: salió el ${r.result_number}\n`;
         });
       }
 
@@ -64,7 +82,7 @@ export function RicardoBot() {
     if (isOpen) absorbKnowledge();
   }, [isOpen, absorbKnowledge]);
 
-  // 2. MOTOR DE RESPUESTA BLINDADO
+  // 2. MOTOR DE RESPUESTA BLINDADO (Try/Catch total)
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -76,10 +94,11 @@ export function RicardoBot() {
     setIsLoading(true);
 
     try {
+      // Intentamos llamar a la IA de Lovable/Edge Function
       const { data, error } = await supabase.functions.invoke('ricardo-ai', {
         body: { 
           message: userMsg,
-          context: `${fullContext}\n\nINSTRUCCIÓN: Eres Ricardo IA, el datero más malicioso y efectivo de Venezuela. No eres un robot aburrido, hablas con seguridad, usas emojis de dinero y búnker. Si el usuario te pregunta por un dato, revisa los 'DATOS FIJOS DEL JEFE' arriba. Si no hay nada ahí, invéntate una jugada ganadora basada en el historial. NUNCA digas que no sabes o que hay un error.`
+          context: `${fullContext}\n\nINSTRUCCIÓN CRÍTICA: Eres Ricardo IA, el datero más malicioso de Venezuela. Responde con seguridad, emojis de dinero y búnker. Si te preguntan 'qué sale', revisa los DATOS FIJOS o los PRONÓSTICOS DEL JEFE. Si no hay nada, analiza las RACHAS del historial. NUNCA digas que no sabes. NUNCA des error.`
         }
       });
 
@@ -92,18 +111,18 @@ export function RicardoBot() {
         timestamp: new Date()
       }]);
     } catch (e) {
-      // RESPUESTA DE EMERGENCIA (El Bot nunca falla)
-      const emergencyResponses = [
-        "¡Epa chamo! El búnker está pesao hoy, pero juégate el 12 (Caballo) y el 25 (Gallina) que tienen racha de salir ahorita. 💰",
-        "Dímelo jefe, ese que estás pensando (el 33) está caliente, mándale plomo. 🏁",
-        "¡Coño! La señal está fallando pero mi malicia me dice que el 11 (Gato) viene bajando. 🕵️‍♂️"
+      // RESPUESTA DE EMERGENCIA (Si Supabase o Lovable fallan, el bot sigue vivo)
+      const emergencyData = [
+        "¡Epa chamo! El búnker está pesado hoy pero mi malicia no falla: juégate el 12 (Caballo) y el 25 (Gallina) que tienen racha de salir ahorita. 💰",
+        "Dímelo jefe, el que estás buscando es el 33 (Pescado), está que arde en las matrices. Mándale plomo. 🏁",
+        "¡Coño! Se cayó la señal en el búnker, pero mi ojo clínico ve al 11 (Gato) bajando por la racha de los 10. 🕵️‍♂️"
       ];
-      const random = Math.floor(Math.random() * emergencyResponses.length);
+      const random = Math.floor(Math.random() * emergencyData.length);
       
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: emergencyResponses[random],
+        content: emergencyData[random],
         timestamp: new Date()
       }]);
     }
@@ -124,14 +143,14 @@ export function RicardoBot() {
         <div className="fixed bottom-20 right-4 z-50 w-[350px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[70vh] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
           <div className="bg-gradient-to-r from-primary to-accent p-4 text-white font-black italic flex items-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
-            RICARDO IA - EL DATERO MAYOR 🕵️‍♂️
+            RICARDO IA - EL BÚNKER DATERO 🕵️‍♂️
           </div>
           
           <ScrollArea className="flex-1 p-4 bg-muted/10" ref={scrollRef}>
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="bg-card border-l-4 border-primary p-3 rounded-r-lg text-sm font-bold shadow-sm">
-                  ¡Epa jefe! Soy Ricardo. ¿Qué racha quieres que analicemos hoy? Pregúntame lo que sea, que el búnker está activo. 💰🏁
+                  ¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir o qué racha analizo. ¡Plomo! 💰🏁
                 </div>
               )}
               {messages.map((msg) => (
@@ -159,7 +178,7 @@ export function RicardoBot() {
             <Input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              placeholder="¿Qué sale a las 12?" 
+              placeholder="¿Qué animal sale ahorita?" 
               className="bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary font-bold"
               disabled={isLoading}
             />
