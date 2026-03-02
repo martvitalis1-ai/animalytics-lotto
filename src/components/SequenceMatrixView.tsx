@@ -3,15 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, ArrowRight, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { TrendingUp, Loader2, RefreshCw } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
 import { getCodesForLottery, getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { getLotteryLogo } from './LotterySelector';
 
 export function SequenceMatrixView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
-  const [sequences, setSequences] = useState<Record<string, Record<string, number>>>({});
+  const [sequences, setSequences] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   const numberRange = useMemo(() => getCodesForLottery(selectedLottery), [selectedLottery]);
@@ -19,8 +19,7 @@ export function SequenceMatrixView() {
   const loadSequences = useCallback(async () => {
     setLoading(true);
     try {
-      // ABSORCIÓN TOTAL: Cruce de toda la historia de Supabase
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('lottery_results')
         .select('result_number')
         .eq('lottery_type', selectedLottery)
@@ -28,7 +27,7 @@ export function SequenceMatrixView() {
         .order('created_at', { ascending: true });
 
       if (data && data.length > 1) {
-        const matrix: Record<string, Record<string, number>> = {};
+        const matrix: any = {};
         for (let i = 0; i < data.length - 1; i++) {
           const current = data[i].result_number;
           const next = data[i+1].result_number;
@@ -45,87 +44,63 @@ export function SequenceMatrixView() {
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden">
-      <CardHeader className="pb-4 bg-muted/10 border-b">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <CardHeader className="pb-3 bg-muted/10 border-b">
+        <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter text-primary italic">
             <TrendingUp className="w-7 h-7 text-primary" /> Matriz de Secuencia (Sucesores)
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Select value={selectedLottery} onValueChange={(v) => { setSelectedLottery(v); }}>
-              <SelectTrigger className="w-[240px] h-10 bg-background font-black text-xs border-primary/30 shadow-lg">
+            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+              <SelectTrigger className="w-[220px] h-10 bg-background font-black text-xs border-primary/30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="font-bold">
                 {LOTTERIES.map(l => (
                   <SelectItem key={l.id} value={l.id}>
                     <div className="flex items-center gap-2">
-                      <img src={getLotteryLogo(l.id)} className="w-5 h-5 rounded-full" /> {l.name}
+                      <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={loadSequences} variant="outline" size="icon" className="h-10 w-10 border-primary/30 shadow-md">
-              <RefreshCw className={loading ? 'animate-spin text-primary' : 'text-primary'}/></Button>
           </div>
         </div>
-        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
-           <Sparkles className="w-3 h-3 text-amber-500" /> Analisis de Arrastre Basado en la Cadena Historica Completa
-        </p>
       </CardHeader>
-      
-      <CardContent className="p-6 bg-muted/5">
+      <CardContent className="p-6">
         {loading ? (
-          <div className="py-24 text-center">
-            <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-            <p className="font-black text-xs mt-6 uppercase tracking-widest text-muted-foreground animate-pulse">Escaneando base de datos...</p>
-          </div>
+          <div className="py-24 text-center"><Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" /></div>
         ) : (
-          <ScrollArea className="h-[650px] pr-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <ScrollArea className="h-[600px] pr-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {numberRange.map(num => {
-                const successors = sequences[num] ? 
-                  Object.entries(sequences[num]).sort((a,b) => b[1] - a[1]).slice(0, 5) : [];
+                const successors = sequences[num] ? Object.entries(sequences[num]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
                 if (successors.length === 0) return null;
                 const animal = getAnimalByCode(num);
-                const totalDraws = Object.values(sequences[num]).reduce((a, b) => a + b, 0);
+                const totalDraws = Object.values(sequences[num]).reduce((a:any, b:any) => a + b, 0);
 
                 return (
-                  <div key={num} className="bg-card border-2 rounded-[2rem] p-6 shadow-xl hover:border-primary/50 transition-all group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-3 bg-primary/5 text-[9px] font-black uppercase opacity-20 italic">Historico</div>
-                    <div className="flex items-center justify-between border-b-2 border-primary/10 pb-4 mb-5">
-                      <div className="flex items-center gap-4">
-                         <span className="text-6xl group-hover:rotate-12 transition-transform duration-500 drop-shadow-xl">{getAnimalEmoji(num)}</span>
-                         <div>
-                            <p className="text-xs font-black text-primary uppercase leading-none tracking-tighter">{animal?.name || 'Animal'}</p>
-                            <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num.padStart(2, '0')}</p>
-                         </div>
-                      </div>
-                      <div className="text-right">
-                         <p className="text-[10px] font-black text-muted-foreground uppercase leading-none">Muestra</p>
-                         <p className="text-2xl font-black text-primary leading-none mt-2">{totalDraws}</p>
-                      </div>
+                  <div key={num} className="bg-card border-2 rounded-3xl p-5 shadow-xl hover:border-primary/50 transition-all">
+                    <div className="flex items-center justify-between border-b-2 border-primary/10 pb-3 mb-4">
+                       <div className="flex items-center gap-3">
+                          <span className="text-5xl">{getAnimalEmoji(num)}</span>
+                          <div>
+                             <p className="text-xs font-black text-primary uppercase leading-none">{animal?.name}</p>
+                             <p className="font-mono font-black text-2xl mt-1">#{num.padStart(2, '0')}</p>
+                          </div>
+                       </div>
+                       <div className="text-right"><p className="text-[10px] font-black text-primary">{totalDraws} casos</p></div>
                     </div>
-                    
-                    <div className="space-y-3">
-                       {successors.map(([nextNum, count], idx) => {
+                    <div className="space-y-2">
+                       {successors.map(([nextNum, count]:any, idx) => {
                           const prob = Math.round((count / totalDraws) * 100);
-                          const nextAnimal = getAnimalByCode(nextNum);
                           return (
-                            <div key={nextNum} className={`flex items-center justify-between p-3 rounded-2xl border-2 transition-all duration-300 ${idx === 0 ? 'bg-primary/10 border-primary/40 shadow-inner' : 'bg-muted/30 border-transparent hover:border-border'}`}>
-                               <div className="flex items-center gap-3">
-                                  <span className="text-3xl drop-shadow-sm">{getAnimalEmoji(nextNum)}</span>
-                                  <div>
-                                     <span className="font-mono font-black text-base block leading-none">{nextNum.padStart(2, '0')}</span>
-                                     <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground">{nextAnimal?.name}</span>
-                                  </div>
+                            <div key={nextNum} className={`flex items-center justify-between p-2 rounded-2xl border ${idx === 0 ? 'bg-primary/10 border-primary/40' : 'bg-muted/30 border-transparent'}`}>
+                               <div className="flex items-center gap-2">
+                                  <span className="text-xl">{getAnimalEmoji(nextNum)}</span>
+                                  <span className="font-mono font-black text-sm">{nextNum.padStart(2, '0')}</span>
                                </div>
-                               <div className="flex flex-col items-end gap-1.5">
-                                  <span className={`text-xs font-black ${idx === 0 ? 'text-primary' : 'text-muted-foreground'}`}>{prob}%</span>
-                                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden shadow-inner border border-black/5">
-                                     <div className={`h-full transition-all duration-1000 ${idx === 0 ? 'bg-gradient-to-r from-primary to-accent' : 'bg-slate-400'}`} style={{width: `${prob}%`}} />
-                                  </div>
-                               </div>
+                               <span className="text-[11px] font-black text-primary">{prob}%</span>
                             </div>
                           );
                        })}
@@ -134,7 +109,6 @@ export function SequenceMatrixView() {
                 );
               })}
             </div>
-            <ScrollBar orientation="vertical" />
           </ScrollArea>
         )}
       </CardContent>
