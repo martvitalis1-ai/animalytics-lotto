@@ -17,7 +17,6 @@ export function DatoRicardo() {
   const [editNumbers, setEditNumbers] = useState("");
   const [editNotes, setEditNotes] = useState("");
   
-  // Form state
   const [lotteryType, setLotteryType] = useState<string>(LOTTERIES[0].id);
   const [predictionDate, setPredictionDate] = useState(new Date().toISOString().split('T')[0]);
   const [drawTime, setDrawTime] = useState(DRAW_TIMES[0]);
@@ -29,102 +28,43 @@ export function DatoRicardo() {
       .from('dato_ricardo_predictions')
       .select('*')
       .order('prediction_date', { ascending: false })
-      .order('draw_time', { ascending: true })
-      .limit(50);
+      .order('draw_time', { ascending: true });
     setPredictions(data || []);
   };
 
-  useEffect(() => {
-    loadPredictions();
-    // Realtime sync
-    const channel = supabase
-      .channel('dato-ricardo-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'dato_ricardo_predictions' }, () => {
-        loadPredictions();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  useEffect(() => { loadPredictions(); }, []);
 
   const handleSubmit = async () => {
-    if (!numbers.trim()) {
-      toast.error("Ingresa los números predichos");
-      return;
-    }
+    if (!numbers.trim()) return toast.error("Ingresa los números");
     setLoading(true);
     const numbersArray = numbers.split(',').map(n => n.trim()).filter(n => n);
-    const lottery = LOTTERIES.find(l => l.id === lotteryType);
-    const animalsArray = lottery?.type === 'animals' 
-      ? numbersArray.map(n => ANIMAL_MAPPING[n] || null).filter(Boolean)
-      : null;
-    
     const { error } = await supabase.from('dato_ricardo_predictions').insert({
       lottery_type: lotteryType,
       prediction_date: predictionDate,
       draw_time: drawTime,
       predicted_numbers: numbersArray,
-      predicted_animals: animalsArray,
       notes: notes || null
     });
-    
-    if (error) {
-      console.error(error);
-      toast.error("Error al guardar");
-    } else {
-      toast.success("Pronóstico guardado");
-      setNumbers("");
-      setNotes("");
-      loadPredictions();
-    }
+    if (!error) { toast.success("Pronóstico guardado"); setNumbers(""); setNotes(""); loadPredictions(); }
     setLoading(false);
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar este pronóstico?")) return;
+    if (!confirm("¿Eliminar este pronóstico definitivamente?")) return;
     const { error } = await supabase.from('dato_ricardo_predictions').delete().eq('id', id);
-    if (error) {
-      toast.error("Error al eliminar (solo se pueden borrar los de hoy)");
-    } else {
-      toast.success("Eliminado");
-      loadPredictions();
-    }
-  };
-
-  const startEdit = (p: any) => {
-    setEditingId(p.id);
-    setEditNumbers(p.predicted_numbers?.join(', ') || '');
-    setEditNotes(p.notes || '');
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditNumbers('');
-    setEditNotes('');
+    if (error) toast.error("Error al eliminar");
+    else { toast.success("Eliminado del búnker"); loadPredictions(); }
   };
 
   const handleSaveEdit = async (id: number) => {
     const numbersArray = editNumbers.split(',').map(n => n.trim()).filter(n => n);
-    if (numbersArray.length === 0) {
-      toast.error("Ingresa al menos un número");
-      return;
-    }
-
     const { error } = await supabase
       .from('dato_ricardo_predictions')
-      .update({
-        predicted_numbers: numbersArray,
-        notes: editNotes || null
-      })
+      .update({ predicted_numbers: numbersArray, notes: editNotes || null })
       .eq('id', id);
 
-    if (error) {
-      toast.error("Error al actualizar (solo se pueden editar los de hoy)");
-      console.error(error);
-    } else {
-      toast.success("Pronóstico actualizado");
-      cancelEdit();
-      loadPredictions();
-    }
+    if (error) toast.error("Error al actualizar");
+    else { toast.success("Pronóstico actualizado"); setEditingId(null); loadPredictions(); }
   };
 
   const groupedPredictions = predictions.reduce((acc, p) => {
@@ -137,130 +77,54 @@ export function DatoRicardo() {
   return (
     <div className="space-y-4">
       <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <UserCircle className="w-5 h-5 text-accent" />
-            Dato Ricardo - Nuevo Pronóstico
-          </CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base font-bold flex items-center gap-2"><UserCircle className="w-5 h-5 text-accent" /> Nuevo Pronóstico</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Lotería</label>
-              <Select value={lotteryType} onValueChange={setLotteryType}>
-                <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-popover border shadow-lg">
-                  {LOTTERIES.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Fecha</label>
-              <Input type="date" value={predictionDate} onChange={(e) => setPredictionDate(e.target.value)} className="bg-background" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Hora</label>
-              <Select value={drawTime} onValueChange={setDrawTime}>
-                <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-popover border shadow-lg max-h-60">
-                  {DRAW_TIMES.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Números (coma)</label>
-              <Input placeholder="05, 12, 23" value={numbers} onChange={(e) => setNumbers(e.target.value)} className="bg-background font-mono" />
-            </div>
+            <Select value={lotteryType} onValueChange={setLotteryType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LOTTERIES.map((l) => (<SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>))}</SelectContent></Select>
+            <Input type="date" value={predictionDate} onChange={(e) => setPredictionDate(e.target.value)} />
+            <Select value={drawTime} onValueChange={setDrawTime}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DRAW_TIMES.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent></Select>
+            <Input placeholder="Números (coma)" value={numbers} onChange={(e) => setNumbers(e.target.value)} className="font-mono" />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Notas (opcional)</label>
-            <Textarea placeholder="Observaciones..." value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-background resize-none" rows={2} />
-          </div>
-          <Button onClick={handleSubmit} disabled={loading} className="w-full bg-foreground text-background hover:bg-foreground/90">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-2" />Guardar Pronóstico</>}
+          <Textarea placeholder="Notas..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          <Button onClick={handleSubmit} disabled={loading} className="w-full bg-foreground text-background">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Pronóstico"}
           </Button>
         </CardContent>
       </Card>
 
       <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-bold">Pronósticos de Dato Ricardo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {Object.entries(groupedPredictions).map(([date, items]) => (
-              <div key={date} className="space-y-2">
-                <h4 className="font-bold text-sm sticky top-0 bg-card py-1 border-b">
-                  📅 {new Date(date + 'T12:00:00').toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </h4>
-                <div className="grid gap-2">
-                  {(items as any[]).map((p) => {
-                    const lottery = LOTTERIES.find(l => l.id === p.lottery_type);
-                    const isEditing = editingId === p.id;
-
-                    return (
-                      <div key={p.id} className="p-3 bg-muted/50 rounded-lg">
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <img src={getLotteryLogo(p.lottery_type)} alt="" className="w-6 h-6" />
-                              <span className="font-semibold text-sm">{lottery?.name}</span>
-                              <span className="text-xs text-muted-foreground">{p.draw_time}</span>
-                            </div>
-                            <Input value={editNumbers} onChange={(e) => setEditNumbers(e.target.value)} placeholder="Números separados por coma" className="font-mono text-sm" />
-                            <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Notas..." className="text-sm" />
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => handleSaveEdit(p.id)} className="bg-primary">
-                                <Save className="w-3 h-3 mr-1" /> Guardar
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={cancelEdit}>
-                                <X className="w-3 h-3 mr-1" /> Cancelar
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <img src={getLotteryLogo(p.lottery_type)} alt="" className="w-8 h-8" />
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-sm">{lottery?.name}</span>
-                                  <span className="text-xs text-muted-foreground">{p.draw_time}</span>
-                                </div>
-                                <div className="flex gap-1 mt-1">
-                                  {p.predicted_numbers?.map((n: string, i: number) => (
-                                    <span key={i} className="px-2 py-0.5 bg-accent/20 text-accent-foreground rounded text-xs font-mono font-bold">
-                                      {n.padStart(2, '0')}
-                                    </span>
-                                  ))}
-                                </div>
-                                {p.notes && <p className="text-xs text-muted-foreground mt-1 italic">{p.notes}</p>}
-                              </div>
-                            </div>
-                            <div className="flex gap-1">
-                              <Button size="icon" variant="ghost" onClick={() => startEdit(p)} className="h-8 w-8 text-primary">
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)} className="h-8 w-8 text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
+        <CardHeader><CardTitle className="text-base font-bold text-primary">Historial de Pronósticos</CardTitle></CardHeader>
+        <CardContent className="space-y-6 max-h-[500px] overflow-y-auto">
+          {Object.entries(groupedPredictions).map(([date, items]) => (
+            <div key={date} className="space-y-2">
+              <h4 className="font-black text-xs uppercase bg-muted p-1 rounded tracking-tighter">📅 {date}</h4>
+              {(items as any[]).map((p) => (
+                <div key={p.id} className="p-3 bg-card border rounded-lg flex items-center justify-between shadow-sm">
+                  {editingId === p.id ? (
+                    <div className="flex-1 space-y-2">
+                      <Input value={editNumbers} onChange={(e) => setEditNumbers(e.target.value)} className="font-mono text-xs" />
+                      <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="text-xs" />
+                      <div className="flex gap-2"><Button size="sm" onClick={() => handleSaveEdit(p.id)}>OK</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)}>X</Button></div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <img src={getLotteryLogo(p.lottery_type)} className="w-8 h-8 rounded-full" />
+                        <div>
+                          <p className="text-xs font-bold">{p.draw_time}</p>
+                          <div className="flex gap-1">{p.predicted_numbers?.map((n:any, i:any) => (<span key={i} className="px-1.5 py-0.5 bg-primary/10 text-primary font-black rounded text-[10px]">{n}</span>))}</div>
+                        </div>
                       </div>
-                    );
-                  })}
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => {setEditingId(p.id); setEditNumbers(p.predicted_numbers.join(',')); setEditNotes(p.notes || '');}}><Pencil className="w-4 h-4 text-primary" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
-            {predictions.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm py-8">No hay pronósticos guardados</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
