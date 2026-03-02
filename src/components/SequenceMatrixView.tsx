@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, Table, Loader2, RefreshCw } from "lucide-react";
+import { TrendingUp, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
 import { getCodesForLottery, getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +18,6 @@ export function SequenceMatrixView() {
   const loadSequences = useCallback(async () => {
     setLoading(true);
     try {
-      // ABSORCIÓN TOTAL: Analizamos toda la historia registrada sin límites
       const { data, error } = await supabase
         .from('lottery_results')
         .select('result_number')
@@ -52,20 +50,16 @@ export function SequenceMatrixView() {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[220px] h-10 bg-background font-black text-xs border-primary/30">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[200px] h-9 bg-background font-black text-xs border-primary/20"><SelectValue /></SelectTrigger>
               <SelectContent className="font-bold">
                 {LOTTERIES.map(l => (
                   <SelectItem key={l.id} value={l.id}>
-                    <div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-5 h-5 rounded-full" /> {l.name}</div>
+                    <div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={loadSequences} variant="outline" size="icon" className="h-10 w-10 border-primary/30">
-              <RefreshCw className={loading ? 'animate-spin' : ''}/>
-            </Button>
+            <Button onClick={loadSequences} variant="outline" size="icon" className="h-9 w-9"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
           </div>
         </div>
       </CardHeader>
