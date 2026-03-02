@@ -15,7 +15,9 @@ export function HourlyPredictionView() {
   const [loading, setLoading] = useState(false);
   const [lastDrawTime, setLastDrawTime] = useState<string | null>(null);
 
+  const lottery = LOTTERIES.find(l => l.id === selectedLottery);
   const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
+  const today = new Date().toISOString().split('T')[0];
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -31,14 +33,19 @@ export function HourlyPredictionView() {
 
       if (data && data.length > 0) {
         setHistory(data);
-        // Detectamos la hora real del último sorteo guardado
-        setLastDrawTime(data[0].draw_time);
+        // Detectamos la hora del último sorteo guardado hoy
+        const todayResults = data.filter(d => d.draw_date === today);
+        if (todayResults.length > 0) {
+          setLastDrawTime(todayResults[0].draw_time);
+        } else {
+          setLastDrawTime(null);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
     }
     setLoading(false);
-  }, [selectedLottery]);
+  }, [selectedLottery, today]);
 
   useEffect(() => {
     loadData();
@@ -48,35 +55,49 @@ export function HourlyPredictionView() {
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
-  // LÓGICA DE DETECCIÓN DEL PRÓXIMO SORTEO REAL
+  // LÓGICA MAESTRA: DETECCIÓN POR RELOJ REAL Y GAPS EN BASE DE DATOS
   const nextDrawTime = useMemo(() => {
-    if (!lastDrawTime) return drawTimes[0];
+    const now = new Date();
+    // Minutos transcurridos hoy
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-    // Convertimos hora (01:00 PM) a minutos para comparar
     const toMin = (t: string) => {
-      const [h, m_ampm] = t.split(':');
-      const [m, ampm] = m_ampm.split(' ');
+      const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!match) return 0;
+      let [_, h, m, ampm] = match;
       let hours = parseInt(h);
-      if (ampm === 'PM' && hours !== 12) hours += 12;
-      if (ampm === 'AM' && hours === 12) hours = 0;
+      if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+      if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
       return hours * 60 + parseInt(m);
     };
 
-    const lastMin = toMin(lastDrawTime);
-    
-    // Buscamos en la lista oficial de horarios el que sigue después del último
+    // 1. Filtrar resultados que YA están grabados hoy
+    const todayResults = history.filter(h => h.draw_date === today);
+
+    // 2. BUSCAR HUECOS (GAPS): El primer sorteo que ya pasó pero NO tiene resultado
     for (const time of drawTimes) {
-      if (toMin(time) > lastMin) return time;
+      const drawMin = toMin(time);
+      if (drawMin <= currentMinutes) {
+        const hasResult = todayResults.some(r => r.draw_time === time);
+        if (!hasResult) return time; // Este es el que falta por salir/cargar
+      }
+    }
+
+    // 3. SI TODO ESTÁ AL DÍA: Buscar el primer sorteo en el futuro
+    for (const time of drawTimes) {
+      const drawMin = toMin(time);
+      if (drawMin > currentMinutes) return time;
     }
     
-    return drawTimes[0]; // Si ya pasaron todos, volvemos al primero (mañana)
-  }, [lastDrawTime, drawTimes]);
+    // 4. RESET: Si ya pasaron todos, mostrar el primero de mañana
+    return drawTimes[0]; 
+  }, [history, drawTimes, today]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    const forecasts = generateDayForecast(selectedLottery, [nextDrawTime], history, new Date().toISOString().split('T')[0]);
+    const forecasts = generateDayForecast(selectedLottery, [nextDrawTime], history, today);
     return forecasts[0] || null;
-  }, [history, selectedLottery, nextDrawTime]);
+  }, [history, selectedLottery, nextDrawTime, today]);
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden">
@@ -87,7 +108,7 @@ export function HourlyPredictionView() {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[180px] h-9 bg-background font-black text-xs border-primary/30">
+              <SelectTrigger className="w-[180px] h-9 bg-background font-black text-xs border-primary/30 shadow-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -100,32 +121,42 @@ export function HourlyPredictionView() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={loadData} variant="ghost" size="icon"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
+            <Button onClick={loadData} variant="ghost" size="icon" className="text-primary"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="pt-6">
         <div className="text-center space-y-6">
-          <div className="inline-flex items-center gap-3 px-8 py-3 bg-emerald-500 text-white rounded-full font-black text-2xl shadow-xl animate-pulse">
+          <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
             {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
 
-          {nextPrediction?.topPick && (
-            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/10 via-background to-primary/10 border-4 border-primary/20 relative shadow-2xl">
-              <span className="text-8xl block drop-shadow-2xl mb-4">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
+          {nextPrediction?.topPick ? (
+            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-primary/10 via-background to-accent/10 border-4 border-primary/20 relative shadow-2xl">
+              <span className="text-8xl block drop-shadow-2xl mb-4 animate-in zoom-in duration-500">
+                {getAnimalEmoji(nextPrediction.topPick.code)}
+              </span>
               <div className="font-mono font-black text-7xl text-primary leading-none tracking-tighter">
                 {nextPrediction.topPick.code.padStart(2, '0')}
               </div>
-              <h3 className="text-3xl font-black uppercase mt-2">{nextPrediction.topPick.name}</h3>
+              <h3 className="text-4xl font-black uppercase mt-2 tracking-tighter">{nextPrediction.topPick.name}</h3>
               
-              <div className="mt-4 inline-flex items-center gap-2 px-6 py-2 bg-destructive text-white rounded-2xl font-black text-xl shadow-lg">
-                <Zap className="w-5 h-5 fill-current" /> {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
+              <div className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-destructive text-white rounded-2xl font-black text-2xl shadow-lg border-b-4 border-black/20">
+                <Zap className="w-6 h-6 fill-current text-yellow-300" /> 
+                {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
               </div>
 
-              <p className="mt-6 text-[11px] font-black text-muted-foreground uppercase tracking-widest border-t pt-4">
-                TENDENCIA FUERTE. APARECIÓ {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X EN LA HISTORIA
-              </p>
+              <div className="mt-8 pt-4 border-t-2 border-dashed border-primary/20">
+                <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                  MUESTRA: {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X APARICIONES EN EL BÚNKER
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-20 flex flex-col items-center opacity-30 grayscale">
+               <Loader2 className="w-12 h-12 animate-spin mb-4" />
+               <p className="font-black uppercase tracking-widest text-sm">Sincronizando Búnker...</p>
             </div>
           )}
         </div>
