@@ -1,70 +1,117 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-client@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { message, lottery_type = 'lotto_activo' } = await req.json();
+    const { message, lottery_type = 'lotto_activo', conversationHistory = [], memoryContext = '' } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // 1. CONSULTA AL CEREBRO DE ALTA EFECTIVIDAD
-    const { data: estudio } = await supabase
-      .from('super_pronostico_final')
+    // 1. CONSULTA DIRECTA a lottery_results - últimos 200 resultados
+    const { data: recentResults } = await supabase
+      .from('lottery_results')
       .select('*')
-      .eq('lottery_type', lottery_type)
-      .maybeSingle();
+      .order('draw_date', { ascending: false })
+      .order('draw_time', { ascending: false })
+      .limit(200);
 
-    // 2. LOGICA DE DECISIÓN (EL FILTRO DEL 40%)
-    let analisisCritico = "";
-    let recomendacionIA = "";
+    // 2. Dato Ricardo predictions for today
+    const today = new Date().toISOString().split('T')[0];
+    const { data: ricardoPreds } = await supabase
+      .from('dato_ricardo_predictions')
+      .select('*')
+      .eq('prediction_date', today);
 
-    if (estudio) {
-      const score = estudio.power_score || 0;
+    // 3. Admin picks for today
+    const { data: adminPicks } = await supabase
+      .from('admin_picks')
+      .select('*')
+      .eq('pick_date', today);
+
+    // 4. Bot memory context
+    const { data: botMemories } = await supabase
+      .from('bot_memory')
+      .select('content')
+      .eq('is_active', true)
+      .limit(20);
+
+    // Build frequency analysis from results
+    let frequencyAnalysis = "";
+    if (recentResults && recentResults.length > 0) {
+      const freqMap: Record<string, number> = {};
+      const lotteryResults = recentResults.filter(r => r.lottery_type === lottery_type);
       
-      analisisCritico = `
-        DATOS TÉCNICOS:
-        - Score de Poder: ${score}/100
-        - Animal de Secuencia: ${estudio.favorito_secuencia}
-        - Animal por Desglose: ${estudio.suma_desglose}
-        - Estatus: ${estudio.nivel_confianza}
-      `;
+      lotteryResults.forEach(r => {
+        freqMap[r.result_number] = (freqMap[r.result_number] || 0) + 1;
+      });
 
-      if (score >= 80) {
-        recomendacionIA = "Este es un DATO DE ORO. Coinciden secuencia, matemática y hora. Es nuestra mayor probabilidad (40%+).";
-      } else if (score >= 70) {
-        recomendacionIA = "Es un TRIPLE FIJO muy fuerte. Las estadísticas están alineadas.";
-      } else {
-        recomendacionIA = "Atención: El score es bajo (${score}). Es un sorteo difícil. Recomiendo jugar con mucha cautela o esperar al próximo sorteo.";
-      }
+      const sorted = Object.entries(freqMap).sort((a, b) => b[1] - a[1]);
+      const top5 = sorted.slice(0, 5);
+      const cold5 = sorted.slice(-5).reverse();
+      
+      const lastResults = lotteryResults.slice(0, 10);
+
+      frequencyAnalysis = `
+DATOS REALES DE LA BASE DE DATOS (${lotteryResults.length} resultados de ${lottery_type}):
+- Top 5 más frecuentes: ${top5.map(([n, c]) => `${n}(${c}x)`).join(', ')}
+- Top 5 más fríos: ${cold5.map(([n, c]) => `${n}(${c}x)`).join(', ')}
+- Últimos 10 resultados: ${lastResults.map(r => `${r.result_number}(${r.draw_time})`).join(', ')}
+- Total registros en BD: ${recentResults.length}
+`;
     }
 
-    // 3. EL SYSTEM PROMPT RECARGADO
-    const systemPrompt = `
-      Eres Ricardo, el analista de loterías más efectivo de Venezuela. 
-      Tu meta absoluta es el 40% de efectividad. 
-      
-      REGLAS DE ORO:
-      1. Tu respuesta debe basarse EN EL SCORE DE PODER que recibes.
-      2. Si el score es > 80, di que es un "Dato de Oro" con mucha seguridad.
-      3. Si el score es < 70, advierte al usuario que el sorteo está difícil ("está rudo") y que juegue poco.
-      4. Habla como un venezolano carismático: "¡Epa mi pana!", "¡Mándale plomo!", "Taquilla segura".
-      
-      CONTEXTO ACTUAL:
-      ${analisisCritico}
-      ${recomendacionIA}
-    `;
+    // Admin picks context
+    let adminPicksContext = "";
+    if (adminPicks && adminPicks.length > 0) {
+      adminPicksContext = `\nDATOS EXPLOSIVOS DEL ADMIN HOY: ${adminPicks.map(p => `${p.animal_code}-${p.animal_name}(${p.pick_type})`).join(', ')}`;
+    }
 
-    // 4. LLAMADA A LA IA
+    // Ricardo predictions context
+    let ricardoContext = "";
+    if (ricardoPreds && ricardoPreds.length > 0) {
+      ricardoContext = `\nDATOS RICARDO HOY: ${ricardoPreds.map(p => `${p.lottery_type} ${p.draw_time}: ${p.predicted_numbers.join(',')}`).join(' | ')}`;
+    }
+
+    // Memory context
+    const memoryStr = botMemories?.map(m => m.content).join('\n') || '';
+
+    const systemPrompt = `
+Eres Ricardo, el analista de loterías más efectivo de Venezuela. 
+Tu meta absoluta es dar análisis basado en datos reales.
+
+REGLAS DE ORO:
+1. SIEMPRE basa tus respuestas en los datos reales que recibes.
+2. Habla como un venezolano carismático: "¡Epa mi pana!", "¡Mándale plomo!", "Taquilla segura".
+3. NUNCA expliques fórmulas ni cálculos internos.
+4. Sé breve y ejecutivo. No divagues.
+5. 0=Delfín, 00=Ballena, 99=Guacharito.
+
+${frequencyAnalysis}
+${adminPicksContext}
+${ricardoContext}
+
+MEMORIA ADMINISTRATIVA:
+${memoryStr}
+${memoryContext}
+`;
+
+    // Build messages array
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory.slice(-6),
+      { role: "user", content: message }
+    ];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -72,21 +119,19 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
+        model: "google/gemini-2.5-flash",
+        messages,
         temperature: 0.7,
       }),
     });
 
     const aiData = await response.json();
-    return new Response(JSON.stringify({ response: aiData.choices?.[0]?.message?.content }), {
+    return new Response(JSON.stringify({ response: aiData.choices?.[0]?.message?.content || "¡Epa! No pude procesar eso, intenta de nuevo." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 500, headers: corsHeaders });
   }
 });
