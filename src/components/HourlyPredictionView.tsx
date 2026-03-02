@@ -13,16 +13,13 @@ export function HourlyPredictionView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [lastDrawTime, setLastDrawTime] = useState<string | null>(null);
-
-  const lottery = LOTTERIES.find(l => l.id === selectedLottery);
-  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
   const today = new Date().toISOString().split('T')[0];
+
+  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // ABSORCIÓN TOTAL: Jalamos historial para estadísticas y racha
       const { data } = await supabase
         .from('lottery_results')
         .select('*')
@@ -30,68 +27,49 @@ export function HourlyPredictionView() {
         .order('draw_date', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(500);
-
-      if (data && data.length > 0) {
-        setHistory(data);
-        // Detectamos la hora del último sorteo guardado hoy
-        const todayResults = data.filter(d => d.draw_date === today);
-        if (todayResults.length > 0) {
-          setLastDrawTime(todayResults[0].draw_time);
-        } else {
-          setLastDrawTime(null);
-        }
-      }
+      if (data) setHistory(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error búnker:', error);
     }
     setLoading(false);
-  }, [selectedLottery, today]);
+  }, [selectedLottery]);
 
   useEffect(() => {
     loadData();
-    const channel = supabase.channel('hourly-sync')
+    const channel = supabase.channel('hourly-atomic-v2')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
-  // LÓGICA MAESTRA: DETECCIÓN POR RELOJ REAL Y GAPS EN BASE DE DATOS
+  // LÓGICA DE RELOJ EN TIEMPO REAL (MANDA LA HORA DEL CELULAR)
   const nextDrawTime = useMemo(() => {
     const now = new Date();
-    // Minutos transcurridos hoy
+    // Ajuste de hora local (Venezuela es UTC-4, pero el sistema usa la del dispositivo)
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     const toMin = (t: string) => {
       const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
       if (!match) return 0;
-      let [_, h, m, ampm] = match;
-      let hours = parseInt(h);
-      if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
-      if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + parseInt(m);
+      let hours = parseInt(match[1]);
+      const mins = parseInt(match[2]);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && hours !== 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + mins;
     };
 
-    // 1. Filtrar resultados que YA están grabados hoy
-    const todayResults = history.filter(h => h.draw_date === today);
-
-    // 2. BUSCAR HUECOS (GAPS): El primer sorteo que ya pasó pero NO tiene resultado
+    // Buscamos el próximo sorteo que va a ocurrir (o que está ocurriendo justo ahora)
+    // Damos un margen de 10 minutos después de la hora del sorteo
     for (const time of drawTimes) {
       const drawMin = toMin(time);
-      if (drawMin <= currentMinutes) {
-        const hasResult = todayResults.some(r => r.draw_time === time);
-        if (!hasResult) return time; // Este es el que falta por salir/cargar
+      if (drawMin >= currentMinutes - 5) { // Si faltan minutos o pasaron menos de 5 min
+        return time;
       }
     }
 
-    // 3. SI TODO ESTÁ AL DÍA: Buscar el primer sorteo en el futuro
-    for (const time of drawTimes) {
-      const drawMin = toMin(time);
-      if (drawMin > currentMinutes) return time;
-    }
-    
-    // 4. RESET: Si ya pasaron todos, mostrar el primero de mañana
-    return drawTimes[0]; 
-  }, [history, drawTimes, today]);
+    return drawTimes[0]; // Si ya pasó el último del día, mostrar el primero de mañana
+  }, [drawTimes]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
@@ -104,7 +82,7 @@ export function HourlyPredictionView() {
       <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter italic">
-            <Clock className="w-6 h-6 text-primary" /> SIGUIENTE HORA
+            <Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
@@ -128,6 +106,7 @@ export function HourlyPredictionView() {
       
       <CardContent className="pt-6">
         <div className="text-center space-y-6">
+          {/* CARTEL DE LA HORA ACTUALIZADA */}
           <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
             {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
@@ -156,7 +135,7 @@ export function HourlyPredictionView() {
           ) : (
             <div className="py-20 flex flex-col items-center opacity-30 grayscale">
                <Loader2 className="w-12 h-12 animate-spin mb-4" />
-               <p className="font-black uppercase tracking-widest text-sm">Sincronizando Búnker...</p>
+               <p className="font-black uppercase tracking-widest text-sm">Escaneando Malicia...</p>
             </div>
           )}
         </div>
