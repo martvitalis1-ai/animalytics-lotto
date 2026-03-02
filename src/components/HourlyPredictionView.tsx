@@ -23,7 +23,7 @@ export function HourlyPredictionView() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Absorbemos todo Supabase (últimos 1000 resultados para máxima precisión)
+      // ABSORCIÓN TOTAL: Jalamos 1000 resultados para que nunca diga que no hay historial
       const { data } = await supabase
         .from('lottery_results')
         .select('*')
@@ -33,16 +33,10 @@ export function HourlyPredictionView() {
 
       if (data) {
         setHistory(data);
-        
-        // Buscamos el último resultado disponible de esta lotería (sin importar si es hoy o ayer)
-        const lotteryResults = data.filter(d => d.lottery_type === selectedLottery);
-        
-        if (lotteryResults.length > 0) {
-          setLastDrawTime(lotteryResults[0].draw_time);
-          setLastDrawResult(lotteryResults[0].result_number);
-        } else {
-          setLastDrawTime(null);
-          setLastDrawResult(null);
+        const todayResults = data.filter(d => d.lottery_type === selectedLottery);
+        if (todayResults.length > 0) {
+          setLastDrawTime(todayResults[0].draw_time);
+          setLastDrawResult(todayResults[0].result_number);
         }
       }
     } catch (error) {
@@ -72,120 +66,59 @@ export function HourlyPredictionView() {
 
   const nextDrawInfo = useMemo(() => {
     if (!lastDrawTime) return { nextTime: drawTimes[0], message: null };
-
     const lastMinutes = parseTimeToMinutes(lastDrawTime);
     for (const time of drawTimes) {
-      if (parseTimeToMinutes(time) > lastMinutes) {
-        return { nextTime: time, message: null };
-      }
+      if (parseTimeToMinutes(time) > lastMinutes) return { nextTime: time, message: null };
     }
-    return { nextTime: drawTimes[0], message: 'Sorteos del próximo bloque' };
+    return { nextTime: drawTimes[0], message: 'Próximo bloque' };
   }, [lastDrawTime, drawTimes]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    const timeToPredict = nextDrawInfo.nextTime || drawTimes[0];
-    const forecasts = generateDayForecast(selectedLottery, [timeToPredict], history, today);
+    const forecasts = generateDayForecast(selectedLottery, [nextDrawInfo.nextTime || drawTimes[0]], history, today);
     return forecasts[0] || null;
   }, [history, selectedLottery, nextDrawInfo.nextTime, today, drawTimes]);
 
-  const getStatusColor = (prob: number): string => {
-    if (prob >= 80) return 'bg-red-500 text-white border-red-700';
-    if (prob >= 60) return 'bg-amber-500 text-white border-amber-700';
-    return 'bg-emerald-500 text-white border-emerald-700';
-  };
-
   return (
-    <Card className="glass-card border-2 border-primary/30 overflow-hidden">
-      <CardHeader className="pb-2 bg-muted/20">
+    <Card className="glass-card border-2 border-primary/30">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg font-black tracking-tighter uppercase">
-            <Clock className="w-5 h-5 text-primary" />
-            Siguiente Hora
+          <CardTitle className="flex items-center gap-2 text-lg font-black uppercase tracking-tighter">
+            <Clock className="w-5 h-5 text-primary" /> Siguiente Hora
           </CardTitle>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[140px] h-8 text-xs font-bold">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LOTTERIES.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectTrigger className="w-[150px] h-8 text-xs font-bold"><SelectValue /></SelectTrigger>
+              <SelectContent>{LOTTERIES.map((l) => (<SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>))}</SelectContent>
             </Select>
-            <Button onClick={loadData} variant="ghost" size="icon" className="h-8 w-8">
+            <Button onClick={loadData} variant="outline" size="icon" className="h-8 w-8">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
-        
-        {lastDrawTime && lastDrawResult && (
-          <div className="mt-2 text-center py-1 bg-primary/5 rounded border border-primary/10">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Salió a las {lastDrawTime}: </span>
-            <span className="text-sm font-black text-primary">
-              {lastDrawResult.padStart(2, '0')} - {getAnimalName(lastDrawResult)} {getAnimalEmoji(lastDrawResult)}
-            </span>
-          </div>
-        )}
       </CardHeader>
-      
-      <CardContent className="pt-4">
+      <CardContent>
         {nextPrediction ? (
           <div className="space-y-4">
             <div className="text-center">
               <div className="inline-flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-full font-black text-xl animate-pulse">
-                {nextDrawInfo.nextTime}
-                <ChevronRight className="w-5 h-5" />
-                <span>PRÓXIMO</span>
+                {nextDrawInfo.nextTime} <ChevronRight className="w-5 h-5" /> <span>PRÓXIMO</span>
               </div>
             </div>
-
             {nextPrediction.topPick && (
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-background to-accent/20 border-2 border-primary/50 shadow-xl relative overflow-hidden">
-                <div className="absolute top-2 right-2">
-                   <Zap className="w-8 h-8 text-primary/20" />
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-background to-accent/20 border-2 border-primary/50 shadow-xl text-center">
+                <span className="text-7xl block mb-2">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
+                <div className="font-mono font-black text-6xl text-primary">{nextPrediction.topPick.code.padStart(2, '0')}</div>
+                <div className="text-xl font-black uppercase mt-1">{nextPrediction.topPick.name}</div>
+                <div className="mt-2 inline-block px-4 py-1 bg-red-500 text-white rounded-lg font-bold">
+                  <Zap className="w-4 h-4 inline mr-1" /> {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
                 </div>
-                <div className="flex items-center justify-around gap-4">
-                  <span className="text-7xl drop-shadow-md">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
-                  <div className="text-center">
-                    <div className="font-mono font-black text-6xl text-primary tracking-tighter">
-                      {nextPrediction.topPick.code.padStart(2, '0')}
-                    </div>
-                    <div className="text-xl font-black uppercase tracking-widest mt-1">
-                      {nextPrediction.topPick.name}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-3xl block mb-1">{nextPrediction.topPick.statusEmoji}</span>
-                    <span className={`px-3 py-1 rounded-lg text-lg font-black shadow-sm border-b-4 ${getStatusColor(nextPrediction.topPick.probability)}`}>
-                      {Math.floor(nextPrediction.topPick.probability)}%
-                    </span>
-                  </div>
-                </div>
-                <p className="text-center text-[11px] font-bold text-muted-foreground mt-4 uppercase tracking-tighter leading-tight bg-muted/50 p-2 rounded-lg italic">
-                  {nextPrediction.topPick.reason}
-                </p>
+                <p className="text-[10px] font-bold text-muted-foreground mt-4 uppercase bg-muted/50 p-2 rounded">{nextPrediction.topPick.reason}</p>
               </div>
             )}
-
-            <div className="grid grid-cols-4 gap-2">
-              {nextPrediction.predictions.slice(1, 5).map((pred) => (
-                <div key={pred.code} className="p-2 rounded-xl bg-card border shadow-sm text-center">
-                  <span className="text-3xl">{getAnimalEmoji(pred.code)}</span>
-                  <div className="font-black text-lg text-primary">{pred.code.padStart(2, '0')}</div>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${getStatusColor(pred.probability)}`}>
-                    {Math.floor(pred.probability)}%
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center py-10 opacity-50">
-            <Loader2 className="w-10 h-10 animate-spin text-primary mb-2" />
-            <p className="text-sm font-bold uppercase tracking-widest">Sincronizando Búnker...</p>
-          </div>
+          <div className="py-12 text-center opacity-50 font-bold uppercase tracking-widest">Sincronizando con Supabase...</div>
         )}
       </CardContent>
     </Card>
