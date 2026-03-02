@@ -79,7 +79,7 @@ export function AIPredictive() {
     setLoading(true);
     
     try {
-      if (history && history.length > 10) {
+      if (history && history.length >= 1) {
         const allPredictions: Record<string, CachedPrediction> = {};
         const allHourlyPredictions: Record<string, Record<string, CachedPrediction>> = {};
         const allBrainPredictions: Record<string, BrainPrediction[]> = {};
@@ -144,7 +144,7 @@ export function AIPredictive() {
         
         toast.success("Predicciones actualizadas con consistencia garantizada");
       } else {
-        toast.warning("No hay historial suficiente para generar predicciones");
+        toast.warning("No hay datos en el historial. Inserta al menos un resultado.");
       }
     } catch (error) {
       console.error('Error generando predicciones:', error);

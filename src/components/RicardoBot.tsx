@@ -349,7 +349,7 @@ export function RicardoBot() {
     if (isLotteryRelated(lowerMsg)) {
       // Predictions
       if (lowerMsg.match(/pronóstico|predicción|predic|qué va a salir|dame números|recomend/)) {
-        if (history.length < 10) {
+        if (history.length < 1) {
           return getRandomResponse('noData');
         }
 
@@ -468,7 +468,7 @@ export function RicardoBot() {
 
       // Complete analysis
       if (lowerMsg.match(/análisis|estadísticas|reporte|completo/)) {
-        if (history.length < 10) return getRandomResponse('noData');
+        if (history.length < 1) return getRandomResponse('noData');
 
         let response = `${getRandomExpression()} ¡Análisis completo del día!\n\n`;
         response += `📊 **Base de datos:** ${history.length} resultados desde ${LEARNING_START_DATE}\n\n`;

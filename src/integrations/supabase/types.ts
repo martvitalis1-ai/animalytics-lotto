@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_picks: {
+        Row: {
+          animal_code: string
+          animal_name: string | null
+          created_at: string
+          id: string
+          lottery_type: string
+          notes: string | null
+          pick_date: string
+          pick_type: string
+          updated_at: string
+        }
+        Insert: {
+          animal_code: string
+          animal_name?: string | null
+          created_at?: string
+          id?: string
+          lottery_type: string
+          notes?: string | null
+          pick_date?: string
+          pick_type?: string
+          updated_at?: string
+        }
+        Update: {
+          animal_code?: string
+          animal_name?: string | null
+          created_at?: string
+          id?: string
+          lottery_type?: string
+          notes?: string | null
+          pick_date?: string
+          pick_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_predictions: {
         Row: {
           analysis_notes: string | null
