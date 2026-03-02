@@ -1,194 +1,129 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Flame, Gift, Sparkles, TrendingUp, Zap } from "lucide-react";
-import { RichAnimalCard } from "./RichAnimalCard";
-import { LOTTERIES } from '@/lib/constants';
-import { getLotteryLogo } from './LotterySelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  getExplosivePredictions, 
-  getGoldenNumbers, 
-  AdvancedPrediction 
-} from '@/lib/advancedProbability';
+import { Flame, Zap, Trophy } from "lucide-react";
+import { LOTTERIES } from '@/lib/constants';
+import { getLotteryLogo } from "./LotterySelector";
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { generateBrainPredictions } from '@/lib/brainEngine';
 
 export function ExplosiveData() {
-  const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
-  const [history, setHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
+  const [displayPredictions, setDisplayPredictions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     setLoading(true);
-    try {
-      const { data } = await supabase
-        .from('lottery_results')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(500);
+    const today = new Date().toISOString().split('T')[0];
 
-      if (data) {
-        setHistory(data);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
+    // 1. BUSCAMOS SI EL JEFE PUSO ALGO MANUAL EN EL ADMIN (admin_picks)
+    const { data: manualPicks } = await supabase
+      .from('admin_picks')
+      .select('*')
+      .eq('lottery_type', selectedLottery)
+      .eq('pick_date', today);
+
+    // 2. BUSCAMOS LOS AUTOMÁTICOS DE LA IA POR SI ACASO
+    const { data: history } = await supabase
+      .from('lottery_results')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    const brainPreds = await generateBrainPredictions(selectedLottery, history || [], 5);
+
+    // 3. LA MALICIA: MEZCLAMOS AMBOS
+    // Si hay manuales, los ponemos de primero con 98% de probabilidad (FUERZA MÁXIMA)
+    const manualMapped = (manualPicks || []).map(p => ({
+      code: p.animal_code,
+      name: p.animal_name,
+      probability: 98,
+      status: 'HOT',
+      statusEmoji: '🔥',
+      reason: p.notes || "Dato especial del Jefe Ricardo para hoy"
+    }));
+
+    // Filtramos los de la IA para que no se repitan con los del jefe
+    const manualCodes = manualMapped.map(m => m.code);
+    const filteredAI = brainPreds.filter(p => !manualCodes.includes(p.code));
+
+    // Mostramos los del jefe primero y rellenamos con IA hasta tener 3
+    const finalResult = [...manualMapped, ...filteredAI].slice(0, 3);
+    
+    setDisplayPredictions(finalResult);
     setLoading(false);
-  }, []);
+  };
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
-
-  const lottery = LOTTERIES.find(l => l.id === selectedLottery);
-  const today = new Date().toISOString().split('T')[0];
-
-  // Top 3 explosive predictions using new algorithm
-  const explosiveNumbers = useMemo((): AdvancedPrediction[] => {
-    if (history.length === 0) return [];
-    return getExplosivePredictions(selectedLottery, history, today, 3);
-  }, [history, selectedLottery, today]);
-
-  // "El Regalo" - golden numbers
-  const giftNumbers = useMemo((): AdvancedPrediction[] => {
-    if (history.length === 0) return [];
-    return getGoldenNumbers(selectedLottery, history, today);
-  }, [history, selectedLottery, today]);
+    // Sincronización en tiempo real: si guardas en el Admin, cambia aquí al segundo
+    const channel = supabase.channel('explosive-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_picks' }, loadData)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedLottery]);
 
   return (
-    <Card className="glass-card border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500">
-              <Flame className="w-5 h-5 text-white" />
-            </div>
-            DATOS EXPLOSIVOS
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-          </CardTitle>
-          
-          {/* Lottery selector */}
-          <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border shadow-lg">
-              {LOTTERIES.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  <div className="flex items-center gap-2">
-                    <img src={getLotteryLogo(l.id)} alt="" className="w-5 h-5" />
-                    {l.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Top predicciones con probabilidades variables (35-98%) para hoy • Algoritmo avanzado
-        </p>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div className="space-y-4">
+      <Card className="glass-card border-2 border-primary/30">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg font-black uppercase tracking-tighter text-destructive">
+              <Flame className="w-5 h-5" /> Datos Explosivos ✨
+            </CardTitle>
+            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+              <SelectTrigger className="w-[150px] h-8 text-xs font-bold bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LOTTERIES.map(l => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        ) : (
-          <>
-            {/* Explosive Numbers Grid - Responsive fix */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {explosiveNumbers.length > 0 ? (
-                explosiveNumbers.map((pred, idx) => (
-                  <RichAnimalCard
-                    key={pred.code}
-                    code={pred.code}
-                    probability={pred.probability}
-                    status={pred.status}
-                    statusEmoji={pred.statusEmoji}
-                    rank={idx + 1}
-                    size="lg"
-                    reason={pred.reason}
-                    lotteryName={lottery?.name}
-                    className={`
-                      ${idx === 0 ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-500/30' : ''}
-                      animate-in fade-in slide-in-from-bottom-2
-                    `}
-                    showProbability
-                  />
-                ))
-              ) : (
-                <div className="col-span-3 text-center py-4 text-muted-foreground">
-                  Cargando análisis de hoy…
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Top predicciones con probabilidades variables (35-98%) para hoy
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {displayPredictions.map((pred, idx) => (
+              <div 
+                key={idx} 
+                className="relative p-4 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-red-500/10 via-background to-orange-500/10 shadow-lg animate-in zoom-in-95"
+              >
+                <div className="absolute -top-2 -left-2 w-8 h-8 bg-muted rounded-full border-2 border-primary/20 flex items-center justify-center text-xs font-black">
+                  #{idx + 1}
                 </div>
-              )}
-            </div>
-
-            {/* Status legend */}
-            <div className="flex flex-wrap gap-2 justify-center text-xs">
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-600">
-                🔥 CALIENTE (90%+)
-              </span>
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600">
-                ⚡ FUERTE (75-89%)
-              </span>
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                ⚖️ POSIBLE (50-74%)
-              </span>
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20 text-blue-600">
-                ❄️ FRÍO (&lt;50%)
-              </span>
-            </div>
-
-            {/* El Regalo Section */}
-            {giftNumbers.length > 0 && (
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 rounded-xl" />
-                <div className="relative p-4 rounded-xl border-2 border-dashed border-amber-500/50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Gift className="w-5 h-5 text-amber-500" />
-                    <h3 className="font-bold text-amber-600 dark:text-amber-400">EL REGALO</h3>
-                    <span className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                      Los números poderosos del día
+                <div className="text-center space-y-2">
+                  <span className="text-6xl block drop-shadow-md">{getAnimalEmoji(pred.code)}</span>
+                  <div className="font-mono font-black text-4xl text-primary leading-none">
+                    {pred.code.padStart(2, '0')}
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-widest border-b-2 border-primary/10 pb-1">
+                    {pred.name}
+                  </div>
+                  <div className="flex justify-center gap-1.5 pt-1">
+                    <span className="px-2 py-0.5 bg-orange-500/20 text-orange-600 rounded text-[10px] font-black flex items-center gap-1 uppercase border border-orange-500/30">
+                      <Zap className="w-3 h-3" /> Fuerte
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-600 rounded text-[10px] font-black flex items-center gap-1 border border-emerald-500/30">
+                      ⚡ {pred.probability}%
                     </span>
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {giftNumbers.map((pred) => (
-                      <RichAnimalCard
-                        key={pred.code}
-                        code={pred.code}
-                        probability={pred.probability}
-                        status={pred.status}
-                        statusEmoji={pred.statusEmoji}
-                        size="md"
-                        reason={pred.reason}
-                        className="ring-2 ring-amber-400"
-                        showProbability
-                      />
-                    ))}
-                  </div>
-                  
-                  <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 mt-2 text-center">
-                    <Zap className="w-3 h-3 inline mr-1" />
-                    Días sin salir: {giftNumbers[0]?.daysSince || 0} días | Seleccionados por algoritmo avanzado
-                  </p>
                 </div>
               </div>
-            )}
-
-            {/* Quick stats */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-              <span className="flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                Lotería: {lottery?.name}
-              </span>
-              <span>
-                Historial: {history.filter(h => h.lottery_type === selectedLottery).length} resultados
-              </span>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+          
+          <div className="flex justify-center gap-2 mt-6 flex-wrap">
+             <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 uppercase border border-red-500/20">🔥 Caliente (90%+)</span>
+             <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 uppercase border border-orange-500/20">⚡ Fuerte (75-89%)</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
