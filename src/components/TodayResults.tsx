@@ -17,11 +17,11 @@ export function TodayResults() {
       // Quitamos el filtro .eq('draw_date', today) para que si hoy no hay nada aún, 
       // muestre lo último de ayer y no se vea la pantalla vacía.
       const { data, error } = await supabase
-        .from('calculadora_analitica')
+        .from('lottery_results')
         .select('*')
         .order('draw_date', { ascending: false })
-        .order('hora_militar', { ascending: false })
-        .limit(40); // Traemos suficientes para cubrir todas las loterías
+        .order('created_at', { ascending: false })
+        .limit(40);
       
       if (error) {
         console.error("Error en TodayResults:", error);
@@ -29,7 +29,7 @@ export function TodayResults() {
 
       if (data) {
         // Agrupar por lotería y obtener solo el ÚLTIMO de cada una
-        const latestByLottery = data.reduce((acc, r) => {
+        const latestByLottery = data.reduce((acc: Record<string, any>, r: any) => {
           if (!acc[r.lottery_type]) {
             acc[r.lottery_type] = r;
           }
