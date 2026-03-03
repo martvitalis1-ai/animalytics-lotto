@@ -17,66 +17,38 @@ export function RicardoBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [fullContext, setFullContext] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const absorbKnowledge = useCallback(async () => {
+  // Función para construir la respuesta de Ricardo basada en datos reales
+  const generarRespuestaRicardo = async () => {
     try {
-      console.log("🕵️ Ricardo IA absorbiendo el búnker...");
+      const { data: pronosticos, error } = await supabase
+        .from('super_pronostico_final')
+        .select('*');
 
-      const today = new Date().toISOString().split('T')[0];
-
-      const [resultsRes, ricardoRes] = await Promise.all([
-        supabase
-          .from('lottery_results')
-          .select('lottery_type, result_number, draw_time, draw_date')
-          .order('draw_date', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(100),
-        supabase
-          .from('dato_ricardo_predictions')
-          .select('lottery_type, predicted_numbers, predicted_animals, draw_time, notes')
-          .eq('prediction_date', today)
-          .order('created_at', { ascending: false })
-          .limit(40),
-      ]);
-
-      let contextString = "ESTADO ACTUAL DEL BÚNKER (USA ESTO PARA RESPONDER):\n\n";
-
-      const ricardoRows = ricardoRes.data || [];
-      const manualRows = ricardoRows.filter((r: any) => r.draw_time === 'MANUAL');
-      const dailyRows = ricardoRows.filter((r: any) => r.draw_time !== 'MANUAL');
-
-      if (manualRows.length > 0) {
-        contextString += "🔥 DATOS MANUALES (dato_ricardo_predictions):\n";
-        manualRows.forEach((r: any) => {
-          contextString += `- ${r.lottery_type}: ${(r.predicted_numbers || []).join(', ')} | ${r.notes || 'Sin nota'}\n`;
-        });
+      if (error || !pronosticos || pronosticos.length === 0) {
+        return "¡Coño jefe! No consigo los papeles en el búnker ahorita. Intenta en un minuto que estoy barajando los datos. 🕵️‍♂️";
       }
 
-      if (dailyRows.length > 0) {
-        contextString += "\n📋 PRONÓSTICOS DEL DÍA:\n";
-        dailyRows.forEach((r: any) => {
-          contextString += `- ${r.lottery_type} ${r.draw_time}: ${(r.predicted_numbers || []).join(', ')}. Nota: ${r.notes || 'Sin nota'}\n`;
-        });
-      }
+      let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura para los próximos sorteos. Activo ahí: \n\n";
 
-      if (resultsRes.data && resultsRes.data.length > 0) {
-        contextString += "\n📊 ÚLTIMOS SORTEOS (RACHAS):\n";
-        resultsRes.data.forEach((r) => {
-          contextString += `- ${r.lottery_type} | ${r.draw_date} | ${r.draw_time}: salió el ${r.result_number}\n`;
-        });
-      }
+      pronosticos.forEach(l => {
+        const lotName = l.lottery_type.replace('_', ' ').toUpperCase();
+        respuesta += `🏛 *${lotName}*\n`;
+        respuesta += `🚜 Arrastre: ${l.pronostico_dia}\n`;
+        respuesta += `📐 Escuadra: ${l.pronostico_jaladera}\n`;
+        respuesta += `❌ Cruzada: ${l.pronostico_fijo}\n`;
+        if (l.power_score >= 90) respuesta += `🔥 *DATO DE TAQUILLA (Score: ${l.power_score})*\n`;
+        respuesta += `------------------\n`;
+      });
 
-      setFullContext(contextString);
-    } catch (error) {
-      console.error("Error absorbiendo datos:", error);
+      respuesta += "\n¡Mándale plomo con fe que hoy se cobra! 💰🍀";
+      return respuesta;
+
+    } catch (err) {
+      return "¡Epa chamo! Se me cruzaron los cables en el búnker. Dame un chance y vuelve a preguntarme. 🍀";
     }
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) absorbKnowledge();
-  }, [isOpen, absorbKnowledge]);
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -88,38 +60,19 @@ export function RicardoBot() {
     setInput('');
     setIsLoading(true);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('ricardo-ai', {
-        body: {
-          message: userMsg,
-          context: `${fullContext}\n\nINSTRUCCIÓN CRÍTICA: Eres Ricardo IA, el datero más malicioso de Venezuela. Responde con seguridad, emojis de dinero y búnker. Si te preguntan 'qué sale', revisa los DATOS MANUALES o los PRONÓSTICOS DEL DÍA. Si no hay nada, analiza las RACHAS del historial. NUNCA digas que no sabes. NUNCA des error.`
-        }
-      });
+    // OMITIMOS EL INVOKE (IA) Y USAMOS NUESTRA LÓGICA LOCAL
+    const respuestaDatera = await generarRespuestaRicardo();
 
-      if (error || !data) throw new Error("Fallback");
-
+    // Simulamos un pequeño retraso para que parezca que Ricardo está "pensando"
+    setTimeout(() => {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.response,
+        content: respuestaDatera,
         timestamp: new Date()
       }]);
-    } catch (e) {
-      const emergencyData = [
-        "¡Epa chamo! El búnker está pesado hoy pero mi malicia no falla: juégate el 12 (Caballo) y el 25 (Gallina) que tienen racha de salir ahorita. 💰",
-        "Dímelo jefe, el que estás buscando es el 33 (Pescado), está que arde en las matrices. Mándale plomo. 🏁",
-        "¡Coño! Se cayó la señal en el búnker, pero mi ojo clínico ve al 11 (Gato) bajando por la racha de los 10. 🕵️‍♂️"
-      ];
-      const random = Math.floor(Math.random() * emergencyData.length);
-
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: emergencyData[random],
-        timestamp: new Date()
-      }]);
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    }, 1000);
   };
 
   useEffect(() => {
@@ -143,7 +96,7 @@ export function RicardoBot() {
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="bg-card border-l-4 border-primary p-3 rounded-r-lg text-sm font-bold shadow-sm">
-                  ¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir o qué racha analizo. ¡Plomo! 💰🏁
+                  ¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir. ¡Plomo! 💰🏁
                 </div>
               )}
               {messages.map((msg) => (
@@ -153,7 +106,7 @@ export function RicardoBot() {
                       ? 'bg-primary text-white rounded-br-none'
                       : 'bg-card border border-primary/10 font-bold rounded-bl-none'
                   }`}>
-                    {msg.content}
+                    <p className="whitespace-pre-line">{msg.content}</p>
                   </div>
                 </div>
               ))}
