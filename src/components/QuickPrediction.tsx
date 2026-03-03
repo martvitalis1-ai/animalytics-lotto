@@ -3,17 +3,32 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Sparkles, Brain, Loader2, Zap, Trophy, Lock } from "lucide-react";
+import { Calculator, Sparkles, Brain, Loader2, Trophy, Lock } from "lucide-react";
 import { LOTTERIES, ANIMAL_MAPPING } from '@/lib/constants';
 import { getLotteryLogo } from "./LotterySelector";
 import { supabase } from "@/integrations/supabase/client";
-import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
-import { generateUniBrainPredictions, UniBrainPrediction } from '@/lib/unibrain';
+import { getAnimalEmoji } from '@/lib/animalData';
+
+type SuperPrediction = {
+  code: string;
+  probability: number;
+  emoji: string;
+};
+
+const normalizeCode = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const str = String(value).trim();
+  if (!str) return null;
+  if (str === '0' || str === '00') return str;
+  const num = Number(str);
+  if (Number.isNaN(num)) return null;
+  return Math.max(0, Math.min(99, num)).toString();
+};
 
 export function QuickPrediction() {
   const [selectedLottery, setSelectedLottery] = useState<string>(LOTTERIES[0].id);
   const [lastResults, setLastResults] = useState<string[]>(['', '', '', '']);
-  const [predictions, setPredictions] = useState<UniBrainPrediction[]>([]);
+  const [predictions, setPredictions] = useState<SuperPrediction[]>([]);
   const [loading, setLoading] = useState(false);
 
   const lottery = LOTTERIES.find(l => l.id === selectedLottery);
@@ -26,32 +41,46 @@ export function QuickPrediction() {
 
   const generatePrediction = async () => {
     const validResults = lastResults.filter(r => r.trim() !== '');
-    if (validResults.length < 2) {
-      return;
-    }
+    if (validResults.length < 2) return;
 
     setLoading(true);
 
-    // ABSORCIÓN TOTAL: Quitamos el filtro de fecha (LEARNING_START_DATE) 
-    // para que use todo el historial de Supabase (Enero + Marzo)
-    const { data: history } = await supabase
-      .from('lottery_results')
+    const { data, error } = await (supabase as any)
+      .from('super_pronostico_final')
       .select('*')
-      .order('draw_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(1000); // Aumentamos el límite para que la IA sea más precisa
+      .eq('lottery_type', selectedLottery)
+      .order('power_score', { ascending: false })
+      .limit(12);
 
-    if (history) {
-      // UNIBRAIN V5.1 - Mantenemos tu algoritmo original intacto
-      const uniBrainPreds = await generateUniBrainPredictions(
-        validResults,
-        selectedLottery,
-        history
-      );
-      
-      setPredictions(uniBrainPreds);
+    if (error) {
+      console.error('Error leyendo super_pronostico_final:', error);
+      setPredictions([]);
+      setLoading(false);
+      return;
     }
 
+    const candidates = (data || []).flatMap((row: any) => {
+      const base = Math.max(1, Math.min(99, Math.floor(Number(row?.power_score ?? 80))));
+      return [
+        { code: normalizeCode(row?.pronostico_dia), probability: base },
+        { code: normalizeCode(row?.pronostico_jaladera), probability: Math.max(1, base - 4) },
+        { code: normalizeCode(row?.pronostico_fijo), probability: Math.max(1, base - 8) },
+      ];
+    });
+
+    const normalized = candidates
+      .filter((item) => !!item.code)
+      .map((item) => ({
+        code: item.code as string,
+        probability: item.probability,
+        emoji: getAnimalEmoji(item.code as string),
+      }));
+
+    const deduped = normalized.filter((item, index, arr) => {
+      return arr.findIndex((x) => x.code === item.code) === index;
+    });
+
+    setPredictions(deduped.slice(0, 5));
     setLoading(false);
   };
 
@@ -63,18 +92,17 @@ export function QuickPrediction() {
           Calculadora UNIBRAIN V5.1
         </CardTitle>
         <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">
-          Ingresa los últimos 4 sorteos. La IA aplicará la Regla del 19 y reducciones digitales.
+          Ingresa los últimos 4 sorteos. El cálculo final lee super_pronostico_final.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Selector de Lotería */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-black text-muted-foreground uppercase">Lotería</label>
           <Select value={selectedLottery} onValueChange={setSelectedLottery}>
             <SelectTrigger className="bg-background font-bold h-10">
               <SelectValue>
                 <div className="flex items-center gap-2">
-                  <img src={getLotteryLogo(selectedLottery)} alt="" className="w-5 h-5 rounded-full" />
+                  <img src={getLotteryLogo(selectedLottery)} alt={lottery?.name || selectedLottery} className="w-5 h-5 rounded-full" />
                   <span>{lottery?.name}</span>
                 </div>
               </SelectValue>
@@ -83,7 +111,7 @@ export function QuickPrediction() {
               {LOTTERIES.map((l) => (
                 <SelectItem key={l.id} value={l.id}>
                   <div className="flex items-center gap-2 font-bold">
-                    <img src={getLotteryLogo(l.id)} alt="" className="w-4 h-4 rounded-full" />
+                    <img src={getLotteryLogo(l.id)} alt={l.name} className="w-4 h-4 rounded-full" />
                     <span>{l.name}</span>
                   </div>
                 </SelectItem>
@@ -92,7 +120,6 @@ export function QuickPrediction() {
           </Select>
         </div>
 
-        {/* Inputs para los últimos 4 resultados */}
         <div className="space-y-2">
           <label className="text-[10px] font-black text-muted-foreground uppercase">
             Secuencia de Resultados (Reciente a Antiguo)
@@ -118,8 +145,7 @@ export function QuickPrediction() {
           </div>
         </div>
 
-        {/* Botón de Predicción */}
-        <Button 
+        <Button
           onClick={generatePrediction}
           disabled={loading || lastResults.filter(r => r.trim()).length < 2}
           className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-lg"
@@ -132,7 +158,6 @@ export function QuickPrediction() {
           Procesar con IA
         </Button>
 
-        {/* Resultados Finales TOP 5 */}
         {predictions.length > 0 && (
           <div className="space-y-3 pt-4 border-t-2 border-dashed">
             <div className="flex items-center justify-between">
@@ -142,17 +167,17 @@ export function QuickPrediction() {
                 <Lock className="w-3 h-3 text-green-500" />
               </div>
               <span className="text-[9px] font-black px-2 py-0.5 bg-muted rounded-full uppercase">
-                Búnker Activo
+                super_pronostico_final
               </span>
             </div>
-            
+
             <div className="grid grid-cols-5 gap-1.5">
               {predictions.slice(0, 5).map((pred, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all ${
-                    idx === 0 
-                      ? 'bg-amber-500/20 border-amber-500/50 scale-105 shadow-md' 
+                    idx === 0
+                      ? 'bg-amber-500/20 border-amber-500/50 scale-105 shadow-md'
                       : 'bg-card border-border shadow-sm'
                   }`}
                 >
@@ -173,7 +198,7 @@ export function QuickPrediction() {
 
             <div className="flex items-center justify-center gap-2 text-[9px] font-black text-muted-foreground uppercase tracking-widest pt-2">
               <Brain className="w-3 h-3" />
-              Algoritmo de Malicia V5.1 Activo
+              Fuente real: super_pronostico_final
             </div>
           </div>
         )}

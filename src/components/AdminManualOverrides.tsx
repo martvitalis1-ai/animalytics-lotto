@@ -9,14 +9,23 @@ import { toast } from "sonner";
 import { LOTTERIES } from '@/lib/constants';
 import { getAnimalName, getAnimalEmoji } from '@/lib/animalData';
 
-// Generate full animal list 00-99
 const ANIMAL_OPTIONS = Array.from({ length: 100 }, (_, i) => {
   const code = i === 0 ? '00' : i.toString();
   const name = getAnimalName(code) || `Animal ${code}`;
   return { code, name, emoji: getAnimalEmoji(code) };
 });
-// Add 0 (Delfín) separately
 ANIMAL_OPTIONS.unshift({ code: '0', name: getAnimalName('0') || 'Delfín', emoji: getAnimalEmoji('0') });
+
+const getPickTypeFromNotes = (notes?: string | null): 'explosivo' | 'regalo' => {
+  if (!notes) return 'explosivo';
+  if (notes.startsWith('[REGALO]')) return 'regalo';
+  return 'explosivo';
+};
+
+const stripPrefix = (notes?: string | null): string => {
+  if (!notes) return '';
+  return notes.replace(/^\[(EXPLOSIVO|REGALO)\]\s*/i, '');
+};
 
 export function AdminManualOverrides() {
   const [picks, setPicks] = useState<any[]>([]);
@@ -29,13 +38,33 @@ export function AdminManualOverrides() {
   const today = new Date().toISOString().split('T')[0];
 
   const loadPicks = useCallback(async () => {
-    // ABSORCIÓN TOTAL: Jalamos los picks del búnker
-    const { data } = await supabase
-      .from('admin_picks')
-      .select('*')
-      .eq('pick_date', today)
+    const { data, error } = await supabase
+      .from('dato_ricardo_predictions')
+      .select('id, lottery_type, predicted_numbers, predicted_animals, notes, prediction_date, draw_time, created_at')
+      .eq('prediction_date', today)
+      .eq('draw_time', 'MANUAL')
       .order('created_at', { ascending: false });
-    setPicks(data || []);
+
+    if (error) {
+      console.error(error);
+      setPicks([]);
+      return;
+    }
+
+    const normalized = (data || []).flatMap((row: any) => {
+      const code = row?.predicted_numbers?.[0];
+      if (!code) return [];
+      return [{
+        id: row.id,
+        lottery_type: row.lottery_type,
+        animal_code: code,
+        animal_name: row?.predicted_animals?.[0] || getAnimalName(code),
+        pick_type: getPickTypeFromNotes(row.notes),
+        notes: stripPrefix(row.notes),
+      }];
+    });
+
+    setPicks(normalized);
   }, [today]);
 
   useEffect(() => { loadPicks(); }, [loadPicks]);
@@ -45,21 +74,23 @@ export function AdminManualOverrides() {
       toast.error("Selecciona un animal");
       return;
     }
+
     setLoading(true);
     const animalName = getAnimalName(selectedAnimal) || '';
-    
-    // USAMOS UPSERT PARA EVITAR EL ERROR 42P10
-    const { error } = await supabase.from('admin_picks').upsert({
+    const prefix = pickType === 'regalo' ? '[REGALO]' : '[EXPLOSIVO]';
+    const mergedNotes = `${prefix}${notes ? ` ${notes}` : ''}`;
+
+    const { error } = await supabase.from('dato_ricardo_predictions').insert({
       lottery_type: selectedLottery,
-      pick_type: pickType,
-      animal_code: selectedAnimal,
-      animal_name: animalName,
-      notes: notes || null,
-      pick_date: today
-    }, { onConflict: 'lottery_type,pick_type,pick_date,animal_code' });
+      draw_time: 'MANUAL',
+      prediction_date: today,
+      predicted_numbers: [selectedAnimal],
+      predicted_animals: [animalName],
+      notes: mergedNotes,
+    });
 
     if (error) {
-      toast.error("Error al guardar en el búnker");
+      toast.error("Error al guardar en dato_ricardo_predictions");
       console.error(error);
     } else {
       toast.success(`${pickType === 'explosivo' ? '💥 Explosivo' : '🎁 Regalo'} agregado con éxito`);
@@ -70,8 +101,8 @@ export function AdminManualOverrides() {
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('admin_picks').delete().eq('id', id);
+  const handleDelete = async (id: number) => {
+    const { error } = await supabase.from('dato_ricardo_predictions').delete().eq('id', id);
     if (!error) {
       toast.success("Eliminado del registro");
       loadPicks();
@@ -89,11 +120,10 @@ export function AdminManualOverrides() {
           Control Manual: Explosivos y Regalos
         </CardTitle>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-          Establece los animales que verán los usuarios en la sección explosiva
+          Guarda manuales en dato_ricardo_predictions
         </p>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">
-        {/* Form */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end bg-muted/20 p-4 rounded-2xl border border-dashed border-primary/20">
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-muted-foreground">Lotería</label>
@@ -106,7 +136,7 @@ export function AdminManualOverrides() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-1">
             <label className="text-[10px] font-black uppercase text-muted-foreground">Tipo de Dato</label>
             <Select value={pickType} onValueChange={(v) => setPickType(v as any)}>
@@ -148,7 +178,6 @@ export function AdminManualOverrides() {
           </Button>
         </div>
 
-        {/* Current picks */}
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-3 p-4 bg-red-500/5 rounded-3xl border-2 border-red-500/10">
             <h4 className="text-sm font-black flex items-center gap-2 uppercase tracking-tighter text-red-600">
@@ -163,7 +192,7 @@ export function AdminManualOverrides() {
                     <div className="flex items-center gap-3">
                       <span className="text-3xl drop-shadow-sm">{getAnimalEmoji(p.animal_code)}</span>
                       <div>
-                        <p className="font-mono font-black text-lg leading-none">{p.animal_code.padStart(2, '0')}</p>
+                        <p className="font-mono font-black text-lg leading-none">{String(p.animal_code).padStart(2, '0')}</p>
                         <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{p.animal_name}</p>
                         <p className="text-[8px] font-bold text-primary">{LOTTERIES.find(l => l.id === p.lottery_type)?.name}</p>
                       </div>
@@ -190,7 +219,7 @@ export function AdminManualOverrides() {
                     <div className="flex items-center gap-3">
                       <span className="text-3xl drop-shadow-sm">{getAnimalEmoji(p.animal_code)}</span>
                       <div>
-                        <p className="font-mono font-black text-lg leading-none">{p.animal_code.padStart(2, '0')}</p>
+                        <p className="font-mono font-black text-lg leading-none">{String(p.animal_code).padStart(2, '0')}</p>
                         <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{p.animal_name}</p>
                         <p className="text-[8px] font-bold text-primary">{LOTTERIES.find(l => l.id === p.lottery_type)?.name}</p>
                       </div>
