@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,86 +17,65 @@ export function RicardoBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [contextoReal, setContextoReal] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Función para obtener Nombre y Emoji del animal
-  const getAnimalFullInfo = async (num: string) => {
-    if (!num || num === '--') return "S/N";
+  // 🕵️ ABSORCIÓN DE CONOCIMIENTO (Lee Supabase para que Ricardo no invente)
+  const absorbKnowledge = useCallback(async () => {
     try {
-      const { data } = await supabase
-        .from('animales_maestro')
-        .select('nombre, emoji')
-        .eq('num', num)
-        .maybeSingle();
-      if (data) return `${num} ${data.nombre} ${data.emoji}`;
-      return `${num} Animal`;
-    } catch {
-      return `${num} Animal`;
-    }
-  };
+      const [pronosticos, similitud, manuales] = await Promise.all([
+        supabase.from('super_pronostico_final').select('*'),
+        supabase.from('reporte_similitud_semanal').select('*'),
+        supabase.from('dato_ricardo_predictions').select('*').eq('prediction_date', new Date().toISOString().split('T')[0])
+      ]);
 
-  const generarRespuestaRicardo = async () => {
-    try {
-      // 1. Consultamos la vista super_pronostico_final (Versión Reporte de Traspaso)
-      const { data: pronosticos, error } = await supabase
-        .from('super_pronostico_final')
-        .select('*');
+      let ctx = "DATOS REALES DEL BÚNKER:\n";
+      pronosticos.data?.forEach(l => {
+        ctx += `- ${l.lottery_type}: Arrastre ${l.v_arrastre}, Escuadra ${l.v_escuadra}, Cruzada ${l.v_resta}. Score: ${l.power_score}\n`;
+      });
+      similitud.data?.forEach(s => {
+        ctx += `- Similitud en ${s.Lotería}: ${s.Similitud}\n`;
+      });
+      setContextoReal(ctx);
+    } catch (e) { console.error("Error absorbiendo:", e); }
+  }, []);
 
-      if (error || !pronosticos || pronosticos.length === 0) {
-        return "¡Coño jefe! No consigo los papeles en el búnker. Revisa que la base de datos tenga los resultados de hoy. 🕵️‍♂️";
-      }
-
-      let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura del REPORTE DE TRASPASO. Activo ahí: \n\n";
-
-      for (const l of pronosticos) {
-        const lotName = (l.lottery_type || 'Lotería').replace('_', ' ').toUpperCase();
-        
-        // Mapeo de las 6 fórmulas EXACTAS de la base de datos
-        const infoTras = await getAnimalFullInfo(l.v_traspaso);
-        const infoDigi = await getAnimalFullInfo(l.v_digital);
-        const infoArra = await getAnimalFullInfo(l.v_arrastre);
-        const infoEspe = await getAnimalFullInfo(l.v_espejo);
-        const infoSuma = await getAnimalFullInfo(l.v_suma);
-        const infoRest = await getAnimalFullInfo(l.v_resta);
-
-        respuesta += `🏛 *${lotName}*\n`;
-        respuesta += `🧬 Traspaso: ${infoTras}\n`;
-        respuesta += `🔢 Digital: ${infoDigi}\n`;
-        respuesta += `🚜 Arrastre: ${infoArra}\n`;
-        respuesta += `🌓 Espejo: ${infoEspe}\n`;
-        respuesta += `➕ Suma: ${infoSuma}\n`;
-        respuesta += `➖ Resta: ${infoRest}\n`;
-        respuesta += `------------------\n`;
-      }
-
-      respuesta += "\n¡Mándale plomo que hoy cobramos! 💰🍀";
-      return respuesta;
-
-    } catch (err) {
-      return "¡Epa chamo! Se me cayeron los cables. Pregúntame de nuevo en un minuto. 🍀";
-    }
-  };
+  useEffect(() => { if (isOpen) absorbKnowledge(); }, [isOpen, absorbKnowledge]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input.trim(), timestamp: new Date() }]);
+    const userMsg = input.trim().toLowerCase();
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
-    const respuestaDatera = await generarRespuestaRicardo();
+    try {
+      // 1. INTENTAMOS LLAMAR A LA IA (Lovable Function)
+      const { data, error } = await supabase.functions.invoke('ricardo-ai', {
+        body: { message: userMsg, context: contextoReal }
+      });
 
-    setMessages(prev => [...prev, {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: respuestaDatera,
-      timestamp: new Date()
-    }]);
+      if (error || !data) throw new Error("Sin créditos");
+
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: 'assistant', content: data.response, timestamp: new Date() }]);
+    } catch (e) {
+      // 2. FALLBACK: INTELIGENCIA DE CALLE (Si no hay créditos)
+      let respuestaDeEmergencia = "¡Epa mi pana! El satélite del búnker está fallando, pero aquí tengo mis papeles a la mano. ";
+      
+      if (userMsg.includes("que sale") || userMsg.includes("dato") || userMsg.includes("fijo")) {
+        respuestaDeEmergencia += "Mira chamo, las matrices están así:\n\n" + contextoReal + "\n¡Mándale plomo a los de mayor Score! 💰";
+      } else if (userMsg.includes("hola") || userMsg.includes("saludos")) {
+        respuestaDeEmergencia += "¡Epa chamo! Activo aquí analizando la jugada. ¿Qué lotería quieres que te desglose? 🕵️‍♂️";
+      } else {
+        respuestaDeEmergencia += "Chamo, no te entendí muy bien por la interferencia, pero lo que está caliente ahorita son los datos por Arrastre y Escuadra que ves en pantalla. ¡Activo! 🏁";
+      }
+
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: 'assistant', content: respuestaDeEmergencia, timestamp: new Date() }]);
+    }
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages]);
 
   return (
     <>
@@ -105,52 +84,27 @@ export function RicardoBot() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[550px] max-h-[80vh] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
-          <div className="bg-gradient-to-r from-orange-600 to-green-600 p-4 text-white font-black italic flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
-              RICARDO IA - EL BÚNKER DATERO 🕵️‍♂️
-            </div>
+        <div className="fixed bottom-20 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[500px] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+          <div className="bg-gradient-to-r from-orange-600 to-green-600 p-4 text-white font-black italic flex justify-between items-center">
+            <span>RICARDO IA - EL BÚNKER 🕵️‍♂️</span>
             <X className="w-5 h-5 cursor-pointer" onClick={() => setIsOpen(false)} />
           </div>
-
           <ScrollArea className="flex-1 p-4 bg-muted/10" ref={scrollRef}>
             <div className="space-y-4">
-              {messages.length === 0 && (
-                <div className="bg-card border-l-4 border-orange-500 p-3 rounded-r-lg text-sm font-bold shadow-sm">
-                  ¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir. ¡Plomo! 💰🏁
-                </div>
-              )}
+              {messages.length === 0 && <div className="bg-card border-l-4 border-orange-500 p-3 rounded text-sm font-bold shadow-sm">¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir o qué racha veo. ¡Plomo! 💰🏁</div>}
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[90%] p-3 rounded-2xl text-sm shadow-sm ${
-                    msg.role === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-card border border-primary/10 font-bold rounded-bl-none'
-                  }`}>
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-orange-500 text-white' : 'bg-card border font-bold shadow-sm'}`}>
                     <p className="whitespace-pre-line">{msg.content}</p>
                   </div>
                 </div>
               ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted p-3 rounded-2xl rounded-bl-none">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  </div>
-                </div>
-              )}
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-primary ml-4" />}
             </div>
           </ScrollArea>
-
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="p-3 border-t bg-card flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="¿Qué animal sale ahorita?"
-              className="bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-orange-500 font-bold"
-              disabled={isLoading}
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="shrink-0 bg-green-600 hover:bg-green-700">
-              <Send className="w-4 h-4 text-white" />
-            </Button>
+            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="¿Qué animal sale ahorita?" className="bg-muted/50 font-bold" />
+            <Button type="submit" size="icon" className="bg-green-600 text-white"><Send className="w-4 h-4" /></Button>
           </form>
         </div>
       )}
