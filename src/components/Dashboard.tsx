@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { HISTORY_BATCH } from "@/data/historyBatch";
-import { getAnimalFromNumber } from "@/lib/constants";
+import { getAnimalFromNumber } from "@/lib/constants"; // kept for other uses
 import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
 import { ResultsInsert } from "./ResultsInsert";
@@ -57,6 +56,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [totalResults, setTotalResults] = useState<number>(0);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -64,20 +64,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
         .from('lottery_results')
         .select('*', { count: 'exact', head: true });
       
-      if (count === 0 || count === null) {
-        toast.info("Cargando datos históricos...");
-        for (const item of HISTORY_BATCH) {
-          const animalName = getAnimalFromNumber(item.n, item.l);
-          await supabase.from('lottery_results').insert({
-            lottery_type: item.l,
-            result_number: item.n.padStart(2, '0'),
-            animal_name: animalName || null,
-            draw_time: item.t,
-            draw_date: item.d,
-          });
-        }
-        toast.success("Datos históricos cargados");
-      }
+      setTotalResults(count || 0);
       setDataLoaded(true);
     };
     loadInitialData();
@@ -113,7 +100,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <img src={logoAnimalytics} alt="Animalytics" className="h-10 w-auto" />
               <div className="hidden sm:block">
                 <h1 className="font-black text-lg leading-none">ANIMALYTICS PRO</h1>
-                <p className="text-xs text-muted-foreground">Sistema de Inteligencia</p>
+                <p className="text-xs text-muted-foreground">{totalResults > 0 ? `${totalResults.toLocaleString()} sorteos registrados` : 'Sistema de Inteligencia'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

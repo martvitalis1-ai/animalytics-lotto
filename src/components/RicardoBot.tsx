@@ -33,12 +33,12 @@ export function RicardoBot() {
       const [resultsRes, overridesRes, predictionsRes] = await Promise.all([
         supabase
           .from('lottery_results')
-          .select('lottery_name, result_number, draw_time, draw_date')
+          .select('lottery_type, result_number, draw_time, draw_date')
           .order('draw_date', { ascending: false })
           .order('created_at', { ascending: false })
-          .limit(100), // Aumentamos a 100 para que vea rachas largas
+          .limit(100),
         supabase
-          .from('admin_manual_overrides')
+          .from('admin_picks')
           .select('*'),
         supabase
           .from('dato_ricardo_predictions')
@@ -51,12 +51,12 @@ export function RicardoBot() {
       // Absorción de Explosivos/Regalos
       if (overridesRes.data && overridesRes.data.length > 0) {
         contextString += "🔥 DATOS FIJOS DEL JEFE (MANDO MANUAL):\n";
-        overridesRes.data.forEach(o => {
-          contextString += `- EL ${o.type.toUpperCase()} ES: ${o.number} (${o.animal_name})\n`;
+        overridesRes.data.forEach((o: any) => {
+          contextString += `- ${o.pick_type?.toUpperCase() || 'EXPLOSIVO'}: ${o.animal_code} (${o.animal_name})\n`;
         });
       }
 
-      // Absorción de Pronósticos de Ricardo (Lo que tú pones en el Admin)
+      // Absorción de Pronósticos de Ricardo
       if (predictionsRes.data && predictionsRes.data.length > 0) {
         contextString += "\n📋 PRONÓSTICOS DEL JEFE RICARDO PARA HOY:\n";
         predictionsRes.data.forEach(p => {
@@ -68,7 +68,7 @@ export function RicardoBot() {
       if (resultsRes.data && resultsRes.data.length > 0) {
         contextString += "\n📊 ÚLTIMOS SORTEOS (RACHAS):\n";
         resultsRes.data.forEach(r => {
-          contextString += `- ${r.lottery_name} | ${r.draw_date} | ${r.draw_time}: salió el ${r.result_number}\n`;
+          contextString += `- ${r.lottery_type} | ${r.draw_date} | ${r.draw_time}: salió el ${r.result_number}\n`;
         });
       }
 
