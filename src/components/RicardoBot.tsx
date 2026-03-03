@@ -19,9 +19,8 @@ export function RicardoBot() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Función para obtener el nombre y emoji de un animal desde la DB
   const getAnimalFullInfo = async (num: string) => {
-    if (!num || num === '--') return "S/N";
+    if (!num || num === '--' || num === 'undefined') return "-- Animal";
     try {
       const { data } = await supabase
         .from('animales_maestro')
@@ -37,35 +36,28 @@ export function RicardoBot() {
 
   const generarRespuestaRicardo = async () => {
     try {
-      // 1. Consultamos la vista de malicia de Supabase
       const { data: pronosticos, error } = await supabase
         .from('super_pronostico_final')
         .select('*');
 
       if (error || !pronosticos || pronosticos.length === 0) {
-        console.error("Error Supabase:", error);
-        return "¡Coño jefe! No consigo los papeles en el búnker ahorita. Revisa que la tabla 'super_pronostico_final' tenga datos. 🕵️‍♂️";
+        return "¡Coño jefe! No consigo los papeles en el búnker. Intenta en un minuto. 🕵️‍♂️";
       }
 
       let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura para los próximos sorteos. Activo ahí: \n\n";
 
-      // 2. Usamos los nombres de columna EXACTOS de tu Supabase
       for (const l of pronosticos) {
         const lotName = (l.lottery_type || 'Lotería').replace('_', ' ').toUpperCase();
         
-        // Mapeamos los nombres de tu tabla a los títulos del Bot
-        const infoArrastre = await getAnimalFullInfo(l.pronostico_rebote);
+        // Mapeo exacto de tus 3 fórmulas
+        const infoArrastre = await getAnimalFullInfo(l.pronostico_dia);
         const infoEscuadra = await getAnimalFullInfo(l.pronostico_jaladera);
-        const infoCruzada = await getAnimalFullInfo(l.pronostico_escondido);
+        const infoCruzada = await getAnimalFullInfo(l.pronostico_fijo);
 
         respuesta += `🏛 *${lotName}*\n`;
         respuesta += `🚜 Arrastre: ${infoArrastre}\n`;
         respuesta += `📐 Escuadra: ${infoEscuadra}\n`;
         respuesta += `❌ Cruzada: ${infoCruzada}\n`;
-        
-        if (l.power_score >= 90) {
-          respuesta += `🔥 *DATO DE TAQUILLA (Score: ${l.power_score})*\n`;
-        }
         respuesta += `------------------\n`;
       }
 
@@ -79,8 +71,7 @@ export function RicardoBot() {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-    const userMsg = input.trim();
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: userMsg, timestamp: new Date() }]);
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input.trim(), timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
