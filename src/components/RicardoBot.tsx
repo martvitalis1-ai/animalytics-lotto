@@ -19,8 +19,9 @@ export function RicardoBot() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Función para obtener Nombre y Emoji del animal
   const getAnimalFullInfo = async (num: string) => {
-    if (!num || num === '--' || num === 'undefined') return "-- Animal";
+    if (!num || num === '--') return "S/N";
     try {
       const { data } = await supabase
         .from('animales_maestro')
@@ -36,36 +37,43 @@ export function RicardoBot() {
 
   const generarRespuestaRicardo = async () => {
     try {
+      // 1. Consultamos la vista super_pronostico_final (Versión Reporte de Traspaso)
       const { data: pronosticos, error } = await supabase
         .from('super_pronostico_final')
         .select('*');
 
       if (error || !pronosticos || pronosticos.length === 0) {
-        return "¡Coño jefe! No consigo los papeles en el búnker. Intenta en un minuto. 🕵️‍♂️";
+        return "¡Coño jefe! No consigo los papeles en el búnker. Revisa que la base de datos tenga los resultados de hoy. 🕵️‍♂️";
       }
 
-      let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura para los próximos sorteos. Activo ahí: \n\n";
+      let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura del REPORTE DE TRASPASO. Activo ahí: \n\n";
 
       for (const l of pronosticos) {
         const lotName = (l.lottery_type || 'Lotería').replace('_', ' ').toUpperCase();
         
-        // Mapeo exacto de tus 3 fórmulas
-        const infoArrastre = await getAnimalFullInfo(l.pronostico_dia);
-        const infoEscuadra = await getAnimalFullInfo(l.pronostico_jaladera);
-        const infoCruzada = await getAnimalFullInfo(l.pronostico_fijo);
+        // Mapeo de las 6 fórmulas EXACTAS de la base de datos
+        const infoTras = await getAnimalFullInfo(l.v_traspaso);
+        const infoDigi = await getAnimalFullInfo(l.v_digital);
+        const infoArra = await getAnimalFullInfo(l.v_arrastre);
+        const infoEspe = await getAnimalFullInfo(l.v_espejo);
+        const infoSuma = await getAnimalFullInfo(l.v_suma);
+        const infoRest = await getAnimalFullInfo(l.v_resta);
 
         respuesta += `🏛 *${lotName}*\n`;
-        respuesta += `🚜 Arrastre: ${infoArrastre}\n`;
-        respuesta += `📐 Escuadra: ${infoEscuadra}\n`;
-        respuesta += `❌ Cruzada: ${infoCruzada}\n`;
+        respuesta += `🧬 Traspaso: ${infoTras}\n`;
+        respuesta += `🔢 Digital: ${infoDigi}\n`;
+        respuesta += `🚜 Arrastre: ${infoArra}\n`;
+        respuesta += `🌓 Espejo: ${infoEspe}\n`;
+        respuesta += `➕ Suma: ${infoSuma}\n`;
+        respuesta += `➖ Resta: ${infoRest}\n`;
         respuesta += `------------------\n`;
       }
 
-      respuesta += "\n¡Mándale plomo con fe que hoy se cobra! 💰🍀";
+      respuesta += "\n¡Mándale plomo que hoy cobramos! 💰🍀";
       return respuesta;
 
     } catch (err) {
-      return "¡Epa chamo! Se me cruzaron los cables. Dame un chance y vuelve a preguntarme. 🍀";
+      return "¡Epa chamo! Se me cayeron los cables. Pregúntame de nuevo en un minuto. 🍀";
     }
   };
 
