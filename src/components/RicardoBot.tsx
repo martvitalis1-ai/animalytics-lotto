@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,62 +17,75 @@ export function RicardoBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [contextoReal, setContextoReal] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 🕵️ ABSORCIÓN DE CONOCIMIENTO (Lee Supabase para que Ricardo no invente)
-  const absorbKnowledge = useCallback(async () => {
+  const getAnimalFullInfo = async (num: string) => {
+    if (!num || num === '--' || num === 'undefined') return "-- Animal";
+    const { data } = await supabase.from('animales_maestro').select('nombre, emoji').eq('num', num.padStart(2, '0')).maybeSingle();
+    return data ? `${num.padStart(2, '0')} ${data.nombre} ${data.emoji}` : `${num} Animal`;
+  };
+
+  const generarRespuestaRicardo = async (userMsg: string) => {
     try {
-      const [pronosticos, similitud, manuales] = await Promise.all([
-        supabase.from('super_pronostico_final').select('*'),
-        supabase.from('reporte_similitud_semanal').select('*'),
-        supabase.from('dato_ricardo_predictions').select('*').eq('prediction_date', new Date().toISOString().split('T')[0])
-      ]);
+      const msg = userMsg.toLowerCase();
+      const numMatch = msg.match(/\d+/); // Buscamos si pusiste un número (ej: 11)
+      
+      // --- LÓGICA 1: PREGUNTA POR UN ANIMAL ESPECÍFICO (JALADERA) ---
+      if (numMatch) {
+        const numero = numMatch[0].padStart(2, '0');
+        const { data: jaladeras } = await supabase
+          .from('matriz_secuencia_fija')
+          .select('animal_siguiente, veces_repetido, probabilidad_secuencia')
+          .eq('animal_sale', numero)
+          .order('veces_repetido', { ascending: false })
+          .limit(3);
 
-      let ctx = "DATOS REALES DEL BÚNKER:\n";
-      pronosticos.data?.forEach(l => {
-        ctx += `- ${l.lottery_type}: Arrastre ${l.v_arrastre}, Escuadra ${l.v_escuadra}, Cruzada ${l.v_resta}. Score: ${l.power_score}\n`;
-      });
-      similitud.data?.forEach(s => {
-        ctx += `- Similitud en ${s.Lotería}: ${s.Similitud}\n`;
-      });
-      setContextoReal(ctx);
-    } catch (e) { console.error("Error absorbiendo:", e); }
-  }, []);
+        if (jaladeras && jaladeras.length > 0) {
+          let r = `¡Epa mi pana! Analizando mi búnker, veo que después del *${numero}*, el banquero suele soltar estos:\n\n`;
+          for (const j of jaladeras) {
+            const info = await getAnimalFullInfo(j.animal_siguiente);
+            r += `🎯 *${info}* - Fuerza: ${j.probabilidad_secuencia}%\n`;
+          }
+          r += `\nEste patrón se ha repetido ${jaladeras[0].veces_repetido} veces desde enero. ¡Mándale plomo! 💰`;
+          return r;
+        } else {
+          return `Chamo, el número ${numero} está medio frío en mi historia reciente. Mejor guíate por el Reporte de Traspaso que te mandé arriba. 🕵️‍♂️`;
+        }
+      }
 
-  useEffect(() => { if (isOpen) absorbKnowledge(); }, [isOpen, absorbKnowledge]);
+      // --- LÓGICA 2: REPORTE GENERAL (Si no hay número en la pregunta) ---
+      const { data: pronosticos } = await supabase.from('super_pronostico_final').select('*');
+      if (!pronosticos || pronosticos.length === 0) return "¡Coño jefe! Se me cayó la señal del búnker. Intenta en un minuto. 🍀";
+
+      let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura del *REPORTE DE TRASPASO*. Activo ahí: \n\n";
+      for (const l of pronosticos) {
+        const lotName = (l.lottery_type || 'Lotería').replace('_', ' ').toUpperCase();
+        const infoArra = await getAnimalFullInfo(l.v_arrastre);
+        const infoEscu = await getAnimalFullInfo(l.v_escuadra);
+        const infoRest = await getAnimalFullInfo(l.v_resta);
+
+        respuesta += `🏛 *${lotName}*\n🚜 Arrastre: ${infoArra}\n📐 Escuadra: ${infoEscu}\n❌ Cruzada: ${infoRest}\n------------------\n`;
+      }
+      return respuesta + "\n¡Activo que hoy se cobra! 💰🏁";
+
+    } catch (err) {
+      return "¡Epa chamo! Se me cruzaron los cables. Vuelve a preguntarme con fe. 🍀";
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-    const userMsg = input.trim().toLowerCase();
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() }]);
+    const userText = input.trim();
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: userText, timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
-    try {
-      // 1. INTENTAMOS LLAMAR A LA IA (Lovable Function)
-      const { data, error } = await supabase.functions.invoke('ricardo-ai', {
-        body: { message: userMsg, context: contextoReal }
-      });
+    const respuesta = await generarRespuestaRicardo(userText);
 
-      if (error || !data) throw new Error("Sin créditos");
-
-      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: 'assistant', content: data.response, timestamp: new Date() }]);
-    } catch (e) {
-      // 2. FALLBACK: INTELIGENCIA DE CALLE (Si no hay créditos)
-      let respuestaDeEmergencia = "¡Epa mi pana! El satélite del búnker está fallando, pero aquí tengo mis papeles a la mano. ";
-      
-      if (userMsg.includes("que sale") || userMsg.includes("dato") || userMsg.includes("fijo")) {
-        respuestaDeEmergencia += "Mira chamo, las matrices están así:\n\n" + contextoReal + "\n¡Mándale plomo a los de mayor Score! 💰";
-      } else if (userMsg.includes("hola") || userMsg.includes("saludos")) {
-        respuestaDeEmergencia += "¡Epa chamo! Activo aquí analizando la jugada. ¿Qué lotería quieres que te desglose? 🕵️‍♂️";
-      } else {
-        respuestaDeEmergencia += "Chamo, no te entendí muy bien por la interferencia, pero lo que está caliente ahorita son los datos por Arrastre y Escuadra que ves en pantalla. ¡Activo! 🏁";
-      }
-
-      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: 'assistant', content: respuestaDeEmergencia, timestamp: new Date() }]);
-    }
-    setIsLoading(false);
+    setTimeout(() => {
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: respuesta, timestamp: new Date() }]);
+      setIsLoading(false);
+    }, 800);
   };
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages]);
@@ -84,17 +97,17 @@ export function RicardoBot() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[500px] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
-          <div className="bg-gradient-to-r from-orange-600 to-green-600 p-4 text-white font-black italic flex justify-between items-center">
-            <span>RICARDO IA - EL BÚNKER 🕵️‍♂️</span>
+        <div className="fixed bottom-20 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[550px] bg-card border-2 border-primary/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+          <div className="bg-gradient-to-r from-orange-600 to-green-600 p-4 text-white font-black italic flex items-center justify-between">
+            <div className="flex items-center gap-2"><Bot size={20} /> RICARDO IA - EL BÚNKER 🕵️‍♂️</div>
             <X className="w-5 h-5 cursor-pointer" onClick={() => setIsOpen(false)} />
           </div>
           <ScrollArea className="flex-1 p-4 bg-muted/10" ref={scrollRef}>
             <div className="space-y-4">
-              {messages.length === 0 && <div className="bg-card border-l-4 border-orange-500 p-3 rounded text-sm font-bold shadow-sm">¡Epa jefe! El búnker está activo. Pregúntame qué animal va a salir o qué racha veo. ¡Plomo! 💰🏁</div>}
+              {messages.length === 0 && <div className="bg-card border-l-4 border-orange-500 p-3 rounded text-sm font-bold shadow-sm">¡Epa jefe! El búnker está activo. Pregúntame qué animal sale después del 10 o mira el Reporte. 💰🏁</div>}
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-orange-500 text-white' : 'bg-card border font-bold shadow-sm'}`}>
+                  <div className={`max-w-[90%] p-3 rounded-2xl text-sm shadow-sm ${msg.role === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-card border font-bold rounded-bl-none'}`}>
                     <p className="whitespace-pre-line">{msg.content}</p>
                   </div>
                 </div>
@@ -103,8 +116,8 @@ export function RicardoBot() {
             </div>
           </ScrollArea>
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="p-3 border-t bg-card flex gap-2">
-            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="¿Qué animal sale ahorita?" className="bg-muted/50 font-bold" />
-            <Button type="submit" size="icon" className="bg-green-600 text-white"><Send className="w-4 h-4" /></Button>
+            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="¿Qué animal sale después del 11?" className="bg-muted/50 font-bold" />
+            <Button type="submit" size="icon" className="bg-green-600 hover:bg-green-700 shrink-0"><Send className="w-4 h-4 text-white" /></Button>
           </form>
         </div>
       )}
