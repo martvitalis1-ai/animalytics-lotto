@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ export function RicardoBot() {
 
   // Función para obtener el nombre y emoji de un animal desde la DB
   const getAnimalFullInfo = async (num: string) => {
+    if (!num || num === '--') return "S/N";
     try {
       const { data } = await supabase
         .from('animales_maestro')
@@ -36,30 +37,31 @@ export function RicardoBot() {
 
   const generarRespuestaRicardo = async () => {
     try {
-      // 1. Consultamos los pronósticos calculados por el Cerebro SQL
+      // 1. Consultamos la vista de malicia de Supabase
       const { data: pronosticos, error } = await supabase
         .from('super_pronostico_final')
         .select('*');
 
       if (error || !pronosticos || pronosticos.length === 0) {
-        return "¡Coño jefe! No consigo los papeles en el búnker ahorita. Intenta en un minuto que estoy barajando los datos. 🕵️‍♂️";
+        console.error("Error Supabase:", error);
+        return "¡Coño jefe! No consigo los papeles en el búnker ahorita. Revisa que la tabla 'super_pronostico_final' tenga datos. 🕵️‍♂️";
       }
 
       let respuesta = "¡Epa mi pana! Aquí te tengo la malicia pura para los próximos sorteos. Activo ahí: \n\n";
 
-      // 2. Procesamos cada lotería para darle el formato de la imagen que te gusta
+      // 2. Usamos los nombres de columna EXACTOS de tu Supabase
       for (const l of pronosticos) {
         const lotName = (l.lottery_type || 'Lotería').replace('_', ' ').toUpperCase();
         
-        // Buscamos la info completa de los animales (usando los nombres de columna de la V112/V113)
-        const infoDia = await getAnimalFullInfo(l.pronostico_dia || l.v_arrastre || '--');
-        const infoJala = await getAnimalFullInfo(l.pronostico_jaladera || l.v_escuadra || '--');
-        const infoFijo = await getAnimalFullInfo(l.pronostico_fijo || l.v_cruzada || '--');
+        // Mapeamos los nombres de tu tabla a los títulos del Bot
+        const infoArrastre = await getAnimalFullInfo(l.pronostico_rebote);
+        const infoEscuadra = await getAnimalFullInfo(l.pronostico_jaladera);
+        const infoCruzada = await getAnimalFullInfo(l.pronostico_escondido);
 
         respuesta += `🏛 *${lotName}*\n`;
-        respuesta += `🚜 Arrastre: ${infoDia}\n`;
-        respuesta += `📐 Escuadra: ${infoJala}\n`;
-        respuesta += `❌ Cruzada: ${infoFijo}\n`;
+        respuesta += `🚜 Arrastre: ${infoArrastre}\n`;
+        respuesta += `📐 Escuadra: ${infoEscuadra}\n`;
+        respuesta += `❌ Cruzada: ${infoCruzada}\n`;
         
         if (l.power_score >= 90) {
           respuesta += `🔥 *DATO DE TAQUILLA (Score: ${l.power_score})*\n`;
@@ -71,18 +73,14 @@ export function RicardoBot() {
       return respuesta;
 
     } catch (err) {
-      console.error(err);
-      return "¡Epa chamo! Se me cruzaron los cables en el búnker. Dame un chance y vuelve a preguntarme. 🍀";
+      return "¡Epa chamo! Se me cruzaron los cables. Dame un chance y vuelve a preguntarme. 🍀";
     }
   };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-
     const userMsg = input.trim();
-    const newUserMessage: Message = { id: Date.now().toString(), role: 'user', content: userMsg, timestamp: new Date() };
-
-    setMessages(prev => [...prev, newUserMessage]);
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: userMsg, timestamp: new Date() }]);
     setInput('');
     setIsLoading(true);
 
@@ -127,9 +125,7 @@ export function RicardoBot() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[90%] p-3 rounded-2xl text-sm shadow-sm ${
-                    msg.role === 'user'
-                      ? 'bg-orange-500 text-white rounded-br-none'
-                      : 'bg-card border border-primary/10 font-bold rounded-bl-none'
+                    msg.role === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-card border border-primary/10 font-bold rounded-bl-none'
                   }`}>
                     <p className="whitespace-pre-line">{msg.content}</p>
                   </div>
