@@ -42,18 +42,17 @@ export function ResultsPanel({ isAdmin }: ResultsPanelProps) {
   const availableTimes = getDrawTimesForLottery(selectedLottery);
   const selectedLotteryData = LOTTERIES.find(l => l.id === selectedLottery);
 
-  const fetchResults = async () => {
+const fetchResults = async () => {
     setLoading(true);
     
-    // 🚀 SOLUCIÓN AL PROBLEMA DE HISTORIAL:
-    // Aumentamos el límite a 5000 para que cargue toda la historia de Supabase
+    // Quitamos filtros innecesarios y aumentamos el límite
     const { data, error } = await supabase
       .from('lottery_results')
       .select('*')
       .eq('draw_date', selectedDate)
       .eq('lottery_type', selectedLottery)
       .order('draw_time', { ascending: true })
-      .limit(5000); 
+      .limit(5000); // <--- OBLIGATORIO PARA VER TODO EL HISTORIAL
     
     if (error) {
       toast.error("Error al cargar resultados");
