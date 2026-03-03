@@ -14,10 +14,8 @@ export function FrequencyHeatmap() {
   const [heatData, setHeatData] = useState<Record<string, Record<string, number>>>({});
   const [loading, setLoading] = useState(false);
 
-  // Horas oficiales para las columnas
   const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
-  // Rango de animales (0, 00, 01-36/75/99)
   const numberRange = useMemo(() => {
     let codes: string[] = [];
     if (!selectedLottery.includes('guacharito')) codes.push('0');
@@ -32,26 +30,35 @@ export function FrequencyHeatmap() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: history } = await supabase
+      // 🚀 SOLUCIÓN AL LÍMITE: Pedimos 10,000 filas para que entren los 2,448 resultados
+      const { data: history, error } = await supabase
         .from('lottery_results')
         .select('result_number, draw_time')
-        .eq('lottery_type', selectedLottery);
+        .eq('lottery_type', selectedLottery)
+        .limit(10000); 
+
+      if (error) throw error;
 
       const matrix: Record<string, Record<string, number>> = {};
       
       history?.forEach(draw => {
         let num = draw.result_number.trim();
+        // Normalización de número (Asegurar 01, 02...)
         if (num !== '0' && num !== '00' && num.length === 1) num = '0' + num;
 
-        const time = draw.draw_time.trim().toUpperCase();
+        // Normalización de hora: "8:00 AM" -> "08:00 AM" para que coincida con la tabla
+        let time = draw.draw_time.trim().toUpperCase();
+        if (time.length === 7) time = '0' + time; 
+
         if (!matrix[num]) matrix[num] = {};
-        
-        // Buscamos la coincidencia exacta en el array de horas
         matrix[num][time] = (matrix[num][time] || 0) + 1;
       });
 
       setHeatData(matrix);
-    } catch (e) { console.error(e); }
+      console.log(`📊 Datos cargados para ${selectedLottery}: ${history?.length} registros.`);
+    } catch (e) { 
+      console.error("Error cargando Heatmap:", e); 
+    }
     setLoading(false);
   }, [selectedLottery]);
 
@@ -70,7 +77,7 @@ export function FrequencyHeatmap() {
       <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xl font-black uppercase text-primary italic">
-            <Grid3X3 className="w-6 h-6" /> Matriz de Frecuencia Real
+            <Grid3X3 className="w-6 h-6" /> Matriz de Frecuencia Total
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
@@ -87,7 +94,9 @@ export function FrequencyHeatmap() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={loadData} variant="outline" size="icon" className="h-9 w-9"><RefreshCw className={loading ? 'animate-spin' : ''} /></Button>
+            <Button onClick={loadData} variant="outline" size="icon" className="h-9 w-9">
+              <RefreshCw className={loading ? 'animate-spin' : ''} />
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -120,7 +129,11 @@ export function FrequencyHeatmap() {
                       </div>
                     </td>
                     {drawTimes.map(t => {
-                      const count = heatData[num]?.[t] || 0;
+                      // Normalizamos la hora de la columna para comparar
+                      let colTime = t.trim().toUpperCase();
+                      if (colTime.length === 7) colTime = '0' + colTime;
+                      
+                      const count = heatData[num]?.[colTime] || 0;
                       return (
                         <td key={t} className={`p-1 border-r text-center text-xs font-black transition-all ${getCellColor(count)}`}>
                           {count > 0 ? count : '-'}
