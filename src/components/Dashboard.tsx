@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -30,6 +30,8 @@ import { HourlyPredictionView } from "./HourlyPredictionView";
 import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
+// IMPORTACIÓN DE LA NUEVA GUÍA
+import { GuiaUso } from "./GuiaUso";
 import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
@@ -111,6 +113,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
+            {/* NUEVA PESTAÑA DE GUÍA */}
+            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20">
+              <PlayCircle className="w-4 h-4 mr-1.5" />Guía
+            </TabsTrigger>
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4 mr-1.5" />Insertar</TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4 mr-1.5" />Admin</TabsTrigger>
           </TabsList>
@@ -133,6 +139,11 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="resultados"><ResultsPanel isAdmin={userRole === 'admin'} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           
+          {/* CONTENIDO DE LA NUEVA GUÍA */}
+          <TabsContent value="guia" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <GuiaUso />
+          </TabsContent>
+
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4">
             <ResultsInsert onInserted={() => toast.success("Resultado guardado")} />
             <TodayResults />
