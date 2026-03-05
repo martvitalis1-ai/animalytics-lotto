@@ -9,56 +9,100 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  const getDeviceId = () => {
+    let id = localStorage.getItem('animalytics_device_fingerprint');
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+      localStorage.setItem('animalytics_device_fingerprint', id);
+    }
+    return id;
+  };
+
+  const handleLogin = async (role: string, accessCode: string) => {
+    const deviceId = getDeviceId();
+    const ADMIN_CODE = "GANADOR2026";
+    const cleanCode = accessCode.toUpperCase().trim();
+    
+    try {
+      const { data: codeData, error } = await supabase
+        .from('access_codes')
+        .select('*')
+        .eq('code', cleanCode)
+        .maybeSingle(); // Usamos maybeSingle para evitar errores de red rígidos
+
+      if (error || !codeData) {
+        toast.error("CÓDIGO NO ENCONTRADO EN LA BASE DE DATOS");
+        return;
+      }
+
+      const ahora = new Date();
+      const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
+      const esAdminMaster = cleanCode === ADMIN_CODE;
+
+      // SI NO ES ADMIN MASTER, BLOQUEAMOS SI ESTÁ EN USO (3 min)
+      if (
+        !esAdminMaster && 
+        codeData.current_device_id && 
+        codeData.current_device_id !== deviceId &&
+        ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
+      ) {
+        toast.error("⚠️ CÓDIGO EN USO EN OTRO DISPOSITIVO");
+        return;
+      }
+
+      // REGISTRAMOS LA SESIÓN
+      await supabase
+        .from('access_codes')
+        .update({ 
+          current_device_id: deviceId,
+          last_ping: ahora.toISOString()
+        })
+        .eq('code', cleanCode);
+
+      localStorage.setItem('session_access_code', cleanCode);
+      setUserRole(esAdminMaster ? "admin" : role);
+      setIsLoggedIn(true);
+      
+      toast.success(esAdminMaster ? "¡HOLA JEFE! ACCESO TOTAL CONCEDIDO." : "ACCESO CONCEDIDO. ¡MUCHA MALICIA!");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("ERROR DE CONEXIÓN CON SUPABASE");
+    }
+  };
+
+  const handleLogout = async () => {
+    const code = localStorage.getItem('session_access_code');
+    if (code && code !== "GANADOR2026") {
+      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
+    }
+    localStorage.removeItem('session_access_code');
+    setIsLoggedIn(false);
+    setUserRole("");
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const savedCode = localStorage.getItem('session_access_code');
-        if (savedCode) {
+        const saved = localStorage.getItem('session_access_code');
+        if (saved) {
           setIsLoggedIn(true);
-          setUserRole(savedCode === "GANADOR2026" ? "admin" : "user");
+          setUserRole(saved === "GANADOR2026" ? "admin" : "user");
         }
-      } catch (e) {
-        console.error("Error en sesión:", e);
       } finally {
-        // ESTA LÍNEA ES EL SALVAVIDAS: obliga a la app a encender
         setLoading(false);
       }
     };
     checkSession();
   }, []);
 
-  const handleLogin = async (role: string, accessCode: string) => {
-    const code = accessCode.toUpperCase().trim();
-    try {
-      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', code).maybeSingle();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background font-black text-emerald-600 animate-pulse uppercase italic">Iniciando Animalytics Pro...</div>;
 
-      if (!codeData) {
-        toast.error("CÓDIGO INVÁLIDO");
-        return;
-      }
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={(role, code) => handleLogin(role, code)} />;
+  }
 
-      localStorage.setItem('session_access_code', code);
-      setUserRole(code === "GANADOR2026" ? "admin" : role);
-      setIsLoggedIn(true);
-      toast.success("BIENVENIDO");
-    } catch (err) {
-      toast.error("ERROR DE CONEXIÓN");
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('session_access_code');
-    setIsLoggedIn(false);
-    setUserRole("");
-  };
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background font-black text-primary animate-pulse uppercase">Cargando Sistema...</div>;
-
-  return isLoggedIn ? (
-    <Dashboard userRole={userRole} onLogout={handleLogout} />
-  ) : (
-    <LoginScreen onLogin={handleLogin} />
-  );
+  return <Dashboard userRole={userRole} onLogout={handleLogout} />;
 };
 
 export default Index;
