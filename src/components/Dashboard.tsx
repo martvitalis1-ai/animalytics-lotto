@@ -45,23 +45,18 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [totalResults, setTotalResults] = useState<number>(0);
-  const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
+
+  // LINK DE TELEGRAM FIJO (Para evitar errores de base de datos)
+  const TELEGRAM_LINK = "https://t.me/+6zATqXM1ucQzNzEx";
 
   useEffect(() => {
-    const loadInitialData = async () => {
+    const loadCount = async () => {
       try {
-        // Cargar contador
         const { count } = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
         if (count) setTotalResults(count);
-
-        // Cargar link de Telegram
-        const { data: guiaData } = await supabase.from('manual_guia').select('telegram_url').limit(1).maybeSingle();
-        if (guiaData?.telegram_url) setTelegramUrl(guiaData.telegram_url);
-      } catch (e) {
-        console.error("Error cargando Dashboard", e);
-      }
+      } catch (e) { console.error(e); }
     };
-    loadInitialData();
+    loadCount();
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -84,8 +79,8 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border text-left">
+    <div className="min-h-screen bg-background text-left">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
@@ -94,16 +89,17 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
               <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
             </div>
           </div>
+          
           <div className="flex items-center gap-2">
             {/* BOTÓN TELEGRAM PC */}
-            {telegramUrl && (
-              <Button 
-                onClick={() => window.open(telegramUrl, '_blank')}
-                className="hidden lg:flex h-9 bg-[#24A1DE] hover:bg-[#24A1DE]/90 text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4"
-              >
-                <Send className="w-3.5 h-3.5 fill-white" /> Telegram
-              </Button>
-            )}
+            <Button 
+              onClick={() => window.open(TELEGRAM_LINK, '_blank')}
+              className="hidden md:flex h-9 bg-[#24A1DE] hover:bg-[#24A1DE]/90 text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4 border-none transition-all hover:scale-105"
+            >
+              <Send className="w-3.5 h-3.5 fill-white" />
+              Canal Oficial
+            </Button>
+
             <ThemeToggle />
             <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -116,16 +112,15 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
 
       <main className="container mx-auto px-4 py-4">
         {/* BOTÓN TELEGRAM MÓVIL */}
-        {telegramUrl && (
-          <div className="lg:hidden mb-4">
-            <Button 
-              onClick={() => window.open(telegramUrl, '_blank')}
-              className="w-full h-12 bg-[#24A1DE] text-white font-black text-sm uppercase italic gap-2 rounded-2xl shadow-xl active:scale-95 transition-all"
-            >
-              <Send className="w-5 h-5 fill-white" /> Unirse al Telegram Oficial
-            </Button>
-          </div>
-        )}
+        <div className="md:hidden mb-4">
+          <Button 
+            onClick={() => window.open(TELEGRAM_LINK, '_blank')}
+            className="w-full h-12 bg-[#24A1DE] text-white font-black text-sm uppercase italic gap-2 rounded-2xl shadow-xl active:scale-95"
+          >
+            <Send className="w-5 h-5 fill-white" />
+            Únete al Telegram 💰🏁
+          </Button>
+        </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
@@ -154,7 +149,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           </TabsContent>
         </Tabs>
       </main>
-
       <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
       <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
       <RicardoBot />
