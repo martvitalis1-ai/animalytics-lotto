@@ -91,4 +91,4 @@ const Index = () => {
   return <Dashboard userRole={userRole} onLogout={handleLogout} />;
 };
 
-export default Index;
+export default Index; Index;
