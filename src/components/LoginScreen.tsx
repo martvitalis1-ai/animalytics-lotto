@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface LoginProps {
-  // Cambio: Ahora pasamos el rol y el código al Index para validar el dispositivo
+  // Ahora pasamos el rol y el código al Index
   onLogin: (role: string, code: string) => void;
 }
 
@@ -33,12 +33,11 @@ export function LoginScreen({ onLogin }: LoginProps) {
     setLoading(true);
     
     try {
-      // 1. Verificación de validez básica (tu lógica original)
       const { valid, role } = await checkAccess(code);
       
       if (valid && role) {
-        // 2. Si es válido, enviamos el rol y el código al Index.tsx
-        // para que él verifique si hay otro dispositivo conectado.
+        // En lugar de loguear directo, mandamos los datos al Index.tsx
+        // para que verifique si el dispositivo está permitido.
         onLogin(role, code.toUpperCase().trim());
       } else {
         toast.error("Código no válido o inactivo");
