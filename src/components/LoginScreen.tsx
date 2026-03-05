@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface LoginProps {
-  // Ahora pasamos el rol y el código al Index
   onLogin: (role: string, code: string) => void;
 }
 
@@ -19,7 +18,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
   const [showCode, setShowCode] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLoginAction = async () => {
     if (!termsAccepted) {
       toast.error("Debes aceptar los términos para continuar");
       return;
@@ -36,8 +35,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
       const { valid, role } = await checkAccess(code);
       
       if (valid && role) {
-        // En lugar de loguear directo, mandamos los datos al Index.tsx
-        // para que verifique si el dispositivo está permitido.
+        // Pasamos el rol y el código al Index.tsx
         onLogin(role, code.toUpperCase().trim());
       } else {
         toast.error("Código no válido o inactivo");
@@ -60,7 +58,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
               className="w-full h-full object-contain drop-shadow-lg"
             />
           </div>
-          <h1 className="text-2xl font-black text-foreground tracking-tight">
+          <h1 className="text-2xl font-black text-foreground tracking-tight uppercase">
             ANIMALYTICS PRO
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -68,7 +66,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
           </p>
         </CardHeader>
         <CardContent className="space-y-4 pt-6 pb-8 px-6">
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
               Código de Acceso
             </label>
@@ -80,7 +78,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
                 className="pl-10 pr-10 h-12 text-lg font-bold tracking-widest uppercase bg-muted/50 border-border/50 focus:bg-background"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                onKeyDown={(e) => e.key === 'Enter' && handleLoginAction()}
                 disabled={loading}
               />
               <button
@@ -93,7 +91,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
             </div>
           </div>
           
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-left">
             <Checkbox 
               id="terms" 
               checked={termsAccepted}
@@ -113,7 +111,7 @@ export function LoginScreen({ onLogin }: LoginProps) {
           
           <Button 
             className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
-            onClick={handleLogin}
+            onClick={handleLoginAction}
             disabled={loading || !termsAccepted}
           >
             {loading ? (
