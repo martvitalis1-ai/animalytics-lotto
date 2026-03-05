@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface LoginProps {
-  onLogin: (role: string) => void;
+  // Cambio: Ahora pasamos el rol y el código al Index para validar el dispositivo
+  onLogin: (role: string, code: string) => void;
 }
 
 export function LoginScreen({ onLogin }: LoginProps) {
@@ -32,11 +33,13 @@ export function LoginScreen({ onLogin }: LoginProps) {
     setLoading(true);
     
     try {
+      // 1. Verificación de validez básica (tu lógica original)
       const { valid, role } = await checkAccess(code);
       
       if (valid && role) {
-        toast.success(role === 'admin' ? "¡Bienvenido Jefe!" : "Acceso Concedido");
-        onLogin(role);
+        // 2. Si es válido, enviamos el rol y el código al Index.tsx
+        // para que él verifique si hay otro dispositivo conectado.
+        onLogin(role, code.toUpperCase().trim());
       } else {
         toast.error("Código no válido o inactivo");
       }
@@ -91,7 +94,6 @@ export function LoginScreen({ onLogin }: LoginProps) {
             </div>
           </div>
           
-          {/* Terms and Conditions - MANDATORY */}
           <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Checkbox 
               id="terms" 
