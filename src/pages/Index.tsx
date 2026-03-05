@@ -10,12 +10,12 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   const getDeviceId = () => {
-    let deviceId = localStorage.getItem('animalytics_device_fingerprint');
-    if (!deviceId) {
-      deviceId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-      localStorage.setItem('animalytics_device_fingerprint', deviceId);
+    let id = localStorage.getItem('device_fingerprint');
+    if (!id) {
+      id = Math.random().toString(36).substring(2) + Date.now();
+      localStorage.setItem('device_fingerprint', id);
     }
-    return deviceId;
+    return id;
   };
 
   const handleLogin = async (role: string, accessCode: string) => {
@@ -23,83 +23,53 @@ const Index = () => {
     const ADMIN_CODE = "GANADOR2026";
     
     try {
-      const { data: codeData, error } = await supabase
-        .from('access_codes')
-        .select('*')
-        .eq('code', accessCode)
-        .single();
+      const { data: codeData, error } = await supabase.from('access_codes').select('*').eq('code', accessCode).single();
 
       if (error || !codeData) {
-        toast.error("CÓDIGO NO VÁLIDO EN EL SERVIDOR");
+        toast.error("CÓDIGO INVÁLIDO");
         return;
       }
 
       const ahora = new Date();
       const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      
-      // EXCEPCIÓN PARA EL JEFE: GANADOR2026 entra sin bloqueos
       const esAdminMaster = accessCode === ADMIN_CODE;
 
-      if (
-        !esAdminMaster && // Si no es admin, aplicamos seguridad estricta
-        codeData.current_device_id && 
-        codeData.current_device_id !== deviceId &&
-        ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
-      ) {
-        toast.error("ACCESO DENEGADO: Este código ya está en uso en otro dispositivo.");
+      if (!esAdminMaster && codeData.current_device_id && codeData.current_device_id !== deviceId && ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000) {
+        toast.error("CÓDIGO EN USO EN OTRO DISPOSITIVO");
         return;
       }
 
-      // Actualizar el estado del código
-      await supabase
-        .from('access_codes')
-        .update({ 
-          current_device_id: deviceId,
-          last_ping: ahora.toISOString()
-        })
-        .eq('code', accessCode);
+      await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: ahora.toISOString() }).eq('code', accessCode);
 
       localStorage.setItem('session_access_code', accessCode);
       setUserRole(esAdminMaster ? "admin" : role);
       setIsLoggedIn(true);
-      
-      toast.success(esAdminMaster ? "¡BIENVENIDO JEFE! Llave maestra activa." : "Acceso Concedido");
-
+      toast.success(esAdminMaster ? "¡HOLA JEFE!" : "ACCESO CONCEDIDO");
     } catch (err) {
-      console.error(err);
-      toast.error("Error de conexión con Supabase");
+      toast.error("ERROR DE CONEXIÓN");
     }
   };
 
   const handleLogout = async () => {
-    const accessCode = localStorage.getItem('session_access_code');
-    // El admin no necesita liberar su código para poder usarlo en varios lados
-    if (accessCode && accessCode !== "GANADOR2026") {
-      await supabase
-        .from('access_codes')
-        .update({ current_device_id: null, last_ping: null })
-        .eq('code', accessCode);
+    const code = localStorage.getItem('session_access_code');
+    if (code && code !== "GANADOR2026") {
+      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
     }
     localStorage.removeItem('session_access_code');
     setIsLoggedIn(false);
-    setUserRole("");
   };
 
   useEffect(() => {
-    const savedCode = localStorage.getItem('session_access_code');
-    if (savedCode) {
+    const saved = localStorage.getItem('session_access_code');
+    if (saved) {
       setIsLoggedIn(true);
-      setUserRole(savedCode === "GANADOR2026" ? "admin" : "user");
+      setUserRole(saved === "GANADOR2026" ? "admin" : "user");
     }
     setLoading(false);
   }, []);
 
   if (loading) return null;
-
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={(role, code) => handleLogin(role, code)} />;
-  }
-
+  if (!isLoggedIn) return <LoginScreen onLogin={handleLogin} />;
   return <Dashboard userRole={userRole} onLogout={handleLogout} />;
 };
 
