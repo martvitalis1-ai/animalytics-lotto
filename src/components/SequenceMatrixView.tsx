@@ -19,7 +19,6 @@ export function SequenceMatrixView() {
   const loadSequences = useCallback(async () => {
     setLoading(true);
     try {
-      // ABSORCIÓN TOTAL: Analizamos la cadena de resultados completa
       const { data, error } = await supabase
         .from('lottery_results')
         .select('result_number')
@@ -82,9 +81,9 @@ export function SequenceMatrixView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {numberRange.map(num => {
                 const successors = sequences[num] ? Object.entries(sequences[num]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
-                if (successors.length === 0) return null;
+                // ARREGLO 1: Eliminé el 'return null' para que aparezcan TODOS los números siempre.
                 const animal = getAnimalByCode(num);
-                const totalDraws = Object.values(sequences[num]).reduce((a:any, b:any) => a + b, 0);
+                const totalDraws = sequences[num] ? Object.values(sequences[num]).reduce((a:any, b:any) => a + b, 0) : 0;
 
                 return (
                   <div key={num} className="bg-card border-2 rounded-[2rem] p-6 shadow-xl hover:border-primary/50 transition-all group relative overflow-hidden">
@@ -93,7 +92,8 @@ export function SequenceMatrixView() {
                          <span className="text-6xl group-hover:rotate-12 transition-transform duration-500 drop-shadow-xl">{getAnimalEmoji(num)}</span>
                          <div>
                             <p className="text-xs font-black text-primary uppercase tracking-tighter leading-none">{animal?.name || 'Animal'}</p>
-                            <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num.padStart(2, '0')}</p>
+                            {/* ARREGLO 2: Quitamos padStart para que el Delfín sea #0 y no #00 */}
+                            <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num}</p>
                          </div>
                       </div>
                       <div className="text-right">
@@ -103,15 +103,17 @@ export function SequenceMatrixView() {
                     </div>
                     
                     <div className="space-y-3">
-                       {successors.map(([nextNum, count]:any, idx) => {
-                          const prob = Math.round((count / totalDraws) * 100);
+                       {successors.length > 0 ? (
+                        successors.map(([nextNum, count]:any, idx) => {
+                          const prob = totalDraws > 0 ? Math.round((count / totalDraws) * 100) : 0;
                           const nextAnimal = getAnimalByCode(nextNum);
                           return (
                             <div key={nextNum} className={`flex items-center justify-between p-3 rounded-2xl border-2 transition-all duration-300 ${idx === 0 ? 'bg-primary/10 border-primary/40 shadow-inner' : 'bg-muted/30 border-transparent'}`}>
                                <div className="flex items-center gap-3">
                                   <span className="text-3xl">{getAnimalEmoji(nextNum)}</span>
                                   <div>
-                                     <span className="font-mono font-black text-base block leading-none">{nextNum.padStart(2, '0')}</span>
+                                     {/* ARREGLO 3: Sucesores sin ceros forzados */}
+                                     <span className="font-mono font-black text-base block leading-none">#{nextNum}</span>
                                      <span className="text-[9px] font-black uppercase text-muted-foreground">{nextAnimal?.name}</span>
                                   </div>
                                </div>
@@ -123,7 +125,12 @@ export function SequenceMatrixView() {
                                </div>
                             </div>
                           );
-                       })}
+                       })
+                      ) : (
+                        <div className="py-6 text-center border-2 border-dashed border-muted-foreground/20 rounded-2xl">
+                          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Sin datos históricos</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
