@@ -29,14 +29,24 @@ export function SequenceMatrixView() {
       if (data && data.length > 1) {
         const matrix: Record<string, Record<string, number>> = {};
         for (let i = 0; i < data.length - 1; i++) {
-          const current = data[i].result_number.trim();
-          const next = data[i+1].result_number.trim();
-          if (!matrix[current]) matrix[current] = {};
-          matrix[current][next] = (matrix[current][next] || 0) + 1;
+          const currentValue = data[i]?.result_number;
+          const nextValue = data[i+1]?.result_number;
+          
+          if (currentValue && nextValue) {
+            const current = currentValue.trim();
+            const next = nextValue.trim();
+            if (!matrix[current]) matrix[current] = {};
+            matrix[current][next] = (matrix[current][next] || 0) + 1;
+          }
         }
         setSequences(matrix);
+      } else {
+        setSequences({});
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e); 
+      setSequences({});
+    }
     setLoading(false);
   }, [selectedLottery]);
 
@@ -82,7 +92,7 @@ export function SequenceMatrixView() {
               {numberRange.map(num => {
                 const successors = sequences[num] ? Object.entries(sequences[num]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
                 const animal = getAnimalByCode(num);
-                const totalDraws = sequences[num] ? Object.values(sequences[num]).reduce((a:any, b:any) => a + b, 0) : 0;
+                const totalDraws = sequences[num] ? Object.values(sequences[num]).reduce((acc: number, val: number) => acc + val, 0) : 0;
 
                 return (
                   <div key={num} className="bg-card border-2 rounded-[2rem] p-6 shadow-xl hover:border-primary/50 transition-all group relative overflow-hidden">
@@ -111,7 +121,7 @@ export function SequenceMatrixView() {
                                   <span className="text-3xl">{getAnimalEmoji(nextNum)}</span>
                                   <div>
                                      <span className="font-mono font-black text-base block leading-none">#{nextNum}</span>
-                                     <span className="text-[9px] font-black uppercase text-muted-foreground">{nextAnimal?.name}</span>
+                                     <span className="text-[9px] font-black uppercase text-muted-foreground">{nextAnimal?.name || 'Desconocido'}</span>
                                   </div>
                                </div>
                                <div className="flex flex-col items-end gap-1.5">
