@@ -19,18 +19,42 @@ export function SequenceMatrixView() {
   const loadSequences = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('lottery_results')
-        .select('result_number')
-        .eq('lottery_type', selectedLottery)
-        .order('draw_date', { ascending: true })
-        .order('created_at', { ascending: true });
+      let allResults: any[] = [];
+      let from = 0;
+      let to = 999;
+      let hasMore = true;
 
-      if (data && data.length > 1) {
+      // ABSORCIÓN TOTAL: Ciclo para traer todos los registros sin límite de 1000
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('lottery_results')
+          .select('result_number')
+          .eq('lottery_type', selectedLottery)
+          .order('draw_date', { ascending: true })
+          .order('created_at', { ascending: true })
+          .range(from, to);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allResults = [...allResults, ...data];
+          if (data.length < 1000) {
+            hasMore = false;
+          } else {
+            from += 1000;
+            to += 1000;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      // Procesamiento de la Matriz con el 100% de los datos absorbidos
+      if (allResults.length > 1) {
         const matrix: Record<string, Record<string, number>> = {};
-        for (let i = 0; i < data.length - 1; i++) {
-          const currentValue = data[i]?.result_number;
-          const nextValue = data[i+1]?.result_number;
+        for (let i = 0; i < allResults.length - 1; i++) {
+          const currentValue = allResults[i]?.result_number;
+          const nextValue = allResults[i+1]?.result_number;
           
           if (currentValue && nextValue) {
             const current = currentValue.trim();
@@ -44,7 +68,7 @@ export function SequenceMatrixView() {
         setSequences({});
       }
     } catch (e) { 
-      console.error(e); 
+      console.error("Error en absorción de datos:", e); 
       setSequences({});
     }
     setLoading(false);
@@ -79,13 +103,16 @@ export function SequenceMatrixView() {
           </div>
         </div>
         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
-           <Sparkles className="w-3 h-3 text-amber-500" /> ANÁLISIS DE ARRASTRE HISTÓRICO COMPLETO
+           <Sparkles className="w-3 h-3 text-amber-500" /> ANÁLISIS DE ARRASTRE HISTÓRICO COMPLETO (100%)
         </p>
       </CardHeader>
       
       <CardContent className="p-6 bg-muted/5">
         {loading ? (
-          <div className="py-24 text-center"><Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" /></div>
+          <div className="py-24 text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+            <p className="text-xs font-bold text-primary mt-4 animate-pulse">ABSORBIENDO HISTORIAL COMPLETO...</p>
+          </div>
         ) : (
           <ScrollArea className="h-[650px] pr-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -101,6 +128,7 @@ export function SequenceMatrixView() {
                          <span className="text-6xl group-hover:rotate-12 transition-transform duration-500 drop-shadow-xl">{getAnimalEmoji(num)}</span>
                          <div>
                             <p className="text-xs font-black text-primary uppercase tracking-tighter leading-none">{animal?.name || 'Animal'}</p>
+                            {/* Corregido: Muestra #0 o #00 según corresponda */}
                             <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num}</p>
                          </div>
                       </div>
