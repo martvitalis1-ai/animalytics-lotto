@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
@@ -30,6 +31,7 @@ import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
+import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -43,13 +45,23 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [totalResults, setTotalResults] = useState<number>(0);
+  const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCount = async () => {
-      const { count } = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-      if (count) setTotalResults(count);
+    const loadInitialData = async () => {
+      try {
+        // Cargar contador
+        const { count } = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        if (count) setTotalResults(count);
+
+        // Cargar link de Telegram
+        const { data: guiaData } = await supabase.from('manual_guia').select('telegram_url').limit(1).maybeSingle();
+        if (guiaData?.telegram_url) setTelegramUrl(guiaData.telegram_url);
+      } catch (e) {
+        console.error("Error cargando Dashboard", e);
+      }
     };
-    loadCount();
+    loadInitialData();
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -73,9 +85,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border text-left">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-left">
+          <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
               <h1 className="font-black text-lg leading-none uppercase italic">ANIMALYTICS PRO</h1>
@@ -83,6 +95,15 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* BOTÓN TELEGRAM PC */}
+            {telegramUrl && (
+              <Button 
+                onClick={() => window.open(telegramUrl, '_blank')}
+                className="hidden lg:flex h-9 bg-[#24A1DE] hover:bg-[#24A1DE]/90 text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4"
+              >
+                <Send className="w-3.5 h-3.5 fill-white" /> Telegram
+              </Button>
+            )}
             <ThemeToggle />
             <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -94,6 +115,18 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
       </header>
 
       <main className="container mx-auto px-4 py-4">
+        {/* BOTÓN TELEGRAM MÓVIL */}
+        {telegramUrl && (
+          <div className="lg:hidden mb-4">
+            <Button 
+              onClick={() => window.open(telegramUrl, '_blank')}
+              className="w-full h-12 bg-[#24A1DE] text-white font-black text-sm uppercase italic gap-2 rounded-2xl shadow-xl active:scale-95 transition-all"
+            >
+              <Send className="w-5 h-5 fill-white" /> Unirse al Telegram Oficial
+            </Button>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
@@ -121,6 +154,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           </TabsContent>
         </Tabs>
       </main>
+
       <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
       <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
       <RicardoBot />
