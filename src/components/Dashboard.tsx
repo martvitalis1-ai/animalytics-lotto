@@ -79,14 +79,15 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Animalytics" className="h-10 w-auto" />
-            <div className="hidden sm:block">
-              <h1 className="font-black text-lg leading-none uppercase">Animalytics Pro</h1>
+            <div className="hidden sm:block text-left">
+              <h1 className="font-black text-lg leading-none uppercase">ANIMALYTICS PRO</h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <NotificationCenter />
+            <ExportTools type="results" filename="resultados" />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               {userRole === 'admin' ? '👑 Admin' : 'Usuario'}
             </span>
@@ -104,9 +105,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
-            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20">
-              <PlayCircle className="w-4 h-4 mr-1.5" />Guía
-            </TabsTrigger>
+            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
           </TabsList>
