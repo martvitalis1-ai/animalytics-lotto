@@ -81,7 +81,6 @@ export function SequenceMatrixView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {numberRange.map(num => {
                 const successors = sequences[num] ? Object.entries(sequences[num]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
-                // ARREGLO 1: Eliminé el 'return null' para que aparezcan TODOS los números siempre.
                 const animal = getAnimalByCode(num);
                 const totalDraws = sequences[num] ? Object.values(sequences[num]).reduce((a:any, b:any) => a + b, 0) : 0;
 
@@ -92,7 +91,6 @@ export function SequenceMatrixView() {
                          <span className="text-6xl group-hover:rotate-12 transition-transform duration-500 drop-shadow-xl">{getAnimalEmoji(num)}</span>
                          <div>
                             <p className="text-xs font-black text-primary uppercase tracking-tighter leading-none">{animal?.name || 'Animal'}</p>
-                            {/* ARREGLO 2: Quitamos padStart para que el Delfín sea #0 y no #00 */}
                             <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num}</p>
                          </div>
                       </div>
@@ -112,7 +110,6 @@ export function SequenceMatrixView() {
                                <div className="flex items-center gap-3">
                                   <span className="text-3xl">{getAnimalEmoji(nextNum)}</span>
                                   <div>
-                                     {/* ARREGLO 3: Sucesores sin ceros forzados */}
                                      <span className="font-mono font-black text-base block leading-none">#{nextNum}</span>
                                      <span className="text-[9px] font-black uppercase text-muted-foreground">{nextAnimal?.name}</span>
                                   </div>
