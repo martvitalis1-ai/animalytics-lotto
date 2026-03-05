@@ -20,109 +20,64 @@ export function LoginScreen({ onLogin }: LoginProps) {
 
   const handleLoginAction = async () => {
     if (!termsAccepted) {
-      toast.error("Debes aceptar los términos para continuar");
+      toast.error("Debes aceptar los términos");
       return;
     }
-    
     if (!code.trim()) {
-      toast.error("Ingresa un código de acceso");
+      toast.error("Ingresa tu código");
       return;
     }
-    
     setLoading(true);
-    
     try {
-      const { valid, role } = await checkAccess(code);
-      
+      const { valid, role } = await checkAccess(code.toUpperCase().trim());
       if (valid && role) {
-        // Pasamos el rol y el código al Index.tsx
         onLogin(role, code.toUpperCase().trim());
       } else {
-        toast.error("Código no válido o inactivo");
+        toast.error("Código inválido");
       }
     } catch (error) {
-      toast.error("Error de conexión");
+      toast.error("Error de red");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md shadow-[var(--shadow-elevated)] border-0 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 text-left">
+      <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden">
         <CardHeader className="text-center pb-2 pt-8">
           <div className="mx-auto w-40 h-40 flex items-center justify-center mb-4">
-            <img 
-              src={logoAnimalytics} 
-              alt="Animalytics Pro" 
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
+            <img src={logoAnimalytics} alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
           </div>
-          <h1 className="text-2xl font-black text-foreground tracking-tight uppercase">
-            ANIMALYTICS PRO
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Sistema de Inteligencia de Lotería
-          </p>
+          <h1 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">ANIMALYTICS PRO</h1>
         </CardHeader>
         <CardContent className="space-y-4 pt-6 pb-8 px-6">
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
-              Código de Acceso
-            </label>
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase text-muted-foreground">Código de Acceso</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground/50" />
               <Input 
                 type={showCode ? "text" : "password"}
-                placeholder="Ingresa tu código..." 
-                className="pl-10 pr-10 h-12 text-lg font-bold tracking-widest uppercase bg-muted/50 border-border/50 focus:bg-background"
+                className="pl-10 pr-10 h-12 text-lg font-bold tracking-widest uppercase bg-muted/50"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleLoginAction()}
                 disabled={loading}
               />
-              <button
-                type="button"
-                onClick={() => setShowCode(!showCode)}
-                className="absolute right-3 top-3 text-muted-foreground/50 hover:text-muted-foreground"
-              >
+              <button type="button" onClick={() => setShowCode(!showCode)} className="absolute right-3 top-3 text-muted-foreground/50">
                 {showCode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
-          
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-left">
-            <Checkbox 
-              id="terms" 
-              checked={termsAccepted}
-              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-              className="mt-0.5"
-            />
-            <div className="flex-1">
-              <label 
-                htmlFor="terms" 
-                className="text-xs text-amber-700 dark:text-amber-400 cursor-pointer leading-relaxed"
-              >
-                <AlertTriangle className="w-3 h-3 inline mr-1" />
-                Esta app es de pronósticos estadísticos. Puede haber días buenos o malos. El uso es bajo mi total responsabilidad.
-              </label>
-            </div>
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(checked === true)} />
+            <label htmlFor="terms" className="text-xs text-amber-700 cursor-pointer">
+              <AlertTriangle className="w-3 h-3 inline mr-1" /> Acepto los términos de uso.
+            </label>
           </div>
-          
-          <Button 
-            className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-50"
-            onClick={handleLoginAction}
-            disabled={loading || !termsAccepted}
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              "ENTRAR AL SISTEMA"
-            )}
+          <Button className="w-full h-12 bg-foreground text-background font-black uppercase italic" onClick={handleLoginAction} disabled={loading || !termsAccepted}>
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "ENTRAR AL SISTEMA"}
           </Button>
-          <p className="text-center text-xs text-muted-foreground pt-4">
-            Acceso exclusivo para miembros autorizados
-          </p>
         </CardContent>
       </Card>
     </div>
