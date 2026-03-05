@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Lock, Loader2, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Lock, Loader2, Eye, EyeOff, AlertTriangle, MessageCircle } from "lucide-react";
 import { checkAccess } from "@/lib/accessControl";
 import { toast } from "sonner";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
@@ -17,6 +17,9 @@ export function LoginScreen({ onLogin }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // LINK DE TELEGRAM CON MENSAJE PRE-CARGADO
+  const TELEGRAM_SUPPORT_URL = "https://t.me/Animalytics?text=QUIERO%20MI%20CODIGO%20DE%20ACCESO";
 
   const handleLoginAction = async () => {
     const ADMIN_CODE = "GANADOR2026";
@@ -33,7 +36,6 @@ export function LoginScreen({ onLogin }: LoginProps) {
     
     setLoading(true);
     
-    // Si es el admin, no necesitamos chequear la validez en accessControl
     if (cleanCode === ADMIN_CODE) {
       onLogin("admin", cleanCode);
       setLoading(false);
@@ -56,28 +58,28 @@ export function LoginScreen({ onLogin }: LoginProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 text-left">
-      <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden">
+      <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden rounded-[2rem]">
         <CardHeader className="text-center pb-2 pt-8">
           <div className="mx-auto w-40 h-40 flex items-center justify-center mb-4">
             <img src={logoAnimalytics} alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
           </div>
           <h1 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">ANIMALYTICS PRO</h1>
         </CardHeader>
-        <CardContent className="space-y-4 pt-6 pb-8 px-6">
+        <CardContent className="space-y-4 pt-4 pb-8 px-8">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Código de Acceso</label>
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Código de Acceso</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground/50" />
               <Input 
                 type={showCode ? "text" : "password"}
                 placeholder="INGRESA TU CÓDIGO..."
-                className="pl-10 pr-10 h-12 text-lg font-bold tracking-widest uppercase bg-muted/50 border-border/50"
+                className="pl-10 pr-10 h-12 text-lg font-bold tracking-widest uppercase bg-muted/30 border-primary/10 rounded-xl"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleLoginAction()}
                 disabled={loading}
               />
-              <button type="button" onClick={() => setShowCode(!showCode)} className="absolute right-3 top-3 text-muted-foreground/50 hover:text-muted-foreground">
+              <button type="button" onClick={() => setShowCode(!showCode)} className="absolute right-3 top-3 text-muted-foreground/50">
                 {showCode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
@@ -85,24 +87,40 @@ export function LoginScreen({ onLogin }: LoginProps) {
           
           <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(checked === true)} className="mt-1" />
-            <div className="flex-1 text-[11px] leading-tight font-bold text-amber-900 dark:text-amber-300">
+            <div className="flex-1 text-[10px] leading-tight font-bold text-amber-900 dark:text-amber-300 italic">
               <AlertTriangle className="w-3 h-3 inline mr-1 text-amber-600" />
-              Entiendo que esta App ofrece <span className="italic underline">pronósticos estadísticos</span> y que los resultados NO están garantizados. 
-              Toda jugada es bajo mi <span className="uppercase text-amber-700 dark:text-amber-500">total responsabilidad</span>. No promovemos el vicio del juego; 
-              recomendamos jugar con inteligencia, frialdad y mucha moderación.
+              Entiendo que esta App ofrece pronósticos estadísticos. Toda jugada es bajo mi responsabilidad. No promovemos el vicio.
             </div>
           </div>
           
           <Button 
-            className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-base shadow-xl transition-all active:scale-95 disabled:opacity-50 uppercase italic"
+            className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-base shadow-xl rounded-2xl transition-all active:scale-95 disabled:opacity-50 uppercase italic"
             onClick={handleLoginAction}
             disabled={loading || !termsAccepted}
           >
             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "ENTRAR AL SISTEMA 💰🏁"}
           </Button>
-          <p className="text-center text-[10px] text-muted-foreground font-black uppercase tracking-widest pt-2">
-            Acceso exclusivo para miembros del búnker
-          </p>
+
+          {/* SECCIÓN NUEVA: BOTÓN PARA SOLICITAR CÓDIGO */}
+          <div className="pt-4 space-y-3">
+             <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-muted"></span></div>
+                <span className="relative bg-background px-2 text-[9px] font-black text-muted-foreground uppercase">¿No tienes acceso?</span>
+             </div>
+             
+             <Button 
+                variant="outline"
+                className="w-full h-12 border-2 border-[#24A1DE] text-[#24A1DE] hover:bg-[#24A1DE] hover:text-white font-black text-xs uppercase italic gap-2 rounded-2xl transition-all"
+                onClick={() => window.open(TELEGRAM_SUPPORT_URL, '_blank')}
+             >
+                <MessageCircle className="w-5 h-5" />
+                Solicitar código de acceso
+             </Button>
+             <p className="text-[9px] text-center text-muted-foreground font-bold">
+               Al hacer clic, solo dale a "Enviar" al mensaje pre-marcado en Telegram.
+             </p>
+          </div>
+
         </CardContent>
       </Card>
     </div>
