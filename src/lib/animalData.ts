@@ -1,4 +1,3 @@
-// Reemplaza TODO el contenido de animalData.ts con este código corregido
 export interface AnimalInfo {
   id: number;
   code: string;  
@@ -22,36 +21,16 @@ export const ANIMAL_EMOJIS: Record<string, string> = {
   "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", 
   "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", 
   "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", 
-  "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍",
-  // Soporte para Guacharo/Guacharito
-  "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", 
-  "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", 
-  "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", 
-  "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", 
-  "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", 
-  "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", 
-  "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", 
-  "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣"
+  "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍"
 };
 
-// Función MEJORADA para obtener animal sin errores
 export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
   if (!code) return undefined;
   const normalized = code.toString().trim();
-  
-  // Caso especial Ballena
   if (normalized === "00") return { id: 100, code: "00", name: "BALLENA", category: "acuatico" };
-  
-  // Para los demás, quitamos el 0 a la izquierda para buscar en el mapeo (ej: "07" -> "7")
   const searchCode = normalized === "0" ? "0" : parseInt(normalized, 10).toString();
   const name = ANIMALS_STANDARD[searchCode] || "ANIMAL";
-
-  return {
-    id: parseInt(searchCode, 10) || 0,
-    code: normalized,
-    name: name,
-    category: "general"
-  };
+  return { id: parseInt(searchCode, 10) || 0, code: normalized, name: name, category: "general" };
 };
 
 export const getAnimalEmoji = (code: string): string => {
@@ -62,8 +41,11 @@ export const getAnimalEmoji = (code: string): string => {
   return ANIMAL_EMOJIS[searchCode] || "🔢";
 };
 
-// Exportamos lo que el Dashboard y el Bot necesitan
 export const getAnimalName = (code: string): string => {
   const a = getAnimalByCode(code);
   return a ? a.name : "ANIMAL";
+};
+
+export const getCodesForLottery = (lotteryId: string): string[] => {
+  return ['0', '00', ...Array.from({ length: 36 }, (_, i) => (i + 1).toString())];
 };
