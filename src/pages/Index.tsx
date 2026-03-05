@@ -9,25 +9,25 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Generar o recuperar huella única del dispositivo
   const getDeviceId = () => {
-    let deviceId = localStorage.getItem('animalytics_device_fingerprint');
-    if (!deviceId) {
-      deviceId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-      localStorage.setItem('animalytics_device_fingerprint', deviceId);
+    let id = localStorage.getItem('device_fingerprint');
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+      localStorage.setItem('device_fingerprint', id);
     }
-    return deviceId;
+    return id;
   };
 
   const handleLogin = async (role: string, accessCode: string) => {
     const deviceId = getDeviceId();
     const ADMIN_CODE = "GANADOR2026";
+    const code = accessCode.toUpperCase().trim();
     
     try {
       const { data: codeData, error } = await supabase
         .from('access_codes')
         .select('*')
-        .eq('code', accessCode)
+        .eq('code', code)
         .single();
 
       if (error || !codeData) {
@@ -37,49 +37,33 @@ const Index = () => {
 
       const ahora = new Date();
       const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      
-      // EXCEPCIÓN ADMIN: GANADOR2026 no se bloquea nunca
-      const esAdminMaster = accessCode === ADMIN_CODE;
+      const esAdminMaster = code === ADMIN_CODE;
 
-      if (
-        !esAdminMaster && 
-        codeData.current_device_id && 
-        codeData.current_device_id !== deviceId &&
-        ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
-      ) {
-        toast.error("CÓDIGO EN USO: Ya hay otra sesión activa con este código.");
+      if (!esAdminMaster && codeData.current_device_id && codeData.current_device_id !== deviceId && ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000) {
+        toast.error("CÓDIGO EN USO: Ya hay otra sesión activa.");
         return;
       }
 
-      // Actualizamos los datos en Supabase
       await supabase
         .from('access_codes')
-        .update({ 
-          current_device_id: deviceId,
-          last_ping: ahora.toISOString()
-        })
-        .eq('code', accessCode);
+        .update({ current_device_id: deviceId, last_ping: ahora.toISOString() })
+        .eq('code', code);
 
-      // Guardamos sesión local
-      localStorage.setItem('session_access_code', accessCode);
+      localStorage.setItem('session_access_code', code);
       setUserRole(esAdminMaster ? "admin" : role);
       setIsLoggedIn(true);
-      
-      toast.success(esAdminMaster ? "¡BIENVENIDO JEFE!" : "Acceso Concedido");
+      toast.success(esAdminMaster ? "¡BIENVENIDO JEFE!" : "ACCESO CONCEDIDO");
 
     } catch (err) {
       console.error(err);
-      toast.error("Error de conexión");
+      toast.error("Error de conexión con el servidor");
     }
   };
 
   const handleLogout = async () => {
-    const accessCode = localStorage.getItem('session_access_code');
-    if (accessCode && accessCode !== "GANADOR2026") {
-      await supabase
-        .from('access_codes')
-        .update({ current_device_id: null, last_ping: null })
-        .eq('code', accessCode);
+    const code = localStorage.getItem('session_access_code');
+    if (code && code !== "GANADOR2026") {
+      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
     }
     localStorage.removeItem('session_access_code');
     setIsLoggedIn(false);
@@ -88,17 +72,12 @@ const Index = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const savedCode = localStorage.getItem('session_access_code');
-        if (savedCode) {
-          setIsLoggedIn(true);
-          setUserRole(savedCode === "GANADOR2026" ? "admin" : "user");
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+      const saved = localStorage.getItem('session_access_code');
+      if (saved) {
+        setIsLoggedIn(true);
+        setUserRole(saved === "GANADOR2026" ? "admin" : "user");
       }
+      setLoading(false);
     };
     checkSession();
   }, []);
