@@ -9,7 +9,6 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // 1. Obtener o crear huella del dispositivo
   const getDeviceId = () => {
     let deviceId = localStorage.getItem('animalytics_device_fingerprint');
     if (!deviceId) {
@@ -19,12 +18,11 @@ const Index = () => {
     return deviceId;
   };
 
-  // 2. Función de validación de dispositivo único
   const handleLogin = async (role: string, accessCode: string) => {
     const deviceId = getDeviceId();
+    const ADMIN_CODE = "GANADOR2026";
     
     try {
-      // Consultamos el estado actual del código en Supabase
       const { data: codeData, error } = await supabase
         .from('access_codes')
         .select('*')
@@ -32,25 +30,28 @@ const Index = () => {
         .single();
 
       if (error || !codeData) {
-        toast.error("Código no válido en el servidor.");
+        toast.error("CÓDIGO NO VÁLIDO EN EL SERVIDOR");
         return;
       }
 
       const ahora = new Date();
       const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
       
-      // REGLA: Bloquear si hay otro dispositivo activo hace menos de 3 minutos
+      // EXCEPCIÓN PARA EL JEFE: GANADOR2026 entra sin bloqueos
+      const esAdminMaster = accessCode === ADMIN_CODE;
+
       if (
+        !esAdminMaster && // Si no es admin, aplicamos seguridad estricta
         codeData.current_device_id && 
         codeData.current_device_id !== deviceId &&
         ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
       ) {
-        toast.error("CÓDIGO EN USO: Ya hay otra sesión activa con este código.");
+        toast.error("ACCESO DENEGADO: Este código ya está en uso en otro dispositivo.");
         return;
       }
 
-      // Si el acceso es válido, registramos este dispositivo como el dueño actual
-      const { error: updateError } = await supabase
+      // Actualizar el estado del código
+      await supabase
         .from('access_codes')
         .update({ 
           current_device_id: deviceId,
@@ -58,24 +59,22 @@ const Index = () => {
         })
         .eq('code', accessCode);
 
-      if (updateError) throw updateError;
-
-      // Todo bien, logueamos
       localStorage.setItem('session_access_code', accessCode);
-      setUserRole(role);
+      setUserRole(esAdminMaster ? "admin" : role);
       setIsLoggedIn(true);
-      toast.success(role === 'admin' ? "¡Hola Jefe!" : "Acceso Exitoso");
+      
+      toast.success(esAdminMaster ? "¡BIENVENIDO JEFE! Llave maestra activa." : "Acceso Concedido");
 
     } catch (err) {
       console.error(err);
-      toast.error("Error al sincronizar con el servidor.");
+      toast.error("Error de conexión con Supabase");
     }
   };
 
   const handleLogout = async () => {
     const accessCode = localStorage.getItem('session_access_code');
-    if (accessCode) {
-      // Liberamos el código para que otro pueda usarlo de inmediato
+    // El admin no necesita liberar su código para poder usarlo en varios lados
+    if (accessCode && accessCode !== "GANADOR2026") {
       await supabase
         .from('access_codes')
         .update({ current_device_id: null, last_ping: null })
@@ -86,12 +85,11 @@ const Index = () => {
     setUserRole("");
   };
 
-  // Persistencia de sesión (opcional)
   useEffect(() => {
     const savedCode = localStorage.getItem('session_access_code');
     if (savedCode) {
       setIsLoggedIn(true);
-      setUserRole("user"); 
+      setUserRole(savedCode === "GANADOR2026" ? "admin" : "user");
     }
     setLoading(false);
   }, []);
