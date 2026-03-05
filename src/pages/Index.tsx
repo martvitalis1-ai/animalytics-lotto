@@ -9,86 +9,56 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const getDeviceId = () => {
-    let id = localStorage.getItem('device_fingerprint');
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-      localStorage.setItem('device_fingerprint', id);
-    }
-    return id;
-  };
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const savedCode = localStorage.getItem('session_access_code');
+        if (savedCode) {
+          setIsLoggedIn(true);
+          setUserRole(savedCode === "GANADOR2026" ? "admin" : "user");
+        }
+      } catch (e) {
+        console.error("Error en sesión:", e);
+      } finally {
+        // ESTA LÍNEA ES EL SALVAVIDAS: obliga a la app a encender
+        setLoading(false);
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleLogin = async (role: string, accessCode: string) => {
-    const deviceId = getDeviceId();
-    const ADMIN_CODE = "GANADOR2026";
     const code = accessCode.toUpperCase().trim();
-    
     try {
-      const { data: codeData, error } = await supabase
-        .from('access_codes')
-        .select('*')
-        .eq('code', code)
-        .single();
+      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', code).maybeSingle();
 
-      if (error || !codeData) {
-        toast.error("CÓDIGO NO VÁLIDO");
+      if (!codeData) {
+        toast.error("CÓDIGO INVÁLIDO");
         return;
       }
-
-      const ahora = new Date();
-      const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      const esAdminMaster = code === ADMIN_CODE;
-
-      if (!esAdminMaster && codeData.current_device_id && codeData.current_device_id !== deviceId && ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000) {
-        toast.error("CÓDIGO EN USO: Ya hay otra sesión activa.");
-        return;
-      }
-
-      await supabase
-        .from('access_codes')
-        .update({ current_device_id: deviceId, last_ping: ahora.toISOString() })
-        .eq('code', code);
 
       localStorage.setItem('session_access_code', code);
-      setUserRole(esAdminMaster ? "admin" : role);
+      setUserRole(code === "GANADOR2026" ? "admin" : role);
       setIsLoggedIn(true);
-      toast.success(esAdminMaster ? "¡BIENVENIDO JEFE!" : "ACCESO CONCEDIDO");
-
+      toast.success("BIENVENIDO");
     } catch (err) {
-      console.error(err);
-      toast.error("Error de conexión con el servidor");
+      toast.error("ERROR DE CONEXIÓN");
     }
   };
 
-  const handleLogout = async () => {
-    const code = localStorage.getItem('session_access_code');
-    if (code && code !== "GANADOR2026") {
-      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
-    }
+  const handleLogout = () => {
     localStorage.removeItem('session_access_code');
     setIsLoggedIn(false);
     setUserRole("");
   };
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const saved = localStorage.getItem('session_access_code');
-      if (saved) {
-        setIsLoggedIn(true);
-        setUserRole(saved === "GANADOR2026" ? "admin" : "user");
-      }
-      setLoading(false);
-    };
-    checkSession();
-  }, []);
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background font-black text-primary animate-pulse uppercase">Cargando Sistema...</div>;
 
-  if (loading) return null;
-
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={(role, code) => handleLogin(role, code)} />;
-  }
-
-  return <Dashboard userRole={userRole} onLogout={handleLogout} />;
+  return isLoggedIn ? (
+    <Dashboard userRole={userRole} onLogout={handleLogout} />
+  ) : (
+    <LoginScreen onLogin={handleLogin} />
+  );
 };
 
-export default Index; Index;
+export default Index;
