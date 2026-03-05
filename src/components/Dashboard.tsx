@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
@@ -30,8 +29,7 @@ import { HourlyPredictionView } from "./HourlyPredictionView";
 import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
-import { GuiaUso } from "./GuiaUso"; // IMPORTACIÓN RESTAURADA
-import { useNavigate } from "react-router-dom";
+import { GuiaUso } from "./GuiaUso";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 interface DashboardProps {
@@ -47,11 +45,11 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   const [totalResults, setTotalResults] = useState<number>(0);
 
   useEffect(() => {
-    const loadTotalCount = async () => {
+    const loadCount = async () => {
       const { count } = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
       if (count) setTotalResults(count);
     };
-    loadTotalCount();
+    loadCount();
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -74,13 +72,13 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background text-left">
+    <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logoAnimalytics} alt="Animalytics" className="h-10 w-auto" />
+          <div className="flex items-center gap-3 text-left">
+            <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
-              <h1 className="font-black text-lg leading-none uppercase">ANIMALYTICS PRO</h1>
+              <h1 className="font-black text-lg leading-none uppercase italic">ANIMALYTICS PRO</h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
             </div>
           </div>
@@ -104,9 +102,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
-            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20">
-              <PlayCircle className="w-4 h-4 mr-1.5" />Guía
-            </TabsTrigger>
+            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
           </TabsList>
