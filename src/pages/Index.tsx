@@ -9,21 +9,23 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Generar o recuperar huella única del dispositivo
+  // 1. GENERAR HUELLA DIGITAL DEL DISPOSITIVO
   const getDeviceId = () => {
     let deviceId = localStorage.getItem('animalytics_device_fingerprint');
     if (!deviceId) {
+      // Creamos un ID único que durará para siempre en este navegador/celular
       deviceId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
       localStorage.setItem('animalytics_device_fingerprint', deviceId);
     }
     return deviceId;
   };
 
-  const handleLogin = async (role: string, accessCode?: string) => {
-    // Si el login viene con un código (desde LoginScreen), validamos sesión única
-    if (accessCode) {
-      const deviceId = getDeviceId();
-      
+  // 2. LÓGICA DE LOGIN CON VALIDACIÓN DE DISPOSITIVO ÚNICO
+  const handleLogin = async (role: string, accessCode: string) => {
+    const deviceId = getDeviceId();
+    
+    try {
+      // Consultamos si el código existe
       const { data: codeData, error } = await supabase
         .from('access_codes')
         .select('*')
@@ -31,25 +33,28 @@ const Index = () => {
         .single();
 
       if (error || !codeData) {
-        toast.error("Código de acceso no válido");
+        toast.error("CÓDIGO NO VÁLIDO. Verifica e intenta de nuevo.");
         return;
       }
 
       const ahora = new Date();
       const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
       
-      // BLOQUEO: Si hay otro dispositivo activo en los últimos 3 minutos
+      // REGLA DE BLOQUEO: 
+      // Si el código ya tiene un ID de dispositivo asignado
+      // Y no es este dispositivo
+      // Y el último aviso de actividad (ping) fue hace menos de 3 minutos...
       if (
         codeData.current_device_id && 
         codeData.current_device_id !== deviceId &&
         ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
       ) {
-        toast.error("ERROR: Este código ya está en uso en otro dispositivo.");
+        toast.error("ACCESO DENEGADO: Este código ya está siendo usado en otro dispositivo.");
         return;
       }
 
-      // Tomamos posesión del código
-      await supabase
+      // Si pasamos la prueba, nos adueñamos del código en la base de datos
+      const { error: updateError } = await supabase
         .from('access_codes')
         .update({ 
           current_device_id: deviceId,
@@ -57,18 +62,24 @@ const Index = () => {
         })
         .eq('code', accessCode);
 
-      localStorage.setItem('session_access_code', accessCode);
-    }
+      if (updateError) throw updateError;
 
-    setUserRole(role);
-    setIsLoggedIn(true);
-    setLoading(false);
+      // Guardamos en memoria local para que la sesión persista
+      localStorage.setItem('session_access_code', accessCode);
+      setUserRole(role);
+      setIsLoggedIn(true);
+      toast.success("¡Acceso concedido! Bienvenido.");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Error de conexión con el servidor.");
+    }
   };
 
   const handleLogout = async () => {
     const accessCode = localStorage.getItem('session_access_code');
     if (accessCode) {
-      // Liberamos el código al cerrar sesión voluntariamente
+      // Liberamos el código en Supabase para que pueda ser usado en otro lado de inmediato
       await supabase
         .from('access_codes')
         .update({ current_device_id: null, last_ping: null })
@@ -79,9 +90,22 @@ const Index = () => {
     setUserRole("");
   };
 
+  // 3. PERSISTENCIA: Si ya estaba logueado, no pedir código de nuevo
+  useEffect(() => {
+    const savedCode = localStorage.getItem('session_access_code');
+    if (savedCode) {
+      // Podrías re-validar aquí, por ahora lo dejamos pasar
+      setIsLoggedIn(true);
+      setUserRole("user");
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) return null;
+
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={(role) => handleLogin(role, (window as any).tempCode)} />;
-    // Nota: Asegúrate que tu LoginScreen guarde el código en window.tempCode o pásalo por la función onLogin
+    // Aquí es donde sucede la magia: pasamos la nueva función handleLogin
+    return <LoginScreen onLogin={(role, code) => handleLogin(role, code)} />;
   }
 
   return <Dashboard userRole={userRole} onLogout={handleLogout} />;
