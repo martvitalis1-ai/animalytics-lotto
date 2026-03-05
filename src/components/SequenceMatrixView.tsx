@@ -16,6 +16,15 @@ export function SequenceMatrixView() {
 
   const numberRange = useMemo(() => getCodesForLottery(selectedLottery), [selectedLottery]);
 
+  // FUNCIÓN DE NORMALIZACIÓN: Asegura que "01" y "1" se unifiquen, pero respeta el "00"
+  const normalize = (val: string | number) => {
+    if (val === undefined || val === null) return "";
+    const s = val.toString().trim();
+    if (s === "00") return "00"; // Respetamos la Ballena
+    if (s === "0") return "0";   // Respetamos el Delfín
+    return parseInt(s, 10).toString(); // Convierte "01" en "1", "05" en "5", etc.
+  };
+
   const loadSequences = useCallback(async () => {
     setLoading(true);
     try {
@@ -24,7 +33,7 @@ export function SequenceMatrixView() {
       let to = 999;
       let hasMore = true;
 
-      // ABSORCIÓN TOTAL: Ciclo para traer todos los registros sin límite de 1000
+      // ABSORCIÓN TOTAL: Traemos todos los registros históricos
       while (hasMore) {
         const { data, error } = await supabase
           .from('lottery_results')
@@ -49,18 +58,21 @@ export function SequenceMatrixView() {
         }
       }
 
-      // Procesamiento de la Matriz con el 100% de los datos absorbidos
       if (allResults.length > 1) {
         const matrix: Record<string, Record<string, number>> = {};
         for (let i = 0; i < allResults.length - 1; i++) {
           const currentValue = allResults[i]?.result_number;
           const nextValue = allResults[i+1]?.result_number;
           
-          if (currentValue && nextValue) {
-            const current = currentValue.trim();
-            const next = nextValue.trim();
-            if (!matrix[current]) matrix[current] = {};
-            matrix[current][next] = (matrix[current][next] || 0) + 1;
+          if (currentValue !== undefined && nextValue !== undefined) {
+            // NORMALIZAMOS ambos valores para que no importe si vienen como "01" o "1"
+            const current = normalize(currentValue);
+            const next = normalize(nextValue);
+            
+            if (current && next) {
+              if (!matrix[current]) matrix[current] = {};
+              matrix[current][next] = (matrix[current][next] || 0) + 1;
+            }
           }
         }
         setSequences(matrix);
@@ -68,7 +80,7 @@ export function SequenceMatrixView() {
         setSequences({});
       }
     } catch (e) { 
-      console.error("Error en absorción de datos:", e); 
+      console.error("Error absorbiendo datos:", e); 
       setSequences({});
     }
     setLoading(false);
@@ -103,7 +115,7 @@ export function SequenceMatrixView() {
           </div>
         </div>
         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-3 flex items-center gap-2">
-           <Sparkles className="w-3 h-3 text-amber-500" /> ANÁLISIS DE ARRASTRE HISTÓRICO COMPLETO (100%)
+           <Sparkles className="w-3 h-3 text-amber-500" /> ABSORCIÓN HISTÓRICA COMPLETA (100%)
         </p>
       </CardHeader>
       
@@ -111,15 +123,17 @@ export function SequenceMatrixView() {
         {loading ? (
           <div className="py-24 text-center">
             <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-            <p className="text-xs font-bold text-primary mt-4 animate-pulse">ABSORBIENDO HISTORIAL COMPLETO...</p>
+            <p className="text-xs font-bold text-primary mt-4 animate-pulse uppercase tracking-widest">Analizando todos los sorteos históricos...</p>
           </div>
         ) : (
           <ScrollArea className="h-[650px] pr-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {numberRange.map(num => {
-                const successors = sequences[num] ? Object.entries(sequences[num]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
+                // Normalizamos el número del rango para buscarlo en la matriz procesada
+                const normalizedNum = normalize(num);
+                const successors = sequences[normalizedNum] ? Object.entries(sequences[normalizedNum]).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5) : [];
                 const animal = getAnimalByCode(num);
-                const totalDraws = sequences[num] ? Object.values(sequences[num]).reduce((acc: number, val: number) => acc + val, 0) : 0;
+                const totalDraws = sequences[normalizedNum] ? Object.values(sequences[normalizedNum]).reduce((acc: number, val: number) => acc + val, 0) : 0;
 
                 return (
                   <div key={num} className="bg-card border-2 rounded-[2rem] p-6 shadow-xl hover:border-primary/50 transition-all group relative overflow-hidden">
@@ -128,7 +142,6 @@ export function SequenceMatrixView() {
                          <span className="text-6xl group-hover:rotate-12 transition-transform duration-500 drop-shadow-xl">{getAnimalEmoji(num)}</span>
                          <div>
                             <p className="text-xs font-black text-primary uppercase tracking-tighter leading-none">{animal?.name || 'Animal'}</p>
-                            {/* Corregido: Muestra #0 o #00 según corresponda */}
                             <p className="font-mono font-black text-3xl mt-2 tracking-tighter leading-none">#{num}</p>
                          </div>
                       </div>
