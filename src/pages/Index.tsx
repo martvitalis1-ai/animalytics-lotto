@@ -23,51 +23,60 @@ const Index = () => {
     const ADMIN_CODE = "GANADOR2026";
     const cleanCode = accessCode.toUpperCase().trim();
     
+    // 1. VERIFICACIÓN INSTANTÁNEA DEL JEFE (Bypass de base de datos)
+    if (cleanCode === ADMIN_CODE) {
+      localStorage.setItem('session_access_code', cleanCode);
+      setUserRole("admin");
+      setIsLoggedIn(true);
+      toast.success("¡BIENVENIDO JEFE! ACCESO MAESTRO CONCEDIDO.");
+      
+      // Intentamos registrar al admin en la DB pero no bloqueamos si falla
+      await supabase.from('access_codes').update({ 
+        current_device_id: deviceId, 
+        last_ping: new Date().toISOString() 
+      }).eq('code', cleanCode);
+      
+      return;
+    }
+
+    // 2. VERIFICACIÓN PARA USUARIOS NORMALES
     try {
       const { data: codeData, error } = await supabase
         .from('access_codes')
         .select('*')
         .eq('code', cleanCode)
-        .maybeSingle(); // Usamos maybeSingle para evitar errores de red rígidos
+        .maybeSingle();
 
       if (error || !codeData) {
-        toast.error("CÓDIGO NO ENCONTRADO EN LA BASE DE DATOS");
+        toast.error("CÓDIGO NO ENCONTRADO EN EL SISTEMA");
         return;
       }
 
       const ahora = new Date();
       const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      const esAdminMaster = cleanCode === ADMIN_CODE;
-
-      // SI NO ES ADMIN MASTER, BLOQUEAMOS SI ESTÁ EN USO (3 min)
+      
+      // Bloqueo de dispositivo compartido (3 minutos)
       if (
-        !esAdminMaster && 
         codeData.current_device_id && 
         codeData.current_device_id !== deviceId &&
         ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
       ) {
-        toast.error("⚠️ CÓDIGO EN USO EN OTRO DISPOSITIVO");
+        toast.error("⚠️ ESTE CÓDIGO YA ESTÁ SIENDO USADO EN OTRO DISPOSITIVO");
         return;
       }
 
-      // REGISTRAMOS LA SESIÓN
-      await supabase
-        .from('access_codes')
-        .update({ 
-          current_device_id: deviceId,
-          last_ping: ahora.toISOString()
-        })
-        .eq('code', cleanCode);
+      await supabase.from('access_codes').update({ 
+        current_device_id: deviceId,
+        last_ping: ahora.toISOString()
+      }).eq('code', cleanCode);
 
       localStorage.setItem('session_access_code', cleanCode);
-      setUserRole(esAdminMaster ? "admin" : role);
+      setUserRole(role);
       setIsLoggedIn(true);
-      
-      toast.success(esAdminMaster ? "¡HOLA JEFE! ACCESO TOTAL CONCEDIDO." : "ACCESO CONCEDIDO. ¡MUCHA MALICIA!");
+      toast.success("ACCESO CONCEDIDO. ¡MUCHA MALICIA!");
 
     } catch (err) {
-      console.error(err);
-      toast.error("ERROR DE CONEXIÓN CON SUPABASE");
+      toast.error("ERROR DE CONEXIÓN CON EL BÚNKER");
     }
   };
 
@@ -78,7 +87,6 @@ const Index = () => {
     }
     localStorage.removeItem('session_access_code');
     setIsLoggedIn(false);
-    setUserRole("");
   };
 
   useEffect(() => {
@@ -96,13 +104,13 @@ const Index = () => {
     checkSession();
   }, []);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background font-black text-emerald-600 animate-pulse uppercase italic">Iniciando Animalytics Pro...</div>;
+  if (loading) return null;
 
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={(role, code) => handleLogin(role, code)} />;
-  }
-
-  return <Dashboard userRole={userRole} onLogout={handleLogout} />;
+  return isLoggedIn ? (
+    <Dashboard userRole={userRole} onLogout={handleLogout} />
+  ) : (
+    <LoginScreen onLogin={handleLogin} />
+  );
 };
 
 export default Index;
