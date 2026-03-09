@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
@@ -33,7 +32,6 @@ import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
-import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout }: { userRole: string; onLogout: () => void }) {
@@ -63,14 +61,9 @@ export function Dashboard({ userRole, onLogout }: { userRole: string; onLogout: 
     setActiveTab(tab);
   };
 
-  const handleAdminVerified = () => {
-    setShowAdminModal(false); setShowInsertModal(false);
-    if (pendingTab) { setActiveTab(pendingTab); setPendingTab(null); }
-  };
-
   return (
     <div className="min-h-screen bg-background text-left">
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border p-3 flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border p-3 flex justify-between items-center text-left">
         <div className="flex items-center gap-3">
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
           <div className="hidden sm:block">
@@ -118,8 +111,8 @@ export function Dashboard({ userRole, onLogout }: { userRole: string; onLogout: 
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={() => setActiveTab(pendingTab || "admin")} title="Acceso Admin" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={() => setActiveTab(pendingTab || "insertar")} title="Acceso Insertar" />
       <RicardoBot />
     </div>
   );
