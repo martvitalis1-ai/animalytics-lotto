@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, Loader2, Store, Image as ImageIcon } from "lucide-react";
+import { Trash2, Plus, Loader2, Store, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 export function AdminAgencias() {
@@ -24,7 +24,7 @@ export function AdminAgencias() {
   useEffect(() => { fetchAgencias(); }, []);
 
   const handleSave = async () => {
-    if (!nombre || !whatsapp || !banco) return toast.error("Datos incompletos");
+    if (!nombre || !whatsapp || !banco) return toast.error("Mínimo Nombre, WhatsApp y Banco");
     setLoading(true);
     try {
       let publicUrl = null;
@@ -36,13 +36,15 @@ export function AdminAgencias() {
           publicUrl = data.publicUrl;
         }
       }
-      const { error } = await supabase.from('agencias').insert({ 
-        nombre: nombre.toUpperCase(), whatsapp: whatsapp.trim(),
-        banco_nombre: banco.toUpperCase(), banco_cedula: cedula,
-        banco_telefono: telefonoBanco, logo_url: publicUrl
+      await supabase.from('agencias').insert({ 
+        nombre: nombre.toUpperCase(), 
+        whatsapp: whatsapp.trim(), 
+        banco_nombre: banco.toUpperCase(), 
+        banco_cedula: cedula, 
+        banco_telefono: telefonoBanco, 
+        logo_url: publicUrl 
       });
-      if (error) throw error;
-      toast.success("Agencia guardada");
+      toast.success("Agencia guardada con éxito");
       setNombre(""); setWhatsapp(""); setBanco(""); setCedula(""); setTelefonoBanco(""); setFile(null);
       fetchAgencias();
     } catch (e) { toast.error("Error al guardar"); }
@@ -51,29 +53,29 @@ export function AdminAgencias() {
 
   return (
     <Card className="glass-card border-2 border-primary/20 text-left">
-      <CardHeader><CardTitle className="text-sm font-black uppercase italic flex items-center gap-2"><Store className="w-5 h-5" /> Configurar Agencias</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-sm font-black uppercase italic flex items-center gap-2"><Store className="w-5 h-5 text-primary" /> Gestión de Agencias Aliadas</CardTitle></CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase">1. Info de Agencia</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest">1. Info General y Logo</label>
             <Input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre Agencia" />
             <Input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="WhatsApp (58...)" />
             <Input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} className="text-[10px]" />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase">2. Pago Móvil Agencia</label>
-            <Input value={banco} onChange={e => setBanco(e.target.value)} placeholder="Banco" />
+            <label className="text-[10px] font-bold uppercase tracking-widest">2. Pago Móvil de Agencia</label>
+            <Input value={banco} onChange={e => setBanco(e.target.value)} placeholder="Nombre del Banco" />
             <Input value={cedula} onChange={e => setCedula(e.target.value)} placeholder="Cédula/RIF" />
             <Input value={telefonoBanco} onChange={e => setTelefonoBanco(e.target.value)} placeholder="Teléfono" />
           </div>
         </div>
-        <Button onClick={handleSave} disabled={loading} className="w-full font-black uppercase italic">{loading ? <Loader2 className="animate-spin" /> : "Guardar Agencia"}</Button>
+        <Button onClick={handleSave} disabled={loading} className="w-full font-black uppercase shadow-lg italic">{loading ? <Loader2 className="animate-spin" /> : "Registrar Agencia Aliada"}</Button>
         <div className="space-y-2 pt-4">
           {agencias.map(ag => (
-            <div key={ag.id} className="p-3 bg-muted/50 rounded-xl border flex justify-between items-center shadow-sm">
-              <div className="flex items-center gap-2 text-left">
-                {ag.logo_url && <img src={ag.logo_url} className="w-10 h-10 rounded-full object-cover border" />}
-                <div><p className="font-black text-xs uppercase">{ag.nombre}</p><p className="text-[9px] opacity-60">{ag.whatsapp}</p></div>
+            <div key={ag.id} className="p-3 bg-muted/50 rounded-xl border flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                {ag.logo_url && <img src={ag.logo_url} className="w-10 h-10 rounded-lg object-cover border" alt="logo" />}
+                <div><p className="font-black text-xs uppercase text-primary leading-none">{ag.nombre}</p></div>
               </div>
               <Button variant="ghost" size="icon" onClick={async () => { await supabase.from('agencias').delete().eq('id', ag.id); fetchAgencias(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>
