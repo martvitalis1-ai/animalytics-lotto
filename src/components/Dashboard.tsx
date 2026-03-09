@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, Store, Ticket } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -31,7 +31,7 @@ import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
-// NUEVAS IMPORTACIONES
+// NUEVAS IMPORTACIONES PARA EL SISTEMA DE AGENCIAS
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
 import { useNavigate } from "react-router-dom";
@@ -64,7 +64,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if ((tab === 'admin' || tab === 'insertar') && userRole !== 'admin') {
+    if ((tab === 'admin' || tab === 'insertar' || tab === 'admin_agencias') && userRole !== 'admin') {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
       else setShowInsertModal(true);
@@ -90,7 +90,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
               <h1 className="font-black text-lg leading-none uppercase italic">ANIMALYTICS PRO</h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos registrados</p>
             </div>
           </div>
           
@@ -106,7 +106,6 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
 
             <ThemeToggle />
             <NotificationCenter />
-            <ExportTools type="results" filename="resultados" />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               {userRole === 'admin' ? '👑 Admin' : 'Usuario'}
             </span>
@@ -136,10 +135,12 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
             <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
-            {/* NUEVA PESTAÑA USUARIO */}
-            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-              <Ticket className="w-4 h-4 mr-1.5" />Enviar Jugada
+            
+            {/* NUEVA PESTAÑA: ENVIAR JUGADA PARA EL USUARIO */}
+            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
+              <ShoppingCart className="w-4 h-4 mr-1.5" /> Enviar Jugada
             </TabsTrigger>
+
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
           </TabsList>
@@ -152,7 +153,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
           
-          {/* NUEVO CONTENIDO JUGADAS */}
+          {/* CONTENIDO DE LA PESTAÑA JUGADAS */}
           <TabsContent value="jugadas">
             <ModuloJugadas />
           </TabsContent>
@@ -160,8 +161,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
           
           <TabsContent value="admin" className="space-y-4">
-            {/* GESTIÓN DE AGENCIAS PARA EL ADMIN */}
+            {/* AGREGAMOS LA GESTIÓN DE AGENCIAS DENTRO DEL PANEL ADMIN */}
             <AdminAgencias />
+            
             <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
             <AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit />
           </TabsContent>
