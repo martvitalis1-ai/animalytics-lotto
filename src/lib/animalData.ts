@@ -50,11 +50,30 @@ export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
   "34": { row: 7, col: 0 }, "35": { row: 7, col: 1 }, "36": { row: 7, col: 2 },
 };
 
+function getCategoryForAnimal(name: string): string {
+  const categories: Record<string, string[]> = {
+    acuatico: ['DELFÍN', 'BALLENA', 'RANA', 'PESCADO', 'TIBURÓN', 'PULPO', 'CANGREJO', 'ANGUILA', 'CABALLITO DE MAR', 'PINGÜINO', 'ERIZO DE MAR', 'CALAMAR', 'CISNE'],
+    ave: ['PERICO', 'ÁGUILA', 'PALOMA', 'PAVO', 'GALLO', 'GALLINA', 'ZAMURO', 'LECHUZA', 'TUCÁN', 'GARZA', 'PAVO REAL', 'CANARIO', 'PELÍCANO', 'PATO', 'GAVILÁN', 'AVESTRUZ', 'GUACAMAYA', 'TURPIAL', 'GUÁCHARO', 'CUERVO', 'BÚHO', 'GAVIOTA', 'PAUJÍ', 'LORO'],
+    granja: ['CARNERO', 'TORO', 'CABALLO', 'BURRO', 'CHIVO', 'COCHINO', 'VACA', 'BUEY', 'CABRA'],
+    selva: ['LEÓN', 'TIGRE', 'MONO', 'ZORRO', 'OSO', 'CEBRA', 'ELEFANTE', 'JIRAFA', 'BÚFALO', 'PUMA', 'PANTERA', 'JAGUAR', 'BISONTE', 'GORILA', 'HIPOPÓTAMO', 'LOBO', 'RINOCERONTE'],
+    insecto: ['CIEMPIÉS', 'ALACRÁN', 'AVISPA', 'MARIPOSA', 'GRILLO', 'HORMIGA', 'ARAÑA', 'CUCARACHA', 'ESCARABAJO'],
+    reptil: ['IGUANA', 'CAIMÁN', 'CULEBRA', 'TORTUGA', 'CAMALEÓN', 'MORROCOY', 'COCODRILO'],
+    silvestre: ['LAPA', 'ARDILLA', 'VENADO', 'CHIGÜIRE', 'PUERCOESPÍN', 'PEREZOSO', 'OSO HORMIGUERO', 'CACHICAMO', 'MURCIÉLAGO', 'HURÓN', 'HÁMSTER'],
+    exotico: ['CAMELLO', 'CANGURO', 'PANDA', 'ANTÍLOPE'],
+    domestico: ['GATO', 'PERRO', 'RATÓN', 'CONEJO', 'GUACHARITO'],
+    molusco: ['CARACOL'],
+  };
+  for (const [cat, animals] of Object.entries(categories)) {
+    if (animals.includes(name)) return cat;
+  }
+  return 'otro';
+}
+
 export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
   if (!code) return undefined;
   const norm = code.toString().trim();
   const name = ANIMALS_MAESTRO_MAP[norm] || ANIMALS_MAESTRO_MAP[parseInt(norm).toString()];
-  return name ? { id: parseInt(norm) || 0, code: norm, name, category: "general" } : undefined;
+  return name ? { id: parseInt(norm) || 0, code: norm, name, category: getCategoryForAnimal(name) } : undefined;
 };
 
 export const getAnimalEmoji = (code: string): string => {
@@ -66,15 +85,15 @@ export const getAnimalEmoji = (code: string): string => {
 export const getAnimalName = (code: string): string => getAnimalByCode(code)?.name || "ANIMAL";
 
 export const getCodesForLottery = (id: string): string[] => {
-  const lotto = id.toLowerCase();
-  const max = lotto.includes('guacharito') ? 99 : lotto.includes('guacharo') ? 75 : 36;
+  const lottoId = (id || "standard").toLowerCase();
+  const max = lottoId.includes('guacharito') ? 99 : lottoId.includes('guacharo') ? 75 : 36;
   return ['0', '00', ...Array.from({ length: max }, (_, i) => (i + 1).toString())];
 };
 
 export const getMaxNumberForLottery = (id: string): number => {
-    const lotto = id.toLowerCase();
-    if (lotto.includes('guacharito')) return 99;
-    if (lotto.includes('guacharo')) return 75;
+    const lottoId = (id || "standard").toLowerCase();
+    if (lottoId.includes('guacharito')) return 99;
+    if (lottoId.includes('guacharo')) return 75;
     return 36;
 };
 
