@@ -31,7 +31,6 @@ import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
-// NUEVAS IMPORTACIONES PARA EL SISTEMA DE AGENCIAS
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
 import { useNavigate } from "react-router-dom";
@@ -43,14 +42,12 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userRole, onLogout }: DashboardProps) {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ia");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [totalResults, setTotalResults] = useState<number>(0);
 
-  // LINK DE TELEGRAM FIJO (Para evitar errores de base de datos)
   const TELEGRAM_LINK = "https://t.me/+6zATqXM1ucQzNzEx";
 
   useEffect(() => {
@@ -64,7 +61,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if ((tab === 'admin' || tab === 'insertar' || tab === 'admin_agencias') && userRole !== 'admin') {
+    if ((tab === 'admin' || tab === 'insertar') && userRole !== 'admin') {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
       else setShowInsertModal(true);
@@ -90,23 +87,16 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
               <h1 className="font-black text-lg leading-none uppercase italic">ANIMALYTICS PRO</h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos registrados</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
             </div>
           </div>
-          
           <div className="flex items-center gap-2">
-            {/* BOTÓN TELEGRAM PC */}
-            <Button 
-              onClick={() => window.open(TELEGRAM_LINK, '_blank')}
-              className="hidden md:flex h-9 bg-[#24A1DE] hover:bg-[#24A1DE]/90 text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4 border-none transition-all hover:scale-105"
-            >
-              <Send className="w-3.5 h-3.5 fill-white" />
-              Canal Oficial
+            <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="hidden md:flex h-9 bg-[#24A1DE] text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4 border-none">
+              <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
             </Button>
-
             <ThemeToggle />
             <NotificationCenter />
-            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
               {userRole === 'admin' ? '👑 Admin' : 'Usuario'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
@@ -115,14 +105,9 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
       </header>
 
       <main className="container mx-auto px-4 py-4">
-        {/* BOTÓN TELEGRAM MÓVIL */}
-        <div className="md:hidden mb-4">
-          <Button 
-            onClick={() => window.open(TELEGRAM_LINK, '_blank')}
-            className="w-full h-12 bg-[#24A1DE] text-white font-black text-sm uppercase italic gap-2 rounded-2xl shadow-xl active:scale-95"
-          >
-            <Send className="w-5 h-5 fill-white" />
-            Únete al Telegram 💰🏁
+        <div className="md:hidden mb-4 text-center">
+          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="w-full h-10 bg-[#24A1DE] text-white font-black text-xs uppercase italic gap-2 rounded-xl shadow-xl">
+            <Send className="w-4 h-4 fill-white" /> Telegram 💰🏁
           </Button>
         </div>
 
@@ -135,12 +120,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
             <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
-            
-            {/* NUEVA PESTAÑA: ENVIAR JUGADA PARA EL USUARIO */}
-            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
-              <ShoppingCart className="w-4 h-4 mr-1.5" /> Enviar Jugada
-            </TabsTrigger>
-
+            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />Agencias</TabsTrigger>
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
           </TabsList>
@@ -152,18 +132,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="resultados"><ResultsPanel isAdmin={userRole === 'admin'} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
-          
-          {/* CONTENIDO DE LA PESTAÑA JUGADAS */}
-          <TabsContent value="jugadas">
-            <ModuloJugadas />
-          </TabsContent>
-
+          <TabsContent value="jugadas"><ModuloJugadas /></TabsContent>
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
-          
           <TabsContent value="admin" className="space-y-4">
-            {/* AGREGAMOS LA GESTIÓN DE AGENCIAS DENTRO DEL PANEL ADMIN */}
             <AdminAgencias />
-            
             <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
             <AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit />
           </TabsContent>
