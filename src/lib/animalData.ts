@@ -35,8 +35,8 @@ export const ANIMAL_EMOJIS: Record<string, string> = {
   "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔",
   "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜",
   "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇",
-  "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍",
-  "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣"
+  "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "Buey", "87": "Cabra", "88": "Erizo", "89": "Anguila",
+  "90": "Hurón", "91": "Tortuga", "92": "Cisne", "93": "Gaviota", "94": "Paují", "95": "Escarabajo", "96": "Caballito", "97": "Loro", "98": "Cocodrilo", "99": "Guacharito"
 };
 
 export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
@@ -66,7 +66,8 @@ export const getAnimalEmoji = (code: string): string => {
 export const getAnimalName = (code: string): string => getAnimalByCode(code)?.name || "ANIMAL";
 
 export const getCodesForLottery = (id: string): string[] => {
-  const max = (id === 'guacharito') ? 99 : (id === 'guacharo') ? 75 : 36;
+  const lotto = id.toLowerCase();
+  const max = lotto.includes('guacharito') ? 99 : lotto.includes('guacharo') ? 75 : 36;
   return ['0', '00', ...Array.from({ length: max }, (_, i) => (i + 1).toString())];
 };
 
@@ -76,6 +77,3 @@ export const getHeatStatusColor = (s: HeatStatus) => {
   if (s === 'warm') return 'hsl(30, 92%, 50%)';
   return 'hsl(210, 100%, 50%)';
 };
-
-export const formatAnimalDisplay = (code: string): string => `${code} - ${getAnimalName(code)}`;
-export const ALL_ANIMAL_CODES = Object.keys(ANIMALS_MAESTRO_MAP);
