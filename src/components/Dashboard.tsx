@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, Store, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -31,6 +31,9 @@ import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
+// NUEVAS IMPORTACIONES
+import { AdminAgencias } from "./AdminAgencias";
+import { ModuloJugadas } from "./ModuloJugadas";
 import { useNavigate } from "react-router-dom";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
@@ -40,6 +43,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userRole, onLogout }: DashboardProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ia");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
@@ -102,6 +106,7 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
 
             <ThemeToggle />
             <NotificationCenter />
+            <ExportTools type="results" filename="resultados" />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               {userRole === 'admin' ? '👑 Admin' : 'Usuario'}
             </span>
@@ -131,6 +136,10 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
             <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
+            {/* NUEVA PESTAÑA USUARIO */}
+            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              <Ticket className="w-4 h-4 mr-1.5" />Enviar Jugada
+            </TabsTrigger>
             <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
           </TabsList>
@@ -142,8 +151,17 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <TabsContent value="resultados"><ResultsPanel isAdmin={userRole === 'admin'} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
+          
+          {/* NUEVO CONTENIDO JUGADAS */}
+          <TabsContent value="jugadas">
+            <ModuloJugadas />
+          </TabsContent>
+
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
+          
           <TabsContent value="admin" className="space-y-4">
+            {/* GESTIÓN DE AGENCIAS PARA EL ADMIN */}
+            <AdminAgencias />
             <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
             <AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit />
           </TabsContent>
