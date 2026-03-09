@@ -70,35 +70,16 @@ export function ModuloJugadas() {
     setNum(""); setMon(""); setSelectedHours([]);
   };
 
-  // --- FUNCIÓN MAESTRA DE ENVÍO (SOLUCIÓN OPERA) ---
-  const handleSendWhatsApp = () => {
-    if (!selectedAgencia || currentJugadas.length === 0 || !userPM) {
-        return toast.error("Completa los datos y jugadas");
-    }
-
-    // 1. Limpiar número
-    let tlf = selectedAgencia.whatsapp.toString().replace(/\D/g, '');
-    if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
-    if (tlf.length === 10) tlf = '58' + tlf;
-
-    // 2. Construir mensaje
-    let msg = `*SOLICITUD DE JUGADA - ANIMALYTICS PRO*\n`;
-    msg += `----------------------------\n`;
-    msg += `🏦 *BANCO:* ${userBanco}\n📞 *PAGO MÓVIL:* ${userPM}\n🆔 *CÉDULA:* ${userCedula}\n`;
-    msg += `----------------------------\n`;
-    currentJugadas.forEach((j) => {
-      msg += `📍 *${j.loteria.toUpperCase()}*\nAnimal: *#${j.numero}*\nSorteos: ${j.horas.join(", ")}\nMonto: ${j.monto} Bs\n---\n`;
-    });
-    const total = currentJugadas.reduce((acc, curr) => acc + (curr.monto * curr.horas.length), 0);
-    msg += `*TOTAL A PAGAR:* ${total.toFixed(2)} Bs`;
-
-    // 3. REGISTRAR LOCALMENTE
+  const registrarTicketLocalmente = () => {
     localStorage.setItem('u_pm_banco', userBanco);
     localStorage.setItem('u_pm_tlf', userPM);
     localStorage.setItem('u_pm_cedula', userCedula);
+    
+    const total = currentJugadas.reduce((acc, curr) => acc + (curr.monto * curr.horas.length), 0);
+    
     const ticket = {
       id: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      agenciaNombre: selectedAgencia.nombre,
+      agenciaNombre: selectedAgencia?.nombre,
       fecha: new Date().toISOString(),
       total,
       jugadas: currentJugadas
@@ -106,29 +87,68 @@ export function ModuloJugadas() {
     const updatedHistory = [ticket, ...savedTickets];
     setSavedTickets(updatedHistory);
     localStorage.setItem('tickets_history_v_final', JSON.stringify(updatedHistory));
-
-    // 4. EL TRUCO PARA OPERA: Usar window.open con una URL limpia
-    const url = `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
-    
-    // Abrir en una nueva pestaña de forma forzada
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (win) {
-        win.focus();
-        toast.success("Enviando a WhatsApp...");
-    } else {
-        // Si el navegador bloquea el popup, redirigir en la misma pestaña como plan B
-        window.location.href = url;
-    }
   };
 
-  if (loading) return <div className="p-20 text-center animate-pulse font-black text-primary">Sincronizando Búnker...</div>;
+  // --- FUNCIÓN MAESTRA DE ENVÍO REPARADA PARA OPERA Y WHATSAPP ---
+  const handleSendWhatsApp = () => {
+    if (!selectedAgencia || currentJugadas.length === 0 || !userPM) {
+        return toast.error("Completa tus datos y añade jugadas");
+    }
+
+    // 1. Limpieza de número (Formato internacional estricto)
+    let tlf = selectedAgencia.whatsapp.toString().replace(/\D/g, '');
+    if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
+    if (tlf.length === 10) tlf = '58' + tlf;
+
+    // 2. Construcción del mensaje (Sin el símbolo '#' que corta la URL en Opera)
+    let msg = `*SOLICITUD DE JUGADA - ANIMALYTICS PRO*\n`;
+    msg += `----------------------------\n`;
+    msg += `🏦 *BANCO:* ${userBanco}\n`;
+    msg += `📞 *PAGO MÓVIL:* ${userPM}\n`;
+    msg += `🆔 *CÉDULA:* ${userCedula}\n`;
+    msg += `----------------------------\n\n`;
+    
+    currentJugadas.forEach((j) => {
+      msg += `📍 *${j.loteria.toUpperCase()}*\n`;
+      // Cambiamos # por Nro para evitar que Opera corte el mensaje
+      msg += `Animal: *${j.numero}*\n`; 
+      msg += `Sorteos: ${j.horas.join(", ")}\n`;
+      msg += `Monto: ${j.monto} Bs x sorteo\n`;
+      msg += `----------\n`;
+    });
+
+    const total = currentJugadas.reduce((acc, curr) => acc + (curr.monto * curr.horas.length), 0);
+    msg += `\n*TOTAL A PAGAR:* ${total.toFixed(2)} Bs\n`;
+    msg += `----------------------------\n`;
+    msg += `📥 _Envío captura de pago adjunta._`;
+
+    // 3. Registrar en historial
+    registrarTicketLocalmente();
+
+    // 4. Codificación Especial para evitar ERR_BLOCKED_BY_RESPONSE
+    const encodedText = encodeURIComponent(msg);
+    const finalUrl = `https://wa.me/${tlf}?text=${encodedText}`;
+
+    // 5. Método de apertura forzada (Simulando clic de usuario para burlar VPN/Bloqueadores)
+    const link = document.createElement('a');
+    link.href = finalUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Enviando ticket completo...");
+  };
+
+  if (loading) return <div className="p-20 text-center animate-pulse font-black text-primary italic text-xl">Sincronizando Búnker...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-2 md:p-6 space-y-10 text-left">
       <section className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="bg-primary/5 p-5 rounded-3xl border border-primary/10 space-y-4 shadow-inner">
-            <label className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Wallet size={14}/> 1. Datos de Cobro</label>
+            <label className="text-[10px] font-black uppercase text-primary flex items-center gap-2"><Wallet size={14}/> 1. Datos de Cobro (Premios)</label>
             <Input value={userBanco} onChange={e => setUserBanco(e.target.value)} placeholder="Banco" className="bg-background font-bold text-xs" />
             <div className="grid grid-cols-2 gap-2">
                 <Input value={userPM} onChange={e => setUserPM(e.target.value)} placeholder="Tlf Pago Móvil" className="bg-background font-bold text-xs" />
@@ -174,7 +194,7 @@ export function ModuloJugadas() {
             </div>
             <Button onClick={agregarOActualizar} className="w-full h-12 font-black uppercase rounded-2xl shadow-md">
               {editingIndex !== null ? <RotateCcw className="mr-2" /> : <Plus className="mr-2" />} 
-              {editingIndex !== null ? "Corregir" : "Añadir"}
+              {editingIndex !== null ? "Corregir Línea" : "Añadir al Ticket"}
             </Button>
           </Card>
         </div>
@@ -194,7 +214,10 @@ export function ModuloJugadas() {
                     </div>
                     <div className="flex items-center gap-3 ml-4">
                        <span className="font-black text-right text-sm">{(j.monto * j.horas.length).toFixed(2)}</span>
-                       <button onClick={() => setCurrentJugadas(currentJugadas.filter((_, idx) => idx !== i))} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={18}/></button>
+                       <div className="flex gap-1">
+                          <button onClick={() => { setLot(j.loteria); setNum(j.numero); setMon(j.monto.toString()); setSelectedHours(j.horas); setEditingIndex(i); window.scrollTo({top:0, behavior:'smooth'}); }} className="text-blue-600 p-1 hover:bg-blue-50 rounded"><Pencil size={18}/></button>
+                          <button onClick={() => setCurrentJugadas(currentJugadas.filter((_, idx) => idx !== i))} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={18}/></button>
+                       </div>
                     </div>
                  </div>
                ))}
@@ -208,7 +231,6 @@ export function ModuloJugadas() {
                </span>
              </div>
              
-             {/* BOTÓN REPARADO: Usamos Button con onClick para evitar el bloqueo de Opera */}
              <Button 
                onClick={handleSendWhatsApp}
                disabled={!selectedAgencia || currentJugadas.length === 0 || !userPM}
@@ -219,7 +241,7 @@ export function ModuloJugadas() {
 
              {currentJugadas.length > 0 && (
                <button onClick={() => { setCurrentJugadas([]); setSelectedAgencia(null); }} className="w-full mt-6 text-[10px] font-black uppercase text-red-500 hover:text-red-700 opacity-50 hover:opacity-100 transition-opacity">
-                 Limpiar Mesa de Trabajo
+                 ❌ Limpiar Mesa de Trabajo
                </button>
              )}
           </div>
