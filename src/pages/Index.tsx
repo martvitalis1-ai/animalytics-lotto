@@ -32,17 +32,21 @@ const Index = () => {
 
     try {
       const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-      if (!codeData) return toast.error("CÓDIGO NO VÁLIDO");
+      if (!codeData) {
+          toast.error("CÓDIGO NO VÁLIDO");
+          return;
+      }
 
       const ahora = new Date();
       const ultimo = codeData.last_ping ? new Date(codeData.last_ping) : null;
       if (codeData.current_device_id && codeData.current_device_id !== deviceId && ultimo && (ahora.getTime() - ultimo.getTime()) < 180000) {
-        return toast.error("CÓDIGO EN USO EN OTRO DISPOSITIVO");
+        toast.error("CÓDIGO EN USO EN OTRO DISPOSITIVO");
+        return;
       }
 
       await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: ahora.toISOString() }).eq('code', cleanCode);
       localStorage.setItem('session_access_code', cleanCode);
-      setUserRole(role);
+      setUserRole(role); 
       setIsLoggedIn(true);
       toast.success("ACCESO CONCEDIDO");
     } catch (err) {
@@ -58,20 +62,13 @@ const Index = () => {
           setIsLoggedIn(true);
           setUserRole(saved === "GANADOR2026" ? "admin" : "user");
         }
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
     checkSession();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse font-black text-primary uppercase italic">Iniciando Búnker...</div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return isLoggedIn ? (
     <Dashboard userRole={userRole} onLogout={() => { localStorage.removeItem('session_access_code'); setIsLoggedIn(false); }} />
