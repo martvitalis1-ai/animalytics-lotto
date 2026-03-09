@@ -52,16 +52,15 @@ export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
 
 export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
   if (!code) return undefined;
-  const normalized = code.toString().trim();
-  const name = ANIMALS_MAESTRO_MAP[normalized] || ANIMALS_MAESTRO_MAP[parseInt(normalized).toString()];
-  if (name) return { id: parseInt(normalized) || 0, code: normalized, name, category: "general" };
-  return undefined;
+  const norm = code.toString().trim();
+  const name = ANIMALS_MAESTRO_MAP[norm] || ANIMALS_MAESTRO_MAP[parseInt(norm).toString()];
+  return name ? { id: parseInt(norm) || 0, code: norm, name, category: "general" } : undefined;
 };
 
 export const getAnimalEmoji = (code: string): string => {
   const norm = code?.toString().trim() || "";
-  if (norm === "00" || norm === "0") return ANIMAL_EMOJIS[norm] || "❓";
-  return ANIMAL_EMOJIS[parseInt(norm).toString()] || "🔢";
+  const clean = norm === "00" || norm === "0" ? norm : parseInt(norm).toString();
+  return ANIMAL_EMOJIS[clean] || "🔢";
 };
 
 export const getAnimalName = (code: string): string => getAnimalByCode(code)?.name || "ANIMAL";
@@ -76,8 +75,4 @@ export const getHeatStatusColor = (s: HeatStatus) => {
   if (s === 'hot') return 'hsl(0, 84%, 60%)';
   if (s === 'warm') return 'hsl(30, 92%, 50%)';
   return 'hsl(210, 100%, 50%)';
-};
-export const getFullAnimalListString = (lotteryId: string): string => {
-  const mapping = getAnimalMappingForLottery(lotteryId);
-  return Object.entries(mapping).map(([c, n]) => `${c}:${n}`).join(', ');
 };
