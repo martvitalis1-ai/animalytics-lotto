@@ -59,14 +59,14 @@ export const getAnimalByCode = (code: string): AnimalInfo | undefined => {
 
 export const getAnimalEmoji = (code: string): string => {
   const norm = code?.toString().trim() || "";
-  const clean = norm === "00" || norm === "0" ? norm : parseInt(norm).toString();
+  const clean = (norm === "00" || norm === "0") ? norm : parseInt(norm).toString();
   return ANIMAL_EMOJIS[clean] || "🔢";
 };
 
 export const getAnimalName = (code: string): string => getAnimalByCode(code)?.name || "ANIMAL";
 
 export const getCodesForLottery = (id: string): string[] => {
-  const max = id === 'guacharito' ? 99 : id === 'guacharo' ? 75 : 36;
+  const max = (id === 'guacharito') ? 99 : (id === 'guacharo') ? 75 : 36;
   return ['0', '00', ...Array.from({ length: max }, (_, i) => (i + 1).toString())];
 };
 
@@ -76,3 +76,6 @@ export const getHeatStatusColor = (s: HeatStatus) => {
   if (s === 'warm') return 'hsl(30, 92%, 50%)';
   return 'hsl(210, 100%, 50%)';
 };
+
+export const formatAnimalDisplay = (code: string): string => `${code} - ${getAnimalName(code)}`;
+export const ALL_ANIMAL_CODES = Object.keys(ANIMALS_MAESTRO_MAP);
