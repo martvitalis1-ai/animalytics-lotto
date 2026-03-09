@@ -27,8 +27,18 @@ const ANIMAL_EMOJIS: Record<string, string> = {
   "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣"
 };
 
-const HORAS_PUNTO = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
-const HORAS_MEDIA = ["08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", "04:30 PM", "05:30 PM", "06:30 PM", "07:30 PM"];
+// --- DEFINICIÓN DE HORARIOS EXACTOS ---
+const HORAS_PUNTO = [
+  "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
+  "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", 
+  "06:00 PM", "07:00 PM"
+];
+
+const HORAS_MEDIA = [
+  "08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", 
+  "01:30 PM", "02:30 PM", "03:30 PM", "04:30 PM", "05:30 PM", 
+  "06:30 PM", "07:30 PM"
+];
 
 export function ModuloJugadas() {
   const [agencias, setAgencias] = useState<any[]>([]);
@@ -57,32 +67,37 @@ export function ModuloJugadas() {
     init();
   }, []);
 
-  const horarios = useMemo(() => (lot === "Guacharito" || lot === "Lotto Rey") ? HORAS_MEDIA : HORAS_PUNTO, [lot]);
+  // Lógica de horarios según la lotería elegida
+  const horarios = useMemo(() => {
+    if (lot === "Guacharito" || lot === "Lotto Rey") return HORAS_MEDIA;
+    return HORAS_PUNTO;
+  }, [lot]);
 
   const agregarJugada = () => {
     if (!lot || !num || !mon || selectedHours.length === 0) return toast.error("Datos incompletos");
     let n = num.trim();
     if (n !== "0" && n !== "00") n = n.padStart(2, '0');
 
-    // Seleccionar Diccionario
+    // Diccionario Inteligente
     let dic = ANIMALS_STANDARD;
     if (lot === "Guacharito") dic = ANIMALS_GUACHARITO;
     else if (lot === "Guácharo Activo") dic = ANIMALS_GUACHARO;
 
-    const nombreAnimal = dic[n] || "ANIMAL";
+    const animal = dic[n] || "ANIMAL";
     const emoji = ANIMAL_EMOJIS[n] || "🎟️";
 
     setCurrentJugadas([...currentJugadas, { 
-      loteria: lot, numero: n, animal: nombreAnimal, emoji, monto: parseFloat(mon), horas: [...selectedHours] 
+      loteria: lot, numero: n, animal, emoji, monto: parseFloat(mon), horas: [...selectedHours] 
     }]);
     setNum(""); setMon(""); setSelectedHours([]);
-    toast.success("Añadido");
+    toast.success("Añadido al ticket");
   };
 
   const msgUrl = useMemo(() => {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
     let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
-    if (tlf.length === 10) tlf = '58' + tlf; else if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
+    if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
+    if (tlf.length === 10) tlf = '58' + tlf;
 
     let msg = `*SOLICITUD DE JUGADA*\n--------------------------\n`;
     msg += `*DATOS DE COBRO:*\nBANCO: ${userBanco}\nPM: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
@@ -100,25 +115,25 @@ export function ModuloJugadas() {
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black text-slate-900 bg-white">Sincronizando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">Sincronizando Búnker...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-2 md:p-6 bg-slate-100 min-h-screen text-slate-900">
       <div className="grid lg:grid-cols-2 gap-8">
+        
+        {/* PANEL IZQUIERDO */}
         <div className="space-y-6">
-          {/* DATOS USUARIO */}
           <div className="p-5 bg-slate-900 rounded-[2rem] shadow-xl space-y-3">
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">1. Datos para Cobrar Premios</p>
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">1. Datos para recibir Premios</p>
             <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-slate-800 border-none text-white font-bold" />
             <div className="grid grid-cols-2 gap-2">
               <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Tlf Pago Móvil" className="bg-slate-800 border-none text-white font-bold" />
-              <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Cédula" className="bg-slate-800 border-none text-white font-bold" />
+              <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Tu Cédula" className="bg-slate-800 border-none text-white font-bold" />
             </div>
           </div>
 
-          {/* AGENCIA Y PAGO */}
           <div className="space-y-3">
-            <p className="text-[10px] font-black uppercase text-slate-500 italic">2. Elige tu Agencia de confianza</p>
+            <p className="text-[10px] font-black uppercase text-slate-500 italic">2. Elige tu Agencia</p>
             <div className="flex flex-wrap gap-2">
               {agencias.map(ag => (
                 <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase border-2 transition-all ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-600'}`}>{ag.nombre}</button>
@@ -126,57 +141,59 @@ export function ModuloJugadas() {
             </div>
             {selectedAgencia && (
               <div className="p-5 bg-white border-2 border-emerald-500 rounded-[2rem] shadow-lg animate-in zoom-in-95">
-                <p className="text-[10px] font-black text-emerald-600 uppercase mb-2 flex items-center gap-2"><Landmark size={14}/> Pagar a la Agencia:</p>
+                <p className="text-[10px] font-black text-emerald-600 uppercase mb-2 flex items-center gap-2"><Landmark size={14}/> Datos de Pago Agencia:</p>
                 <div className="space-y-1 text-slate-900 font-black uppercase italic text-xs">
-                  <p className="bg-slate-50 p-3 rounded-xl border border-slate-100">{selectedAgencia.banco_nombre || 'BANCO NO REGISTRADO'}</p>
+                  <p className="bg-slate-50 p-3 rounded-xl border border-slate-200">{selectedAgencia.banco_nombre || 'BANCO NO REGISTRADO'}</p>
                   <div className="flex gap-2">
-                    <p className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">Tlf: {selectedAgencia.banco_telefono || '---'}</p>
-                    <p className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">CI: {selectedAgencia.banco_cedula || '---'}</p>
+                    <p className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">Tlf: {selectedAgencia.banco_telefono || '---'}</p>
+                    <p className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">CI: {selectedAgencia.banco_cedula || '---'}</p>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* FORMULARIO */}
           <Card className="p-6 space-y-4 border-none shadow-2xl rounded-[2.5rem] bg-white">
             <Select value={lot} onValueChange={v => {setLot(v); setSelectedHours([])}}>
               <SelectTrigger className="font-black bg-slate-100 border-none text-slate-900 uppercase h-12 shadow-inner"><SelectValue placeholder="Elegir Lotería" /></SelectTrigger>
               <SelectContent className="font-bold">
-                <SelectItem value="Lotto Activo">Lotto Activo</SelectItem>
-                <SelectItem value="La Granjita">La Granjita</SelectItem>
-                <SelectItem value="Guacharito">Guacharito (Media Hora)</SelectItem>
-                <SelectItem value="Lotto Rey">Lotto Rey (Media Hora)</SelectItem>
-                <SelectItem value="Guácharo Activo">Guácharo Activo</SelectItem>
-                <SelectItem value="Selva Plus">Selva Plus</SelectItem>
+                <SelectItem value="Lotto Activo">Lotto Activo (08-07)</SelectItem>
+                <SelectItem value="La Granjita">La Granjita (08-07)</SelectItem>
+                <SelectItem value="Guacharito">Guacharito (08:30-07:30)</SelectItem>
+                <SelectItem value="Lotto Rey">Lotto Rey (08:30-07:30)</SelectItem>
+                <SelectItem value="Guácharo Activo">Guácharo Activo (08-07)</SelectItem>
+                <SelectItem value="Selva Plus">Selva Plus (08-07)</SelectItem>
               </SelectContent>
             </Select>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[9px] font-black ml-2 uppercase opacity-40 italic text-slate-900">Número</label>
-                <Input placeholder="00-99" value={num} onChange={e => setNum(e.target.value)} className="h-14 font-black text-center text-4xl bg-slate-100 border-none text-slate-900 shadow-inner" />
+                <label className="text-[9px] font-black ml-2 uppercase opacity-40 text-slate-900">Número</label>
+                <Input placeholder="00-99" value={num} onChange={e => setNum(e.target.value)} className="h-14 font-black text-center text-4xl bg-slate-100 border-none text-slate-900" />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-black ml-2 uppercase opacity-40 italic text-slate-900">Monto Bs</label>
-                <Input placeholder="Bs" type="number" value={mon} onChange={e => setMon(e.target.value)} className="h-14 font-black text-center text-4xl bg-slate-100 border-none text-slate-900 shadow-inner" />
+                <label className="text-[9px] font-black ml-2 uppercase opacity-40 text-slate-900">Monto Bs</label>
+                <Input placeholder="Bs" type="number" value={mon} onChange={e => setMon(e.target.value)} className="h-14 font-black text-center text-4xl bg-slate-100 border-none text-slate-900" />
               </div>
             </div>
+
             <div className="grid grid-cols-3 gap-2">
               {horarios.map(t => (
                 <button 
                   key={t} 
                   onClick={() => setSelectedHours(prev => prev.includes(t) ? prev.filter(h => h !== t) : [...prev, t])} 
-                  className={`h-11 text-[11px] font-black rounded-xl border-2 transition-all ${selectedHours.includes(t) ? 'bg-slate-900 border-slate-900 text-white' : 'bg-slate-100 border-transparent text-slate-500'}`}
+                  className={`h-11 text-[10px] font-black rounded-xl border-2 transition-all ${selectedHours.includes(t) ? 'bg-slate-900 border-slate-900 text-white shadow-md' : 'bg-slate-200 border-slate-300 text-slate-900'}`}
                 >
                   {t}
                 </button>
               ))}
             </div>
+
             <Button onClick={agregarJugada} className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-2xl text-lg shadow-xl active:scale-95 transition-all"><Plus className="mr-2"/> Añadir al Ticket</Button>
           </Card>
         </div>
 
-        {/* TICKET (FORZADO BLANCO PARA MODO NOCHE) */}
+        {/* TICKET DERECHA */}
         <div className="bg-white p-6 md:p-8 font-mono shadow-2xl rounded-sm border-t-[20px] border-emerald-600 min-h-[600px] flex flex-col text-slate-900">
           <div className="text-center border-b-2 border-dashed border-slate-200 pb-5 mb-8">
             <h3 className="font-black text-2xl uppercase tracking-tighter text-slate-800 italic">{selectedAgencia?.nombre || "NUEVA JUGADA"}</h3>
@@ -186,7 +203,7 @@ export function ModuloJugadas() {
             {currentJugadas.map((j, i) => (
               <div key={i} className="border-b border-slate-100 pb-4 flex justify-between items-start animate-in fade-in slide-in-from-right-4">
                 <div className="text-left">
-                  <p className="font-black uppercase text-emerald-600 text-xs tracking-widest">{j.loteria}</p>
+                  <p className="font-black uppercase text-emerald-600 text-[11px] tracking-widest">{j.loteria}</p>
                   <p className="font-black text-xl text-slate-900">#{j.numero} - {j.animal} {j.emoji}</p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase">{j.horas.join(" | ")}</p>
                 </div>
@@ -203,7 +220,7 @@ export function ModuloJugadas() {
               </div>
             )}
           </div>
-          <div className="mt-8 border-t-4 border-double border-slate-900 pt-6 flex justify-between font-black text-3xl italic text-slate-900 tracking-tighter">
+          <div className="mt-8 border-t-4 border-double border-slate-900 pt-6 flex justify-between font-black text-4xl italic text-slate-900 tracking-tighter">
             <span>TOTAL:</span>
             <span className="underline decoration-emerald-500 decoration-4">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
           </div>
