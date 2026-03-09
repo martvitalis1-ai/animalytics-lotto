@@ -20,38 +20,73 @@ const Index = () => {
 
   const handleLogin = async (role: string, accessCode: string) => {
     const deviceId = getDeviceId();
-    const cleanCode = accessCode.trim().toUpperCase();
+    const ADMIN_CODE = "GANADOR2026";
+    const cleanCode = accessCode.toUpperCase().trim();
     
-    if (cleanCode === "GANADOR2026") {
+    // 1. VERIFICACIÓN INSTANTÁNEA DEL JEFE (Bypass de base de datos)
+    if (cleanCode === ADMIN_CODE) {
       localStorage.setItem('session_access_code', cleanCode);
       setUserRole("admin");
       setIsLoggedIn(true);
-      toast.success("¡BIENVENIDO JEFE!");
+      toast.success("¡BIENVENIDO JEFE! ACCESO MAESTRO CONCEDIDO.");
+      
+      // Intentamos registrar al admin en la DB pero no bloqueamos si falla
+      await supabase.from('access_codes').update({ 
+        current_device_id: deviceId, 
+        last_ping: new Date().toISOString() 
+      }).eq('code', cleanCode);
+      
       return;
     }
 
+    // 2. VERIFICACIÓN PARA USUARIOS NORMALES
     try {
-      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-      if (!codeData) {
-          toast.error("CÓDIGO NO VÁLIDO");
-          return;
-      }
+      const { data: codeData, error } = await supabase
+        .from('access_codes')
+        .select('*')
+        .eq('code', cleanCode)
+        .maybeSingle();
 
-      const ahora = new Date();
-      const ultimo = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      if (codeData.current_device_id && codeData.current_device_id !== deviceId && ultimo && (ahora.getTime() - ultimo.getTime()) < 180000) {
-        toast.error("CÓDIGO EN USO EN OTRO DISPOSITIVO");
+      if (error || !codeData) {
+        toast.error("CÓDIGO NO ENCONTRADO EN EL SISTEMA");
         return;
       }
 
-      await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: ahora.toISOString() }).eq('code', cleanCode);
+      const ahora = new Date();
+      const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
+      
+      // Bloqueo de dispositivo compartido (3 minutos)
+      if (
+        codeData.current_device_id && 
+        codeData.current_device_id !== deviceId &&
+        ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000 
+      ) {
+        toast.error("⚠️ ESTE CÓDIGO YA ESTÁ SIENDO USADO EN OTRO DISPOSITIVO");
+        return;
+      }
+
+      await supabase.from('access_codes').update({ 
+        current_device_id: deviceId,
+        last_ping: ahora.toISOString()
+      }).eq('code', cleanCode);
+
       localStorage.setItem('session_access_code', cleanCode);
-      setUserRole(role); 
+      setUserRole(role);
       setIsLoggedIn(true);
-      toast.success("ACCESO CONCEDIDO");
+      toast.success("ACCESO CONCEDIDO. ¡MUCHA MALICIA!");
+
     } catch (err) {
-      toast.error("ERROR DE CONEXIÓN");
+      toast.error("ERROR DE CONEXIÓN CON EL BÚNKER");
     }
+  };
+
+  const handleLogout = async () => {
+    const code = localStorage.getItem('session_access_code');
+    if (code && code !== "GANADOR2026") {
+      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
+    }
+    localStorage.removeItem('session_access_code');
+    setIsLoggedIn(false);
   };
 
   useEffect(() => {
@@ -62,8 +97,9 @@ const Index = () => {
           setIsLoggedIn(true);
           setUserRole(saved === "GANADOR2026" ? "admin" : "user");
         }
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
+      } finally {
+        setLoading(false);
+      }
     };
     checkSession();
   }, []);
@@ -71,7 +107,7 @@ const Index = () => {
   if (loading) return null;
 
   return isLoggedIn ? (
-    <Dashboard userRole={userRole} onLogout={() => { localStorage.removeItem('session_access_code'); setIsLoggedIn(false); }} />
+    <Dashboard userRole={userRole} onLogout={handleLogout} />
   ) : (
     <LoginScreen onLogin={handleLogin} />
   );
