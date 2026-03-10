@@ -7,7 +7,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2, Info, Star, Instagram, MessageCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN DE LOGOS GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -45,7 +44,10 @@ export function ModuloJugadas() {
     const init = async () => {
       try {
         const { data: ag } = await supabase.from('agencias').select('*').eq('activa', true);
-        if (ag) setAgencias(ag);
+        if (ag) {
+          setAgencias(ag);
+          console.log("Agencias cargadas:", ag); // DEBUG: Mira esto en la consola F12
+        }
         setUserPM(localStorage.getItem('u_pm_tlf') || "");
         setUserCedula(localStorage.getItem('u_pm_cedula') || "");
         setUserBanco(localStorage.getItem('u_pm_banco') || "");
@@ -69,10 +71,10 @@ export function ModuloJugadas() {
       loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], emoji: ANIMAL_EMOJIS[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
     setSelectedNum(null);
-    toast.success("¡Añadida!");
   };
 
-  const getCleanPhone = (rawPhone: string) => {
+  const getCleanPhone = (rawPhone: any) => {
+    if (!rawPhone) return "";
     let tlf = rawPhone.toString().replace(/\D/g, '');
     if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1);
     else if (!tlf.startsWith('58')) tlf = '58' + tlf;
@@ -82,7 +84,7 @@ export function ModuloJugadas() {
   const msgUrl = useMemo(() => {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
     const tlf = getCleanPhone(selectedAgencia.whatsapp);
-    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
+    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE PAGO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => {
       msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
     });
@@ -97,7 +99,7 @@ export function ModuloJugadas() {
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white">CARGANDO...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando...</div>;
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-20">
@@ -118,27 +120,24 @@ export function ModuloJugadas() {
         
         <div className="space-y-8">
           {/* DATOS USUARIO */}
-          <Card className="p-8 bg-emerald-600 text-white rounded-[3rem] shadow-2xl border-none relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={120}/></div>
-             <div className="relative z-10 space-y-6">
-                <h2 className="text-xl font-black uppercase italic tracking-tighter">¿Dónde te pagamos cuando ganes?</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/10 border-white/20 text-white h-14 rounded-2xl font-black text-lg" />
-                  <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Tlf Pago Móvil" className="bg-white/10 border-white/20 text-white h-14 rounded-2xl font-black text-lg" />
-                  <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Tu Cédula" className="bg-white/10 border-white/20 text-white h-14 rounded-2xl font-black text-lg" />
-                </div>
+          <Card className="p-8 bg-emerald-600 text-white rounded-[3rem] shadow-2xl border-none">
+             <h2 className="text-xl font-black uppercase italic mb-6">¿A dónde enviamos tu pago si ganas?</h2>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Banco" className="bg-white/10 border-none text-white h-14 rounded-2xl font-black" />
+               <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono" className="bg-white/10 border-none text-white h-14 rounded-2xl font-black" />
+               <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Cédula" className="bg-white/10 border-none text-white h-14 rounded-2xl font-black" />
              </div>
           </Card>
 
           {/* LOTERIAS */}
           <Card className="bg-white p-6 lg:p-10 rounded-[3rem] shadow-xl border-none">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4 lg:gap-12 items-center">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
               {LOTERIAS.map(lot => (
-                <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-100 hover:scale-105'}`}>
-                  <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-100 shadow-sm'} overflow-hidden bg-black p-1.5 flex items-center justify-center`}>
+                <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-40 grayscale-0'}`}>
+                  <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-800'} overflow-hidden bg-black p-1.5 flex items-center justify-center`}>
                     <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none' }} crossOrigin="anonymous" onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} />
                   </div>
-                  <span className={`text-[10px] lg:text-[12px] font-black uppercase ${selectedLot === lot.id ? 'text-emerald-600' : 'text-slate-500'}`}>{lot.label}</span>
+                  <span className={`text-[10px] font-black uppercase ${selectedLot === lot.id ? 'text-emerald-600' : 'text-slate-500'}`}>{lot.label}</span>
                 </button>
               ))}
             </div>
@@ -148,7 +147,7 @@ export function ModuloJugadas() {
           <Card className="p-6 lg:p-10 bg-white rounded-[3rem] shadow-2xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-3">
               {Object.keys(animalitosAMostrar).map(n => (
-                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-3xl border-2 transition-all h-28 lg:h-32 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
+                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-3xl border-2 transition-all h-28 lg:h-32 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110' : 'bg-[#F8FAFC] border-transparent text-slate-600'}`}>
                   <span className="text-3xl lg:text-4xl mb-2">{ANIMAL_EMOJIS[n] || '🎟️'}</span>
                   <span className="text-[16px] lg:text-[18px] font-black text-slate-900 leading-none">{n}</span>
                   <span className="text-[9px] lg:text-[10px] font-bold uppercase truncate w-full text-center mt-2 text-slate-500">{(animalitosAMostrar as any)[n]}</span>
@@ -161,7 +160,7 @@ export function ModuloJugadas() {
           <Card className="p-8 bg-white rounded-[3rem] shadow-2xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
               {horasAMostrar.map(h => (
-                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F1F5F9] border-transparent text-slate-500 hover:bg-slate-200'}`}>{h}</button>
+                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F1F5F9] border-transparent text-slate-500'}`}>{h}</button>
               ))}
             </div>
           </Card>
@@ -171,86 +170,84 @@ export function ModuloJugadas() {
         <div className="space-y-8">
           <div className="lg:sticky lg:top-32 space-y-8">
             
-            {/* ENLACES REDES AGENCIA (NUEVO) */}
+            {/* BOTONES DE CONTACTO (INSTAGRAM Y RECLAMOS) */}
             {selectedAgencia && (
-              <Card className="p-6 bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-100 flex flex-col gap-3">
-                 <p className="text-[10px] font-black uppercase text-slate-400 text-center mb-2 tracking-widest">Sigue y contacta a la agencia</p>
+              <Card className="p-6 bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-100 flex flex-col gap-4">
+                 <p className="text-[10px] font-black uppercase text-slate-400 text-center tracking-widest italic">SOPORTE Y REDES</p>
                  <div className="grid grid-cols-2 gap-3">
-                    <a 
-                      href={selectedAgencia.instagram_url || "#"} 
-                      target="_blank" 
-                      className={`flex items-center justify-center gap-2 h-14 rounded-2xl font-black text-xs uppercase transition-all ${selectedAgencia.instagram_url ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-md hover:scale-105' : 'bg-slate-100 text-slate-300 pointer-events-none'}`}
+                    <Button 
+                      onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.info("No hay Instagram registrado")}
+                      className="h-16 rounded-2xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg"
                     >
-                      <Instagram size={18}/> Instagram
-                    </a>
-                    <a 
-                      href={reclamoUrl} 
-                      target="_blank" 
-                      className={`flex items-center justify-center gap-2 h-14 rounded-2xl font-black text-[10px] uppercase transition-all bg-amber-500 text-white shadow-md hover:scale-105 ${selectedAgencia ? '' : 'pointer-events-none opacity-20'}`}
+                      <Instagram size={20} className="mr-2"/> Instagram
+                    </Button>
+                    <Button 
+                      onClick={() => window.open(reclamoUrl, '_blank')}
+                      className="h-16 rounded-2xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg"
                     >
-                      <MessageCircle size={18}/> Reclamos
-                    </a>
+                      <MessageCircle size={20} className="mr-2"/> Reclamos
+                    </Button>
                  </div>
               </Card>
             )}
 
-            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-8 text-center">
-              <div className="space-y-2">
-                <label className="text-[12px] font-black uppercase opacity-40 italic tracking-widest text-slate-900">Monto por Sorteo (Bs)</label>
-                <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner" />
-              </div>
-              <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl active:scale-95 transition-all">
+            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none text-center">
+              <label className="text-[12px] font-black uppercase opacity-40 italic tracking-widest">Monto por Sorteo (Bs)</label>
+              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner" />
+              <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl shadow-xl mt-6">
                 <Plus size={32} className="mr-3" /> AÑADIR JUGADA
               </Button>
             </Card>
 
             <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[3.5rem] border-t-[18px] border-emerald-600 flex flex-col text-slate-900">
-              <h4 className="text-center font-black uppercase text-xl italic border-b border-slate-100 pb-4 mb-8">RESUMEN TICKET</h4>
+              <h4 className="text-center font-black uppercase text-xl italic border-b pb-4 mb-8">TICKET VIRTUAL</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
                 {currentJugadas.map((j, i) => (
-                  <div key={i} className="border-b border-slate-50 pb-5 flex justify-between items-start text-left">
+                  <div key={i} className="border-b pb-5 flex justify-between items-start text-left">
                     <div>
                       <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{j.loteria}</p>
                       <p className="font-black text-xl italic text-slate-800">#{j.numero} - {j.animal}</p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">{j.horas.join(", ")}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-black text-xl tracking-tighter">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
+                      <span className="font-black text-xl">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
                       <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-3 rounded-2xl hover:bg-red-100"><Trash2 size={20}/></button>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic tracking-tighter mb-10">
-                <span className="text-sm uppercase tracking-widest not-italic opacity-40">Total:</span>
+                <span className="text-sm uppercase opacity-40">Total:</span>
                 <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
               <Button 
                 onClick={() => {
-                   if (!userPM || !userBanco || !userCedula) return toast.error("¡Llena tus datos de cobro arriba!");
-                   if (!selectedAgencia) return toast.error("Elige una agencia");
+                   if (!userPM || !userBanco || !userCedula) return toast.error("¡Faltan tus datos de pago arriba!");
                    window.open(msgUrl, '_blank');
                 }}
-                className={`w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3rem] font-black text-2xl shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 leading-none ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
+                className={`w-full h-24 bg-emerald-600 text-white rounded-[3rem] font-black text-2xl shadow-xl active:scale-95 ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none' : ''}`}
               >
-                <Send size={32} /> 
-                <span className="tracking-tighter">ENVIAR A AGENCIA</span>
+                <Send size={32} className="mr-3" /> ENVIAR A AGENCIA
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 4. SECCIÓN DE PUBLICIDAD ADJUNTA (AL FINAL) */}
+      {/* 4. PUBLICIDAD FINAL */}
       {selectedAgencia?.publicidad_url && (
-        <div className="max-w-[1600px] mx-auto mt-20 px-6 animate-in slide-in-from-bottom-10 duration-1000">
-           <p className="text-[10px] font-black text-slate-400 uppercase text-center mb-4 tracking-[0.5em]">PROMOCIONES DE LA AGENCIA</p>
-           <div className="rounded-[4rem] overflow-hidden shadow-2xl border-8 border-white">
+        <div className="max-w-[1600px] mx-auto mt-20 px-6">
+           <p className="text-[10px] font-black text-slate-400 uppercase text-center mb-6 tracking-[0.5em] italic">ESPACIO PUBLICITARIO</p>
+           <div className="rounded-[4rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.2)] border-8 border-white bg-white">
               <img 
                 src={selectedAgencia.publicidad_url} 
-                alt="Publicidad Agencia" 
-                className="w-full h-auto object-cover max-h-[600px]"
-                onError={(e: any) => e.target.style.display = 'none'}
+                alt="Publicidad" 
+                className="w-full h-auto object-contain max-h-[700px] mx-auto"
+                onLoad={() => console.log("Imagen cargada con éxito")}
+                onError={(e: any) => {
+                    console.log("Error cargando publicidad:", selectedAgencia.publicidad_url);
+                    e.target.style.display = 'none';
+                }}
               />
            </div>
         </div>
