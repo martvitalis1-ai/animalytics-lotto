@@ -7,13 +7,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Trash2, Wallet, Landmark, Plus, CheckCircle2, Info, Instagram, MessageCircle, Star } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN DE LOGOS GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
+
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` },
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
@@ -63,7 +63,7 @@ export function ModuloJugadas() {
   const horasAMostrar = useMemo(() => (selectedLot === "Guacharito" || selectedLot === "Lotto Rey") ? HORAS_MEDIA : HORAS_PUNTO, [selectedLot]);
 
   const agregarJugada = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Completa los datos");
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Selecciona animal y sorteos");
     setCurrentJugadas([...currentJugadas, {
       loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
@@ -76,18 +76,18 @@ export function ModuloJugadas() {
     tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
     let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => {
-      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nSorteos: ${j.horas.join(", ")}\nBs ${j.monto}\n----------\n`;
+      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
     });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black">Cargando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando Búnker...</div>;
 
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40">
+    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden">
       
-      {/* 1. AGENCIA SELECTOR */}
+      {/* 1. SECTOR AGENCIA */}
       <div className="w-full bg-[#0F172A] p-6 lg:p-8 text-white shadow-2xl rounded-b-[4rem] mb-10">
         <p className="text-[11px] font-black uppercase text-emerald-400 mb-4 text-center tracking-[0.4em]">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center">
@@ -100,13 +100,12 @@ export function ModuloJugadas() {
       </div>
 
       <div className="max-w-[1600px] mx-auto grid lg:grid-cols-[1fr_450px] gap-8 px-6">
-        
         <div className="space-y-8">
           {/* DATOS COBRO */}
-          <Card className="p-8 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden">
+          <Card className="p-8 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none">
              <h2 className="text-2xl font-black uppercase italic mb-6">¿A dónde enviamos tu pago si ganas?</h2>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
+               <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
                <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
                <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Cédula" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
              </div>
@@ -118,7 +117,7 @@ export function ModuloJugadas() {
               {LOTERIAS.map(lot => (
                 <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-40 grayscale-0'}`}>
                   <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-100'} overflow-hidden bg-black p-1.5 flex items-center justify-center`}>
-                    <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" crossOrigin="anonymous" style={{ filter: 'none !important' }} />
+                    <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none !important' }} crossOrigin="anonymous" />
                   </div>
                   <span className={`text-[10px] lg:text-[12px] font-black uppercase text-center ${selectedLot === lot.id ? 'text-emerald-600' : 'text-slate-500'}`}>{lot.label}</span>
                 </button>
@@ -126,15 +125,17 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
-          {/* GRILLA ANIMALITOS */}
+          {/* GRILLA ANIMALITOS (FIJADO CUERVO) */}
           <Card className="p-8 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {filteredNumbers.map(n => (
-                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
+                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600'}`}>
                   <span className="text-3xl lg:text-5xl mb-1">{ANIMAL_EMOJIS[n]}</span>
                   <span className="text-[18px] lg:text-[22px] font-black text-slate-900 leading-none">{n}</span>
-                  <div className="h-6 flex items-center justify-center overflow-hidden">
-                    <span className="text-[9px] font-black uppercase text-slate-400 text-center leading-none">{ANIMALS_MASTER[n]}</span>
+                  <div className="mt-2 w-full px-1 flex items-center justify-center">
+                    <span className="text-[9px] lg:text-[10px] font-black uppercase text-slate-400 text-center leading-none px-1">
+                      {ANIMALS_MASTER[n]}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -145,7 +146,7 @@ export function ModuloJugadas() {
           <Card className="p-8 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
               {horasAMostrar.map(h => (
-                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A]' : 'bg-[#F8FAFC] border-transparent text-slate-500'}`}>{h}</button>
+                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F8FAFC] border-transparent text-slate-500'}`}>{h}</button>
               ))}
             </div>
           </Card>
@@ -155,15 +156,15 @@ export function ModuloJugadas() {
         <div className="space-y-8">
           <div className="lg:sticky lg:top-32 space-y-8">
             <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none text-center">
-              <label className="text-[12px] font-black uppercase opacity-40 italic text-slate-900 tracking-widest">Monto por Sorteo (Bs)</label>
+              <label className="text-[12px] font-black uppercase opacity-40 italic tracking-widest">Monto por Sorteo (Bs)</label>
               <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner" />
               <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-8">
                 <Plus size={32} className="mr-3" /> AÑADIR JUGADA
               </Button>
             </Card>
 
-            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 flex flex-col text-slate-900">
-              <h4 className="text-center font-black uppercase text-xl border-b border-slate-100 pb-4 mb-8 italic text-slate-800">TICKET VIRTUAL</h4>
+            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900">
+              <h4 className="text-center font-black uppercase text-xl border-b border-slate-100 pb-4 mb-8 italic">Resumen Ticket</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-left">
                 {currentJugadas.map((j, i) => (
                   <div key={i} className="border-b border-slate-50 pb-5 flex justify-between items-start">
@@ -175,16 +176,7 @@ export function ModuloJugadas() {
                   </div>
                 ))}
               </div>
-
-              {selectedAgencia && (
-                <div className="mt-6 p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left">
-                  <p className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1"><Landmark size={14}/> PAGO AGENCIA:</p>
-                  <p className="text-[12px] font-black text-slate-700 uppercase italic mt-1 leading-none">{selectedAgencia.banco_nombre}</p>
-                  <p className="text-[10px] font-bold text-slate-500 mt-1">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
-                </div>
-              )}
-
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic tracking-tighter mb-10">
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic mb-10 tracking-tighter text-right">
                 <span className="text-sm uppercase opacity-40">Total:</span>
                 <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
@@ -209,7 +201,6 @@ export function ModuloJugadas() {
            </div>
         </div>
       )}
-
     </div>
   );
 }
