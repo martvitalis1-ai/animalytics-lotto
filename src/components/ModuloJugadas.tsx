@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2, Info } from "lucide-react";
 import { toast } from "sonner";
 
-// --- RUTA EXACTA DE GITHUB ---
+// --- RUTA RAW DE GITHUB (VERIFICADA) ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -19,12 +19,13 @@ const LOTERIAS = [
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
 
-// --- DICCIONARIOS OFICIALES ---
+// --- DICCIONARIOS DE ANIMALES OFICIALES ---
 const ANIMALS_STANDARD: any = { '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', '9': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA' };
 const ANIMALS_GUACHARO: any = { ...ANIMALS_STANDARD, '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO' };
 const ANIMALS_GUACHARITO: any = { ...ANIMALS_GUACHARO, '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' };
-const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
+const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐚", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
 
+// --- HORARIOS ---
 const HORAS_PUNTO = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
 const HORAS_MEDIA = ["08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", "02:30 PM", "03:30 PM", "04:30 PM", "05:30 PM", "06:30 PM", "07:30 PM"];
 
@@ -67,10 +68,10 @@ export function ModuloJugadas() {
     if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
     const dic: any = animalitosAMostrar;
     setCurrentJugadas([...currentJugadas, {
-      loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
+      loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], emoji: ANIMAL_EMOJIS[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
     setSelectedNum(null);
-    toast.success("Jugada añadida!");
+    toast.success("¡Añadido!");
   };
 
   const msgUrl = useMemo(() => {
@@ -79,20 +80,20 @@ export function ModuloJugadas() {
     if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1); else if (!tlf.startsWith('58')) tlf = '58' + tlf;
     let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS: ${userBanco} / ${userPM} / ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => {
-      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nSorteos: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
+      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
     });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
-    return `https://api.whatsapp.com/send?phone=${tlf}&text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">SINCRONIZANDO...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900 italic">Sincronizando Búnker...</div>;
 
   return (
     <div className="max-w-7xl mx-auto bg-[#F8FAFC] min-h-screen text-slate-900 pb-40">
       
       {/* 1. AGENCIA SELECTOR */}
-      <div className="p-4 bg-[#0F172A] text-white shadow-xl rounded-b-[2rem]">
-        <p className="text-[9px] font-black uppercase text-emerald-400 mb-3 text-center tracking-[0.3em]">PASO 1: SELECCIONA TU AGENCIA</p>
+      <div className="p-4 bg-[#0F172A] text-white shadow-xl rounded-b-[2.5rem]">
+        <p className="text-[9px] font-black uppercase text-emerald-400 mb-3 text-center tracking-[0.3em] italic">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex gap-2 overflow-x-auto pb-2 justify-center no-scrollbar">
           {agencias.map(ag => (
             <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black uppercase text-[11px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
@@ -102,10 +103,10 @@ export function ModuloJugadas() {
         </div>
       </div>
 
-      {/* 2. LOTERÍA SELECTOR - CORREGIDO Y EN ORDEN */}
+      {/* 2. SELECTOR DE LOTERÍA (FIXED: JUSTIFY-START + PADDING) */}
       <div className="mt-4 px-2">
         <div className="bg-white p-4 rounded-[2rem] shadow-sm overflow-x-auto border border-slate-100 no-scrollbar">
-          <div className="flex gap-4 min-w-max px-2">
+          <div className="flex gap-4 min-w-max px-4 justify-start">
             {LOTERIAS.map(lot => (
               <button 
                 key={lot.id} 
@@ -115,7 +116,7 @@ export function ModuloJugadas() {
                 <div className={`w-16 h-16 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-lg' : 'border-slate-800'} overflow-hidden bg-black p-1 flex items-center justify-center`}>
                   <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none' }} crossOrigin="anonymous" onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} />
                 </div>
-                <span className="text-[8px] font-black uppercase text-slate-700">{lot.label}</span>
+                <span className="text-[8px] font-black uppercase text-slate-700 whitespace-nowrap">{lot.label}</span>
               </button>
             ))}
           </div>
@@ -134,7 +135,7 @@ export function ModuloJugadas() {
                   onClick={() => setSelectedNum(n)} 
                   className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all h-20 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'bg-[#F1F5F9] border-transparent text-slate-600'}`}
                 >
-                  <span className="text-2xl leading-none mb-1">{ANIMAL_EMOJIS[n] || '🎟️'}</span>
+                  <span className="text-xl leading-none mb-1">{ANIMAL_EMOJIS[n] || '🎟️'}</span>
                   <span className="text-[12px] font-black text-slate-900 leading-none">{n}</span>
                   <span className="text-[7px] font-bold uppercase truncate w-full text-center mt-1 text-slate-500">{(animalitosAMostrar as any)[n]}</span>
                 </button>
@@ -146,7 +147,7 @@ export function ModuloJugadas() {
           <Card className="p-4 bg-white rounded-[2rem] shadow-xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
               {horasAMostrar.map(h => (
-                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-12 rounded-xl text-[10px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A]' : 'bg-[#F1F5F9] border-transparent text-slate-500'}`}>{h}</button>
+                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-12 rounded-xl text-[10px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F1F5F9] border-transparent text-slate-500'}`}>{h}</button>
               ))}
             </div>
           </Card>
@@ -166,12 +167,12 @@ export function ModuloJugadas() {
 
           {/* TICKET Y PAGO AGENCIA */}
           <div className="bg-white p-6 font-mono shadow-2xl rounded-[2.5rem] border-t-[14px] border-emerald-600 flex flex-col text-slate-900">
-            <h4 className="text-center font-black uppercase text-sm italic border-b pb-2 mb-4">Ticket de Jugada</h4>
-            <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px] no-scrollbar">
+            <h4 className="text-center font-black uppercase text-sm italic border-b pb-2 mb-4 tracking-tighter">Ticket Virtual</h4>
+            <div className="flex-1 space-y-3 overflow-y-auto max-h-[250px] no-scrollbar">
               {currentJugadas.map((j, i) => (
                 <div key={i} className="border-b pb-2 flex justify-between items-start text-left">
                   <div>
-                    <p className="text-[8px] font-black text-emerald-600 uppercase">{j.loteria}</p>
+                    <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">{j.loteria}</p>
                     <p className="font-black text-sm">#{j.numero} - {j.animal}</p>
                     <p className="text-[8px] text-slate-400 font-bold">{j.horas.join(", ")}</p>
                   </div>
@@ -183,7 +184,7 @@ export function ModuloJugadas() {
               ))}
             </div>
 
-            {/* DATOS DE PAGO AGENCIA (CAMPOS COMPATIBLES) */}
+            {/* DATOS DE PAGO AGENCIA (CAMPOS DINÁMICOS) */}
             {selectedAgencia && (
               <div className="mt-4 p-4 bg-emerald-50 border-2 border-emerald-500/20 rounded-2xl text-left">
                 <p className="text-[9px] font-black text-emerald-600 uppercase flex items-center gap-1"><Info size={10}/> PAGO A AGENCIA:</p>
@@ -204,11 +205,12 @@ export function ModuloJugadas() {
               <span>{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
             </div>
 
+            {/* BOTÓN ENVIAR - CENTRADO Y PREMIUM (CLON DEL DE ARRIBA) */}
             <a 
               href={msgUrl} 
               onClick={() => { localStorage.setItem('u_pm_banco', userBanco); localStorage.setItem('u_pm_tlf', userPM); localStorage.setItem('u_pm_cedula', userCedula); }}
               target="_blank" rel="noopener noreferrer"
-              className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg shadow-xl flex items-center justify-center text-center gap-3 mt-6 transition-all active:scale-95"
+              className={`w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg shadow-xl flex items-center justify-center text-center gap-3 mt-6 transition-all active:scale-95 ${msgUrl === "#" ? 'opacity-30 pointer-events-none grayscale' : ''}`}
             >
               <Send size={24} /> ENVIAR A AGENCIA
             </a>
