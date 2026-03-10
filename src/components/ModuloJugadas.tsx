@@ -238,3 +238,27 @@ export function ModuloJugadas() {
     </div>
   );
 }
+const [datoVip, setDatoVip] = useState<any>(null);
+const [isVip, setIsVip] = useState(false); // Luego conectaremos esto a tu sistema de pagos
+
+// Esta función busca el pronóstico real usando tu fórmula + frecuencia
+const cargarDatoMaestro = async () => {
+  if (!selectedLot) return;
+
+  // Calculamos la próxima hora (esto es un ejemplo, puedes hacerlo dinámico)
+  const proximaHora = "04:00 PM"; 
+
+  const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
+    lot_name: selectedLot,
+    proxima_hora: proximaHora
+  });
+
+  if (data && data.length > 0) {
+    setDatoVip(data[0]);
+  }
+};
+
+// Se ejecuta cada vez que cambias de lotería
+useEffect(() => {
+  cargarDatoMaestro();
+}, [selectedLot]);
