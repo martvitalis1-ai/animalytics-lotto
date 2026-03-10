@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2, Info, Star } from "lucide-react";
+import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2, Info, Star, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 // --- RUTA RAW DE GITHUB ---
@@ -46,9 +46,10 @@ export function ModuloJugadas() {
       try {
         const { data: ag } = await supabase.from('agencias').select('*').eq('activa', true);
         if (ag) setAgencias(ag);
-        setUserPM(localStorage.getItem('u_pm_tlf') || "");
-        setUserCedula(localStorage.getItem('u_pm_cedula') || "");
-        setUserBanco(localStorage.getItem('u_pm_banco') || "");
+        const b = localStorage.getItem('u_pm_banco') || "";
+        const t = localStorage.getItem('u_pm_tlf') || "";
+        const c = localStorage.getItem('u_pm_cedula') || "";
+        setUserBanco(b); setUserPM(t); setUserCedula(c);
       } catch (e) { console.error(e); } finally { setLoading(false); }
     };
     init();
@@ -63,20 +64,20 @@ export function ModuloJugadas() {
   const horasAMostrar = useMemo(() => (selectedLot === "Guacharito" || selectedLot === "Lotto Rey") ? HORAS_MEDIA : HORAS_PUNTO, [selectedLot]);
 
   const agregarJugada = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Selecciona animal y sorteos");
     const dic: any = animalitosAMostrar;
     setCurrentJugadas([...currentJugadas, {
       loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], emoji: ANIMAL_EMOJIS[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
     setSelectedNum(null);
-    toast.success("¡Jugada añadida!");
+    toast.success("¡Añadida al ticket!");
   };
 
   const msgUrl = useMemo(() => {
-    if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
+    if (!selectedAgencia || currentJugadas.length === 0 || !userPM || !userBanco || !userCedula) return "#";
     let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
     if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1); else if (!tlf.startsWith('58')) tlf = '58' + tlf;
-    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS: ${userBanco} / ${userPM} / ${userCedula}\n--------------------------\n\n`;
+    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => {
       msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
     });
@@ -84,66 +85,93 @@ export function ModuloJugadas() {
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">CARGANDO PANEL PREMIUM...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">CARGANDO...</div>;
 
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40">
+    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-20">
       
       {/* 1. SECTOR AGENCIA - FULL WIDTH PC */}
-      <div className="w-full bg-[#0F172A] p-6 lg:p-8 text-white shadow-2xl rounded-b-[4rem] mb-8">
-        <p className="text-[10px] font-black uppercase text-emerald-400 mb-4 text-center tracking-[0.4em] italic">SELECCIONA TU AGENCIA AUTORIZADA</p>
+      <div className="w-full bg-[#0F172A] p-6 lg:p-8 text-white shadow-2xl rounded-b-[3rem] mb-8 relative">
+        <p className="text-[10px] font-black uppercase text-emerald-400 mb-4 text-center tracking-[0.4em] italic">PASO 1: SELECCIONA TU AGENCIA DE ENVÍO</p>
         <div className="flex flex-wrap gap-4 justify-center">
           {agencias.map(ag => (
-            <button 
-              key={ag.id} 
-              onClick={() => setSelectedAgencia(ag)} 
-              className={`flex items-center gap-3 px-10 py-4 rounded-3xl font-black uppercase text-[12px] lg:text-[14px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] scale-105' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'}`}
-            >
-              {selectedAgencia?.id === ag.id && <CheckCircle2 size={20} />} {ag.nombre}
+            <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-3 px-8 py-3 rounded-full font-black uppercase text-[12px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg scale-105' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+              {selectedAgencia?.id === ag.id && <CheckCircle2 size={16} />} {ag.nombre}
             </button>
           ))}
         </div>
       </div>
 
-      {/* 2. SELECTOR DE LOTERÍA - OCUPA TODO EL ANCHO EN PC */}
-      <div className="max-w-[1600px] mx-auto px-6 mb-8">
-        <Card className="bg-white p-6 lg:p-10 rounded-[3rem] shadow-xl border-none">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 lg:gap-12 items-center">
-            {LOTERIAS.map(lot => (
-              <button 
-                key={lot.id} 
-                onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} 
-                className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-100 hover:scale-105'}`}
-              >
-                <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl shadow-emerald-200' : 'border-slate-100 shadow-sm'} overflow-hidden bg-black p-1.5 flex items-center justify-center transition-all`}>
-                  <img 
-                    src={lot.img} 
-                    alt={lot.id} 
-                    className="w-full h-full object-contain" 
-                    style={{ filter: 'none' }}
-                    crossOrigin="anonymous" 
-                    onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} 
-                  />
-                </div>
-                <span className={`text-[10px] lg:text-[12px] font-black uppercase transition-colors ${selectedLot === lot.id ? 'text-emerald-600' : 'text-slate-500'}`}>{lot.label}</span>
-              </button>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* 3. GRID PRINCIPAL (2 COLUMNAS EN PC) */}
       <div className="max-w-[1600px] mx-auto grid lg:grid-cols-[1fr_450px] gap-8 px-6">
         
-        {/* PANEL IZQUIERDO: SELECCIÓN */}
+        {/* COLUMNA IZQUIERDA: CONFIGURACIÓN Y JUEGO */}
         <div className="space-y-8">
-          {/* GRILLA DE ANIMALITOS */}
-          <Card className="p-6 lg:p-10 bg-white rounded-[3rem] shadow-2xl border-none">
-            <div className="flex items-center gap-2 mb-8 border-b pb-4">
-               <Star className="text-emerald-500 fill-emerald-500" size={18} />
-               <p className="text-[12px] font-black uppercase text-slate-400 italic tracking-widest">Panel de Selección de Animalitos:</p>
+          
+          {/* SECCIÓN DE DATOS DEL USUARIO (SÚPER VISIBLE) */}
+          <Card className="p-8 bg-emerald-600 text-white rounded-[3rem] shadow-2xl border-none relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={120}/></div>
+             <div className="relative z-10 space-y-6">
+                <div className="flex flex-col gap-1">
+                   <h2 className="text-xl font-black uppercase italic tracking-tighter">¿Dónde quieres recibir tus premios?</h2>
+                   <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest flex items-center gap-1">
+                      <AlertCircle size={12}/> Llena estos datos para que la agencia sepa a dónde pagarte si ganas.
+                   </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase ml-2 opacity-70">Tu Banco</label>
+                    <Input 
+                      value={userBanco} 
+                      onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} 
+                      placeholder="Ej: Banesco" 
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-14 rounded-2xl font-black text-lg" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase ml-2 opacity-70">Teléfono Pago Móvil</label>
+                    <Input 
+                      value={userPM} 
+                      onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} 
+                      placeholder="0412..." 
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-14 rounded-2xl font-black text-lg" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase ml-2 opacity-70">Cédula de Identidad</label>
+                    <Input 
+                      value={userCedula} 
+                      onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} 
+                      placeholder="V-12345..." 
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-14 rounded-2xl font-black text-lg" 
+                    />
+                  </div>
+                </div>
+             </div>
+          </Card>
+
+          {/* SELECTOR DE LOTERÍA */}
+          <Card className="bg-white p-6 lg:p-8 rounded-[3rem] shadow-xl border-none">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-6 items-center">
+              {LOTERIAS.map(lot => (
+                <button 
+                  key={lot.id} 
+                  onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} 
+                  className={`flex flex-col items-center gap-2 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-40 grayscale hover:grayscale-0 hover:opacity-80'}`}
+                >
+                  <div className={`w-16 h-16 lg:w-24 lg:h-24 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-100'} overflow-hidden bg-black p-1.5 flex items-center justify-center transition-all`}>
+                    <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none' }} crossOrigin="anonymous" onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} />
+                  </div>
+                  <span className={`text-[9px] lg:text-[11px] font-black uppercase text-center ${selectedLot === lot.id ? 'text-emerald-600 underline decoration-2' : 'text-slate-500'}`}>{lot.label}</span>
+                </button>
+              ))}
             </div>
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-9 gap-3">
+          </Card>
+
+          {/* GRILLA ANIMALITOS */}
+          <Card className="p-8 bg-white rounded-[3rem] shadow-2xl border-none">
+            <p className="text-[11px] font-black uppercase text-slate-400 mb-8 italic tracking-widest flex items-center gap-2"><Star size={14}/> Selección de Animalito:</p>
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3">
               {Object.keys(animalitosAMostrar).map(n => (
                 <button 
                   key={n} 
@@ -159,100 +187,86 @@ export function ModuloJugadas() {
           </Card>
 
           {/* HORARIOS */}
-          <Card className="p-6 lg:p-10 bg-white rounded-[3rem] shadow-2xl border-none">
-            <p className="text-[12px] font-black uppercase text-slate-400 mb-8 border-b pb-4 italic tracking-widest">Selecciona los Sorteos:</p>
+          <Card className="p-8 bg-white rounded-[3rem] shadow-2xl border-none">
+            <p className="text-[11px] font-black uppercase text-slate-400 mb-8 italic tracking-widest">Sorteos de {selectedLot}:</p>
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
               {horasAMostrar.map(h => (
-                <button 
-                   key={h} 
-                   onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} 
-                   className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl scale-105' : 'bg-[#F1F5F9] border-transparent text-slate-500 hover:bg-slate-200'}`}
-                >
-                  {h}
-                </button>
+                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F1F5F9] border-transparent text-slate-500 hover:bg-slate-200'}`}>{h}</button>
               ))}
             </div>
           </Card>
         </div>
 
-        {/* PANEL DERECHO: TICKET (STICKY EN PC) */}
+        {/* COLUMNA DERECHA: TICKET Y CONTROL (STICKY) */}
         <div className="space-y-8">
           <div className="lg:sticky lg:top-32 space-y-8">
             
-            {/* DATOS DE PAGO DEL USUARIO (PC: SIDEBAR) */}
-            <Card className="hidden lg:block p-8 bg-[#0F172A] text-white rounded-[3rem] shadow-2xl space-y-6">
-               <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.3em] italic border-b border-slate-800 pb-4">DATOS PARA RECIBIR PREMIOS</p>
-               <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-slate-800 border-none h-14 rounded-2xl text-base px-6" />
-               <div className="grid grid-cols-1 gap-4">
-                 <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-slate-800 border-none h-14 rounded-2xl text-base px-6" />
-                 <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Tu Cédula" className="bg-slate-800 border-none h-14 rounded-2xl text-base px-6" />
-               </div>
-            </Card>
-
-            {/* MONTO Y ACCION */}
-            <Card className="p-10 bg-white rounded-[3.5rem] shadow-2xl border-none space-y-8 text-center">
+            {/* PANEL DE MONTO */}
+            <Card className="p-10 bg-white rounded-[4rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border-none space-y-8 text-center">
               <div className="space-y-2">
                 <label className="text-[12px] font-black uppercase opacity-40 italic tracking-widest">Monto por Sorteo (Bs)</label>
-                <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-6xl lg:text-7xl font-black bg-slate-50 border-none rounded-[2.5rem] text-slate-900 shadow-inner" />
+                <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner focus:ring-0" />
               </div>
-              
-              {selectedAgencia && (
-                <div className="p-6 bg-emerald-50 border-2 border-emerald-500/20 rounded-[2rem] text-left">
-                  <p className="text-[10px] font-black text-emerald-600 uppercase mb-2 tracking-[0.2em]">🏦 AGENCIA DESTINO:</p>
-                  <p className="text-[15px] font-black text-slate-800 uppercase italic leading-none">{selectedAgencia.nombre}</p>
-                </div>
-              )}
-
-              <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2rem] text-xl lg:text-2xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] active:scale-95 transition-all">
+              <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl active:scale-95 transition-all">
                 <Plus size={32} className="mr-3" /> AÑADIR JUGADA
               </Button>
             </Card>
 
             {/* TICKET VIRTUAL */}
-            <div className="bg-white p-8 lg:p-10 font-mono shadow-2xl rounded-[3rem] border-t-[16px] border-emerald-600 flex flex-col text-slate-900">
-              <h4 className="text-center font-black uppercase text-base italic border-b border-slate-100 pb-4 mb-6 tracking-widest">Resumen Ticket</h4>
-              <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
+            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[3.5rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900 relative">
+              <div className="text-center border-b-2 border-dashed border-slate-200 pb-4 mb-8">
+                 <h4 className="font-black uppercase text-xl italic tracking-[0.2em]">RESUMEN TICKET</h4>
+              </div>
+              
+              <div className="flex-1 space-y-6 overflow-y-auto max-h-[350px] no-scrollbar">
                 {currentJugadas.map((j, i) => (
-                  <div key={i} className="border-b border-slate-50 pb-4 flex justify-between items-start text-left">
+                  <div key={i} className="border-b border-slate-50 pb-5 flex justify-between items-start text-left">
                     <div>
-                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{j.loteria}</p>
-                      <p className="font-black text-lg italic text-slate-800">#{j.numero} - {j.animal}</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">{j.horas.join(", ")}</p>
+                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">{j.loteria}</p>
+                      <p className="font-black text-xl italic text-slate-800 leading-none">#{j.numero} - {j.animal}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 italic">{j.horas.join(", ")}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-black text-lg">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
-                      <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-2 rounded-2xl hover:bg-red-100 transition-colors"><Trash2 size={20}/></button>
+                      <span className="font-black text-xl tracking-tighter">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
+                      <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-3 rounded-2xl hover:bg-red-100"><Trash2 size={20}/></button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between font-black text-4xl italic tracking-tighter decoration-emerald-500 underline decoration-4 mb-10">
-                <span>TOTAL:</span>
-                <span>{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
+              {selectedAgencia && (
+                <div className="mt-6 p-6 bg-slate-50 border-2 border-slate-200 rounded-[2.5rem] text-left">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">< Landmark size={14}/> AGENCIA DESTINO:</p>
+                  <p className="text-[16px] font-black text-slate-800 uppercase italic leading-none">{selectedAgencia.nombre}</p>
+                </div>
+              )}
+
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic tracking-tighter mb-10">
+                <span className="text-sm uppercase tracking-widest not-italic opacity-40">Total:</span>
+                <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
 
-              {/* BOTÓN ENVIAR - IDÉNTICO AL DE ARRIBA */}
-              <a 
-                href={msgUrl} 
-                onClick={() => { localStorage.setItem('u_pm_banco', userBanco); localStorage.setItem('u_pm_tlf', userPM); localStorage.setItem('u_pm_cedula', userCedula); }}
-                target="_blank" rel="noopener noreferrer"
-                className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[2rem] font-black text-xl lg:text-2xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] flex items-center justify-center text-center gap-4 transition-all hover:scale-[1.02] active:scale-95 leading-none"
+              {/* BOTÓN ENVIAR - VERIFICACIÓN DE DATOS */}
+              <Button 
+                onClick={() => {
+                   if (!userPM || !userBanco || !userCedula) {
+                      toast.error("¡Faltan tus datos de cobro! Llénalos arriba.");
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      return;
+                   }
+                   if (!selectedAgencia) return toast.error("Elige una agencia primero");
+                   window.open(msgUrl, '_blank');
+                }}
+                className={`w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3rem] font-black text-2xl shadow-2xl flex items-center justify-center text-center gap-4 transition-all hover:scale-[1.02] active:scale-95 leading-none ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
               >
                 <Send size={32} className="shrink-0" /> 
                 <span className="tracking-tighter">ENVIAR A AGENCIA</span>
-              </a>
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* FOOTER DATOS (SOLO MÓVIL) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0F172A] p-5 border-t-4 border-emerald-500 flex gap-3 z-[100] shadow-[0_-15px_30px_rgba(0,0,0,0.5)]">
-          <Input value={userBanco} onChange={e => setUserBanco(e.target.value)} placeholder="Banco" className="bg-slate-800 border-none text-white font-black h-12 text-xs" />
-          <Input value={userPM} onChange={e => setUserPM(e.target.value)} placeholder="Tlf PM" className="bg-slate-800 border-none text-white font-black h-12 text-xs" />
-          <Input value={userCedula} onChange={e => setUserCedula(e.target.value)} placeholder="Cédula" className="bg-slate-800 border-none text-white font-black h-12 text-xs" />
-      </div>
     </div>
   );
 }
