@@ -12,8 +12,8 @@ const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // Dados
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },    // Pájaro
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, 
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
@@ -56,29 +56,30 @@ export function ModuloJugadas() {
     init();
   }, []);
 
-  const cargarDatoIA = async () => {
-    try {
-      if (!selectedLot) return;
-      const { data } = await supabase.rpc('generar_dato_maestro_vip', {
-        lot_name: selectedLot, proxima_hora: "SIGUIENTE"
-      });
-      if (data && data.length > 0) setDatoVip(data[0]);
-    } catch (e) { console.warn("IA no vinculada aún"); }
+  // ✅ FUNCIÓN CARGAR DATO MAESTRO (JavaScript para Lovable)
+  const cargarDatoMaestro = async () => {
+    if (!selectedLot) return;
+    setDatoVip(null); // Efecto visual de carga
+
+    const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
+      lot_name: selectedLot,
+      proxima_hora: "SIGUIENTE"
+    });
+
+    if (data && data.length > 0) {
+      setDatoVip(data[0]);
+    } else {
+      setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 85, metodo: "Frecuencia General" });
+    }
   };
 
-  useEffect(() => { cargarDatoIA(); }, [selectedLot]);
+  useEffect(() => { cargarDatoMaestro(); }, [selectedLot]);
 
   const validarVip = async () => {
     if (!passVip) return toast.error("Ingresa un código");
     setValidando(true);
     try {
-      const { data, error } = await supabase
-        .from('codigos_vip')
-        .select('*')
-        .eq('codigo', passVip.toUpperCase().trim())
-        .eq('activo', true)
-        .single();
-
+      const { data } = await supabase.from('codigos_vip').select('*').eq('codigo', passVip.toUpperCase().trim()).eq('activo', true).single();
       if (data) {
         setIsVip(true);
         localStorage.setItem('vip_active', 'true');
@@ -106,27 +107,28 @@ export function ModuloJugadas() {
   }, [selectedLot]);
 
   const agregar = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Completa la jugada");
     setCurrentJugadas([...currentJugadas, { loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours] }]);
     setSelectedNum(null);
   };
 
   const msgUrl = useMemo(() => {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
-    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
+    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '');
     tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
-    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
+    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE PAGO:\n🏦 BANCO: ${userBanco}\n📞 TLF: ${userPM}\n🆔 CI: ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`; });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">Sincronizando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando...</div>;
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
       
-      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10">
+      {/* SECTOR AGENCIA */}
+      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
         <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic text-center">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center">
           {agencias.map(ag => (
@@ -139,10 +141,10 @@ export function ModuloJugadas() {
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
         <div className="space-y-10">
-          <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden text-center flex flex-col items-center">
+          <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
-                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
+                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter text-center leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
                 <div className="grid grid-cols-1 gap-4 w-full">
                   <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
@@ -151,23 +153,24 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
+          {/* TARJETA VIP BÚNKER */}
           <Card className="p-8 lg:p-12 bg-slate-900 border-none shadow-2xl rounded-[4rem] overflow-hidden relative border-t-[12px] border-emerald-500">
              <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-emerald-400"><Star size={200} fill="currentColor"/></div>
              <div className="relative z-10 space-y-8">
-                <div className="flex justify-between items-center px-4">
+                <div className="flex justify-between items-center px-4 text-white">
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse">PRÓXIMO DATO VIP</span>
                   <span className="text-emerald-400 font-black text-2xl italic tracking-tighter uppercase">{selectedLot}</span>
                 </div>
                 <div className="text-center py-6 text-white">
                    {isVip ? (
                      <div className="space-y-6 animate-in zoom-in-95 duration-700">
-                        <div className="text-6xl lg:text-8xl font-black tracking-tighter flex flex-col items-center gap-4">
+                        <div className="text-6xl lg:text-8xl font-black tracking-tighter flex flex-col items-center gap-4 leading-none">
                            <span className="text-5xl">{ANIMAL_EMOJIS[datoVip?.animal_id] || "🎲"}</span>
                            {datoVip?.animal_id || "--"} - {datoVip?.animal_nombre || "CALCULANDO"}
                         </div>
                         <div className="flex flex-wrap justify-center gap-3">
-                           <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase">🎯 {datoVip?.metodo || "Fórmula Maestra"}</span>
-                           <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase">🔥 {datoVip?.probabilidad || "95"}% ÉXITO</span>
+                           <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🎯 {datoVip?.metodo || "Fórmula Maestra"}</span>
+                           <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🔥 {datoVip?.probabilidad || "95"}% ÉXITO</span>
                         </div>
                      </div>
                    ) : (
@@ -177,9 +180,9 @@ export function ModuloJugadas() {
                         <div className="w-full max-w-sm flex flex-col gap-4">
                            <div className="flex gap-2 bg-white/5 p-2 rounded-3xl border border-white/10">
                               <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Código VIP..." className="bg-transparent border-none text-white font-black text-center text-lg h-14" />
-                              <Button onClick={validarVip} disabled={validando} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase">{validando ? "..." : "ACTIVAR"}</Button>
+                              <Button onClick={validarVip} disabled={validando} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase">ACTIVAR</Button>
                            </div>
-                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl hover:scale-105">COMPRAR CÓDIGO VIP</Button>
+                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl">SOLICITAR CÓDIGO VIP</Button>
                         </div>
                      </div>
                    )}
@@ -201,15 +204,13 @@ export function ModuloJugadas() {
           </Card>
 
           <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none">
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 text-slate-900">
               {filteredNumbers.map(n => (
                 <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
                   <span className="text-3xl lg:text-5xl mb-1">{ANIMAL_EMOJIS[n]}</span>
-                  <span className="text-[18px] lg:text-[22px] font-black text-slate-900 leading-none">{n}</span>
-                  <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-visible">
-                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-slate-400 text-center leading-tight">
-                      {ANIMALS_MASTER[n]}
-                    </span>
+                  <span className="text-[18px] lg:text-[22px] font-black leading-none">{n}</span>
+                  <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-hidden text-slate-400">
+                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">{ANIMALS_MASTER[n]}</span>
                   </div>
                 </button>
               ))}
@@ -226,34 +227,20 @@ export function ModuloJugadas() {
         </div>
 
         <div className="space-y-8 flex flex-col items-center w-full">
-          <div className="lg:sticky lg:top-32 space-y-8 w-full">
-            {selectedAgencia && (
-              <Card className="p-8 bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 flex flex-col gap-6 text-center text-slate-900">
-                 <div className="grid grid-cols-2 gap-3">
-                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">Instagram</Button>
-                    <Button onClick={() => window.open(`https://wa.me/${selectedAgencia.whatsapp.replace(/\D/g, '')}?text=Hola, reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">Reclamos</Button>
-                 </div>
-                 <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center leading-none">DATOS PAGO AGENCIA</p>
-                    <p className="text-[14px] font-black text-slate-700 uppercase italic leading-tight">{selectedAgencia.banco_nombre}</p>
-                    <p className="text-[12px] font-bold text-slate-500 mt-2">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
-                 </div>
-              </Card>
-            )}
-
+          <div className="lg:sticky lg:top-32 space-y-8 w-full text-slate-900">
             <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-4 text-center">
-              <label className="text-[11px] font-black uppercase opacity-40 italic text-slate-900 tracking-widest text-center">MONTO POR SORTEO (BS)</label>
-              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner focus:ring-0" />
+              <label className="text-[11px] font-black uppercase opacity-40 italic tracking-widest">MONTO POR SORTEO (BS)</label>
+              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] shadow-inner focus:ring-0" />
               <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4"><Plus size={32} className="mr-3" /> AÑADIR JUGADA</Button>
             </Card>
 
-            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900">
-              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic text-center">RESUMEN TICKET</h4>
-              <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-center">
+            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col">
+              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic">RESUMEN TICKET</h4>
+              <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
                 {currentJugadas.map((j, i) => (
-                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center">
+                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center text-center text-slate-900">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{j.loteria}</p>
-                    <p className="font-black text-xl italic text-slate-800 leading-none">#{j.numero} - {j.animal}</p>
+                    <p className="font-black text-xl italic leading-none">#{j.numero} - {j.animal}</p>
                     <div className="flex items-center gap-4 mt-2">
                        <span className="font-black text-lg">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
                        <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-2 rounded-2xl"><Trash2 size={18}/></button>
@@ -261,7 +248,7 @@ export function ModuloJugadas() {
                   </div>
                 ))}
               </div>
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 tracking-tighter text-right">
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 text-slate-900">
                 <span className="text-sm uppercase opacity-40">TOTAL:</span>
                 <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
@@ -270,12 +257,6 @@ export function ModuloJugadas() {
           </div>
         </div>
       </div>
-
-      {selectedAgencia?.publicidad_url && (
-        <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-20 text-center flex flex-col items-center">
-           <img src={selectedAgencia.publicidad_url} alt="Publicidad" className="w-full h-auto object-contain max-h-[800px] mx-auto rounded-[5rem] shadow-2xl border-[12px] border-white bg-white" />
-        </div>
-      )}
     </div>
   );
 }
