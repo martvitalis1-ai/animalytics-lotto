@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star } from "lucide-react";
+import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, AlertTriangle, Info } from "lucide-react";
 import { toast } from "sonner";
 
 // --- RUTA RAW DE GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
-// --- LOTERÍAS CON LOGOS E ID CORREGIDOS ---
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // CORREGIDO: Logo Dados
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },    // CORREGIDO: Logo Pájaro
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
@@ -39,13 +38,12 @@ export function ModuloJugadas() {
 
   useEffect(() => {
     const init = async () => {
-      try {
-        const { data } = await supabase.from('agencias').select('*').eq('activa', true);
-        if (data) setAgencias(data);
-        setUserPM(localStorage.getItem('u_pm_tlf') || "");
-        setUserCedula(localStorage.getItem('u_pm_cedula') || "");
-        setUserBanco(localStorage.getItem('u_pm_banco') || "");
-      } catch (e) { console.error(e); } finally { setLoading(false); }
+      const { data } = await supabase.from('agencias').select('*').eq('activa', true);
+      if (data) setAgencias(data);
+      setUserPM(localStorage.getItem('u_pm_tlf') || "");
+      setUserCedula(localStorage.getItem('u_pm_cedula') || "");
+      setUserBanco(localStorage.getItem('u_pm_banco') || "");
+      setLoading(false);
     };
     init();
   }, []);
@@ -66,11 +64,12 @@ export function ModuloJugadas() {
   }, [selectedLot]);
 
   const agregarJugada = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Datos incompletos");
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Selecciona animal y sorteos");
     setCurrentJugadas([...currentJugadas, {
       loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
     setSelectedNum(null);
+    toast.success("Añadido!");
   };
 
   const msgUrl = useMemo(() => {
@@ -85,13 +84,13 @@ export function ModuloJugadas() {
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black">Sincronizando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando...</div>;
 
   return (
-    <div className="w-full bg-slate-50 min-h-screen text-slate-900 pb-40 overflow-x-hidden text-left">
+    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-left">
       
       {/* 1. AGENCIA SELECTOR */}
-      <div className="w-full bg-[#0F172A] p-6 lg:p-8 text-white shadow-2xl rounded-b-[4rem] mb-10 text-center">
+      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[4rem] mb-10 text-center">
         <p className="text-[11px] font-black uppercase text-emerald-400 mb-4 tracking-[0.4em]">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center">
           {agencias.map(ag => (
@@ -103,10 +102,11 @@ export function ModuloJugadas() {
       </div>
 
       <div className="max-w-[1600px] mx-auto grid lg:grid-cols-[1fr_450px] gap-8 px-6">
+        
         <div className="space-y-8">
           {/* DATOS COBRO */}
           <Card className="p-8 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none">
-             <h2 className="text-2xl font-black uppercase italic mb-6">¿A dónde enviamos tu pago si ganas?</h2>
+             <h2 className="text-2xl font-black uppercase italic mb-6 tracking-tighter">¿A dónde enviamos tu pago si ganas?</h2>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
                <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/50" />
@@ -114,13 +114,13 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
-          {/* LOTERIAS (COLOR REAL SIEMPRE) */}
+          {/* LOTERIAS */}
           <Card className="bg-white p-8 lg:p-10 rounded-[3.5rem] shadow-xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-6 items-center">
               {LOTERIAS.map(lot => (
-                <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-100 hover:scale-105 grayscale-0'}`}>
-                  <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-100'} overflow-hidden bg-black p-1.5 flex items-center justify-center transition-all`}>
-                    <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none !important' }} crossOrigin="anonymous" />
+                <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-3 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-40 grayscale-0'}`}>
+                  <div className={`w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-2xl' : 'border-slate-100'} overflow-hidden bg-black p-1.5 flex items-center justify-center`}>
+                    <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" crossOrigin="anonymous" style={{ filter: 'none !important' }} />
                   </div>
                   <span className={`text-[10px] lg:text-[12px] font-black uppercase text-center ${selectedLot === lot.id ? 'text-emerald-600 underline' : 'text-slate-500'}`}>{lot.label}</span>
                 </button>
@@ -128,7 +128,7 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
-          {/* GRILLA ANIMALITOS (FIJADO CUERVO) */}
+          {/* GRILLA ANIMALITOS */}
           <Card className="p-8 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {filteredNumbers.map(n => (
@@ -136,7 +136,7 @@ export function ModuloJugadas() {
                   <span className="text-3xl lg:text-5xl mb-1">{ANIMAL_EMOJIS[n]}</span>
                   <span className="text-[18px] lg:text-[22px] font-black text-slate-900 leading-none">{n}</span>
                   <div className="mt-2 w-full px-1 flex items-center justify-center min-h-[30px]">
-                    <span className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 text-center leading-none px-1 overflow-visible">
+                    <span className="text-[9px] lg:text-[11px] font-black uppercase text-slate-400 text-center leading-none px-1 overflow-visible break-words">
                       {ANIMALS_MASTER[n]}
                     </span>
                   </div>
@@ -148,41 +148,43 @@ export function ModuloJugadas() {
           {/* HORARIOS */}
           <Card className="p-8 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
-              {horas.map(h => (
-                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-slate-900 text-white shadow-xl' : 'bg-[#F8FAFC] border-transparent text-slate-500'}`}>{h}</button>
+              {horasAMostrar.map(h => (
+                <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F8FAFC] border-transparent text-slate-500'}`}>{h}</button>
               ))}
             </div>
           </Card>
         </div>
 
         {/* COLUMNA DERECHA */}
-        <div className="space-y-8">
+        <div className="space-y-8 text-center">
           <div className="lg:sticky lg:top-32 space-y-8">
             
-            {/* PANEL SOPORTE */}
+            {/* PANEL REDES */}
             {selectedAgencia && (
-              <Card className="p-8 bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 flex flex-col gap-4 text-center">
+              <Card className="p-8 bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 flex flex-col gap-4">
                  <div className="grid grid-cols-2 gap-3">
-                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">
-                      <Instagram size={20} className="mr-2"/> Instagram
+                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Instagram no definido")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">
+                      Instagram
                     </Button>
-                    <Button onClick={() => window.open(`https://wa.me/${selectedAgencia.whatsapp}?text=Hola, reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">
-                      <MessageCircle size={20} className="mr-2"/> Reclamos
+                    <Button onClick={() => window.open(`https://wa.me/${selectedAgencia.whatsapp.replace(/\D/g, '')}?text=Hola, necesito realizar un reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">
+                      Reclamos
                     </Button>
                  </div>
               </Card>
             )}
 
-            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none text-center">
-              <label className="text-xs font-black uppercase opacity-40 text-slate-900">Monto (Bs)</label>
-              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner" />
-              <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-8">
+            {/* MONTO */}
+            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-4">
+              <label className="text-[12px] font-black uppercase opacity-40 italic tracking-widest text-slate-900">Monto por Sorteo (Bs)</label>
+              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] text-slate-900 shadow-inner focus:ring-0" />
+              <Button onClick={agregarJugada} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4">
                 <Plus size={32} className="mr-3" /> AÑADIR JUGADA
               </Button>
             </Card>
 
+            {/* TICKET VIRTUAL */}
             <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900">
-              <h4 className="text-center font-black uppercase text-xl border-b pb-4 mb-8 italic">Ticket de Jugada</h4>
+              <h4 className="text-center font-black uppercase text-xl border-b border-slate-100 pb-4 mb-8 italic">Ticket Virtual</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-left">
                 {currentJugadas.map((j, i) => (
                   <div key={i} className="border-b border-slate-50 pb-5 flex justify-between items-start">
@@ -196,26 +198,40 @@ export function ModuloJugadas() {
               </div>
 
               {selectedAgencia && (
-                <div className="mt-6 p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem]">
-                  <p className="text-[10px] font-black text-slate-400 uppercase">PAGO AGENCIA:</p>
-                  <p className="text-[12px] font-black text-slate-700 uppercase italic mt-1">{selectedAgencia.banco_nombre}</p>
+                <div className="mt-6 p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Landmark size={14}/> PAGO AGENCIA:</p>
+                  <p className="text-[12px] font-black text-slate-700 uppercase italic mt-1 leading-none">{selectedAgencia.banco_nombre}</p>
                   <p className="text-[10px] font-bold text-slate-500 mt-1">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
                 </div>
               )}
 
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic mb-10 text-right">
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-end font-black text-4xl italic mb-10 tracking-tighter">
                 <span className="text-sm uppercase opacity-40">Total:</span>
                 <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
-              <Button onClick={() => window.open(msgUrl, '_blank')} className="w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3.5rem] font-black text-2xl shadow-xl active:scale-95 leading-none"><Send className="mr-3" /> ENVIAR A AGENCIA</Button>
+
+              <Button 
+                onClick={() => {
+                   if (!userPM || !userBanco || !userCedula) return toast.error("¡Faltan tus datos de pago!");
+                   if (!selectedAgencia) return toast.error("Elige una agencia");
+                   window.open(msgUrl, '_blank');
+                }}
+                className={`w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3.5rem] font-black text-2xl shadow-xl active:scale-95 leading-none ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
+              >
+                <Send size={32} className="mr-3" /> ENVIAR A AGENCIA
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* PUBLICIDAD FINAL */}
       {selectedAgencia?.publicidad_url && (
         <div className="max-w-[1600px] mx-auto mt-24 px-6 pb-20 text-center">
-           <img src={selectedAgencia.publicidad_url} className="w-full h-auto object-contain max-h-[800px] mx-auto rounded-[5rem] shadow-2xl border-[12px] border-white" />
+           <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic">ESPACIO PUBLICITARIO</p>
+           <div className="rounded-[5rem] overflow-hidden shadow-2xl border-[12px] border-white bg-white">
+              <img src={selectedAgencia.publicidad_url} alt="Publicidad" className="w-full h-auto object-contain max-h-[800px] mx-auto" />
+           </div>
         </div>
       )}
     </div>
