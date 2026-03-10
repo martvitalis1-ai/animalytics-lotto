@@ -4,21 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock } from "lucide-react";
+import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-// --- RUTA RAW DE GITHUB ---
+// --- CONFIGURACIÓN DE LOGOS GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, // LOGO DADOS
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },    // LOGO PÁJARO
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` },
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
 
-// --- DICCIONARIOS CORREGIDOS ---
 const ANIMALS_MASTER: any = { '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', '9': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' };
 const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
 
@@ -32,12 +31,12 @@ export function ModuloJugadas() {
   const [monto, setMonto] = useState("10");
   const [loading, setLoading] = useState(true);
 
-  // --- ESTADOS VIP Y DATO MAESTRO ---
+  // VIP
   const [isVip, setIsVip] = useState(false);
   const [passVip, setPassVip] = useState("");
   const [datoVip, setDatoVip] = useState<any>(null);
 
-  // Datos usuario
+  // User PM
   const [userPM, setUserPM] = useState("");
   const [userCedula, setUserCedula] = useState("");
   const [userBanco, setUserBanco] = useState("");
@@ -56,14 +55,18 @@ export function ModuloJugadas() {
     init();
   }, []);
 
-  // ✅ FUNCIÓN PEDIR DATO MAESTRO (INTEGRADA)
+  // CARGA SEGURA DE IA
   const cargarDatoMaestro = async () => {
-    if (!selectedLot) return;
-    const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
-      lot_name: selectedLot,
-      proxima_hora: "SIGUIENTE"
-    });
-    if (data && data.length > 0) setDatoVip(data[0]);
+    try {
+      if (!selectedLot) return;
+      const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
+        lot_name: selectedLot,
+        proxima_hora: "SIGUIENTE"
+      });
+      if (data && data.length > 0) setDatoVip(data[0]);
+    } catch (err) {
+      console.warn("Falta crear función SQL generar_dato_maestro_vip");
+    }
   };
 
   useEffect(() => { cargarDatoMaestro(); }, [selectedLot]);
@@ -72,7 +75,7 @@ export function ModuloJugadas() {
     if (passVip.toUpperCase() === "ANIMALYTICS2026") {
       setIsVip(true);
       localStorage.setItem('bunker_vip', 'true');
-      toast.success("¡BÚNKER DESBLOQUEADO!");
+      toast.success("¡BIENVENIDO AL BÚNKER VIP!");
     } else {
       toast.error("Llave incorrecta");
     }
@@ -87,36 +90,32 @@ export function ModuloJugadas() {
     });
   }, [selectedLot]);
 
-  const horasAMostrar = useMemo(() => {
-    const punto = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
-    const media = ["08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", "02:30 PM", "03:30 PM", "04:30 PM", "05:30 PM", "06:30 PM", "07:30 PM"];
-    return (selectedLot === "Guacharito" || selectedLot === "Lotto Rey") ? media : punto;
+  const horas = useMemo(() => {
+    const p = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
+    const m = ["08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", "02:30 PM", "03:30 PM", "04:30 PM", "05:30 PM", "06:30 PM", "07:30 PM"];
+    return (selectedLot === "Guacharito" || selectedLot === "Lotto Rey") ? m : p;
   }, [selectedLot]);
 
-  const agregarJugada = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
-    setCurrentJugadas([...currentJugadas, {
-      loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
-    }]);
+  const agregar = () => {
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Completa la jugada");
+    setCurrentJugadas([...currentJugadas, { loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours] }]);
     setSelectedNum(null);
   };
 
   const msgUrl = useMemo(() => {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
-    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '');
+    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
     tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
     let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\n🏦 BANCO: ${userBanco}\n📞 TLF: ${userPM}\n🆔 CI: ${userCedula}\n--------------------------\n\n`;
-    currentJugadas.forEach(j => {
-      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
-    });
+    currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`; });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando...</div>;
 
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
+    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden flex flex-col items-center">
       
       {/* 1. AGENCIA SELECTOR */}
       <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
@@ -131,13 +130,12 @@ export function ModuloJugadas() {
       </div>
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
-        
         <div className="space-y-10">
-          {/* PASO 1: DATOS COBRO */}
-          <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center">
+          {/* DATOS COBRO */}
+          <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
-                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter text-center leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
+                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter leading-tight text-center">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
                 <div className="grid grid-cols-1 gap-4 w-full">
                   <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
@@ -154,31 +152,28 @@ export function ModuloJugadas() {
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse">PRÓXIMO DATO VIP</span>
                   <span className="text-emerald-400 font-black text-2xl italic tracking-tighter uppercase">{selectedLot}</span>
                 </div>
-
-                <div className="text-center py-6">
+                <div className="text-center py-6 text-white">
                    {isVip ? (
                      <div className="space-y-6 animate-in zoom-in-95 duration-700">
-                        <div className="text-6xl lg:text-8xl font-black text-white tracking-tighter flex flex-col items-center gap-4 leading-none">
+                        <div className="text-6xl lg:text-8xl font-black tracking-tighter flex flex-col items-center gap-4 leading-none">
                            <span className="text-5xl">{ANIMAL_EMOJIS[datoVip?.animal_id] || "🎲"}</span>
                            {datoVip?.animal_id || "75"} - {datoVip?.animal_nombre || "GUÁCHARO"}
                         </div>
                         <div className="flex flex-wrap justify-center gap-3">
-                           <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase">🎯 {datoVip?.metodo || "Matemática"}</span>
-                           <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase">🔥 {datoVip?.probabilidad || "98"}% ÉXITO</span>
+                           <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🎯 {datoVip?.metodo || "Fórmula Maestra"}</span>
+                           <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🔥 {datoVip?.probabilidad || "98"}% ÉXITO</span>
                         </div>
                      </div>
                    ) : (
-                     <div className="flex flex-col items-center gap-8">
-                        <div className="bg-white/5 backdrop-blur-xl p-14 rounded-full border-4 border-dashed border-white/10">
-                           <Lock size={80} className="text-white/20" />
-                        </div>
+                     <div className="flex flex-col items-center gap-8 text-center">
+                        <div className="bg-white/5 backdrop-blur-xl p-14 rounded-full border-4 border-dashed border-white/10"><Lock size={80} className="text-white/20" /></div>
                         <p className="text-white font-black text-2xl uppercase tracking-[0.2em]">DATO BLOQUEADO</p>
                         <div className="w-full max-w-sm flex flex-col gap-4">
                            <div className="flex gap-2 bg-white/5 p-2 rounded-3xl border border-white/10">
                               <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Escribe tu llave..." className="bg-transparent border-none text-white font-black text-center text-lg h-14" />
-                              <Button onClick={validarLlave} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase">DESBLOQUEAR</Button>
+                              <Button onClick={validarLlave} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase tracking-tighter">LISTO</Button>
                            </div>
-                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl">COMPRAR LLAVE MAESTRA</Button>
+                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl hover:scale-105 transition-all">SOLICITAR ACCESO VIP</Button>
                         </div>
                      </div>
                    )}
@@ -201,15 +196,15 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
-          {/* GRILLA ANIMALITOS */}
+          {/* GRILLA ANIMALITOS (FIX CUERVO) */}
           <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {filteredNumbers.map(n => (
                 <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
-                  <span className="text-3xl lg:text-5xl mb-1">{ANIMAL_EMOJIS[n]}</span>
+                  <span className="text-3xl lg:text-5xl mb-1 leading-none">{ANIMAL_EMOJIS[n] || "🎲"}</span>
                   <span className="text-[18px] lg:text-[22px] font-black text-slate-900 leading-none">{n}</span>
-                  <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-visible">
-                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-slate-400 text-center leading-none">
+                  <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-hidden">
+                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-slate-400 text-center leading-tight">
                       {ANIMALS_MASTER[n]}
                     </span>
                   </div>
@@ -232,15 +227,15 @@ export function ModuloJugadas() {
         <div className="space-y-8 flex flex-col items-center w-full">
           <div className="lg:sticky lg:top-32 space-y-8 w-full">
             
-            {/* PANEL REDES Y PAGO AGENCIA */}
+            {/* PANEL REDES */}
             {selectedAgencia && (
               <Card className="p-8 bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 flex flex-col gap-6 text-center">
                  <div className="grid grid-cols-2 gap-3">
-                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">Instagram</Button>
-                    <Button onClick={() => window.open(`https://wa.me/${selectedAgencia.whatsapp.replace(/\D/g, '')}?text=Hola, reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">Reclamos</Button>
+                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg"><Instagram size={20} className="mr-2"/> Instagram</Button>
+                    <Button onClick={() => window.open(`https://wa.me/${selectedAgencia.whatsapp.replace(/\D/g, '')}?text=Hola, necesito realizar un reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg"><MessageCircle size={20} className="mr-2"/> Reclamos</Button>
                  </div>
                  <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left text-slate-900">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center leading-none">DATOS PAGO AGENCIA</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center">DATOS PAGO AGENCIA</p>
                     <p className="text-[14px] font-black text-slate-700 uppercase italic leading-tight">{selectedAgencia.banco_nombre}</p>
                     <p className="text-[12px] font-bold text-slate-500 mt-2">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
                  </div>
@@ -257,9 +252,9 @@ export function ModuloJugadas() {
             {/* TICKET VIRTUAL */}
             <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900">
               <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic">RESUMEN TICKET</h4>
-              <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
+              <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-center">
                 {currentJugadas.map((j, i) => (
-                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center text-center">
+                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{j.loteria}</p>
                     <p className="font-black text-xl italic text-slate-800 leading-none">#{j.numero} - {j.animal}</p>
                     <div className="flex items-center gap-4 mt-2">
@@ -282,7 +277,7 @@ export function ModuloJugadas() {
       {/* PUBLICIDAD FINAL */}
       {selectedAgencia?.publicidad_url && (
         <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-20 text-center flex flex-col items-center">
-           <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic text-center">ESPACIO PUBLICITARIO</p>
+           <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic">ESPACIO PUBLICITARIO</p>
            <img src={selectedAgencia.publicidad_url} alt="Publicidad" className="w-full h-auto object-contain max-h-[800px] mx-auto rounded-[5rem] shadow-2xl border-[12px] border-white bg-white" />
         </div>
       )}
