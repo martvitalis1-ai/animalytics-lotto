@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN DE LOGOS GITHUB (URL RAW EXACTA) ---
+// --- CONFIGURACIÓN DE LOGOS GITHUB (RUTA EXACTA) ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -77,56 +77,42 @@ export function ModuloJugadas() {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
     let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
     if (tlf.startsWith('0')) tlf = '58' + tlf.substring(1); else if (!tlf.startsWith('58')) tlf = '58' + tlf;
-    
     let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS: ${userBanco} / ${userPM} / ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => {
-      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nSorteos: ${j.horas.join(", ")}\nMonto: ${j.monto} Bs x sorteo\n----------\n`;
+      msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nSorteos: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`;
     });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
-    
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">SINCRONIZANDO...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white text-slate-900">Sincronizando Búnker...</div>;
 
   return (
     <div className="max-w-7xl mx-auto bg-[#F8FAFC] min-h-screen text-slate-900 pb-40">
       
-      {/* 1. AGENCIA SELECTOR */}
+      {/* 1. SELECCIÓN DE AGENCIA */}
       <div className="p-4 bg-[#0F172A] text-white shadow-xl rounded-b-[2rem]">
         <p className="text-[9px] font-black uppercase text-emerald-400 mb-3 text-center tracking-[0.3em]">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex gap-2 overflow-x-auto pb-2 justify-center no-scrollbar">
           {agencias.map(ag => (
-            <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black uppercase text-[11px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+            <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black uppercase text-[11px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
               {selectedAgencia?.id === ag.id && <CheckCircle2 size={16} />} {ag.nombre}
             </button>
           ))}
         </div>
       </div>
 
-      {/* 2. SELECTOR DE LOTERÍA - CÍRCULOS NEGROS SIN FILTROS */}
+      {/* 2. SELECCIÓN DE LOTERÍA - CORREGIDO */}
       <div className="mt-4 px-4">
         <div className="bg-white p-4 rounded-[2rem] shadow-sm overflow-x-auto flex justify-center no-scrollbar border border-slate-100">
           <div className="flex gap-6 min-w-max px-4">
             {LOTERIAS.map(lot => (
-              <button 
-                key={lot.id} 
-                onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} 
-                className={`flex flex-col items-center gap-2 transition-all ${selectedLot === lot.id ? 'scale-110' : 'opacity-60'}`}
-              >
+              <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-2 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-60'}`}>
                 <div className={`w-16 h-16 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-lg' : 'border-slate-800'} overflow-hidden bg-black p-1 flex items-center justify-center`}>
-                  <img 
-                    src={lot.img} 
-                    alt={lot.id} 
-                    className="w-full h-full object-contain" 
-                    style={{ filter: 'none' }}
-                    crossOrigin="anonymous" 
-                    onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} 
-                  />
+                  <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" style={{ filter: 'none' }} crossOrigin="anonymous" onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} />
                 </div>
-                {/* ETIQUETA CORREGIDA PARA LOTTO ACTIVO */}
                 <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">
-                   {lot.id === "Lotto Activo" ? "LOTTO" : lot.id.split(" ")[0]}
+                   {lot.id === "Lotto Activo" ? "LOTTO ACTIVO" : lot.id.split(" ")[0]}
                 </span>
               </button>
             ))}
@@ -139,11 +125,7 @@ export function ModuloJugadas() {
           <Card className="p-4 bg-white rounded-[2rem] shadow-xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
               {Object.keys(animalitosAMostrar).map(n => (
-                <button 
-                  key={n} 
-                  onClick={() => setSelectedNum(n)} 
-                  className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all h-20 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'bg-[#F1F5F9] border-transparent text-slate-600'}`}
-                >
+                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all h-20 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'bg-[#F1F5F9] border-transparent text-slate-600'}`}>
                   <span className="text-xl leading-none mb-1">{ANIMAL_EMOJIS[n] || '🎟️'}</span>
                   <span className="text-[12px] font-black text-slate-900 leading-none">{n}</span>
                   <span className="text-[7px] font-bold uppercase truncate w-full text-center mt-1 text-slate-500">{(animalitosAMostrar as any)[n]}</span>
@@ -173,11 +155,12 @@ export function ModuloJugadas() {
                 <p className="text-[12px] font-black text-slate-800 uppercase italic mt-1 leading-none">{selectedAgencia.banco_nombre}</p>
               </div>
             )}
-            <Button onClick={agregarJugada} className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-2xl text-lg shadow-xl active:scale-95 transition-all">
+            <Button onClick={agregarJugada} className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-2xl text-lg shadow-xl active:scale-95">
               <Plus size={24} className="mr-2" /> AÑADIR JUGADA
             </Button>
           </Card>
 
+          {/* TICKET VISUAL */}
           <div className="bg-white p-6 font-mono shadow-2xl rounded-[2.5rem] border-t-[14px] border-emerald-600 flex flex-col text-slate-900">
             <h4 className="text-center font-black uppercase text-sm italic border-b pb-2 mb-4">Ticket Virtual</h4>
             <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px] no-scrollbar">
@@ -200,10 +183,10 @@ export function ModuloJugadas() {
               <span>{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
             </div>
 
-            {/* BOTÓN ENVIAR - CLON PERFECTO DEL DE AÑADIR JUGADA */}
+            {/* BOTÓN ENVIAR - CLON DEL DE ARRIBA */}
             <a 
               href={msgUrl} 
-              onClick={() => { localStorage.setItem('u_pm_banco', userBanco); localStorage.setItem('u_pm_tlf', userPM); localStorage.setItem('u_pm_cedula', userCedula); }}
+              onClick={() => { localStorage.setItem('u_pm_banco', userBanco); localStorage.setItem('u_pm_tlf', userPM); localStorage.setItem('u_pm_cedula', userCedula); registrarVenta(); }}
               target="_blank" rel="noopener noreferrer"
               className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg shadow-xl flex items-center justify-center text-center gap-3 mt-6 transition-all active:scale-95"
             >
@@ -213,7 +196,7 @@ export function ModuloJugadas() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-5 border-t-4 border-emerald-500 flex gap-3 z-[100] shadow-[0_-15px_30px_rgba(0,0,0,0.4)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0F172A] p-5 border-t-4 border-emerald-500 flex gap-3 z-[100] shadow-[0_-15px_30px_rgba(0,0,0,0.4)]">
           <Input value={userBanco} onChange={e => setUserBanco(e.target.value)} placeholder="Banco" className="bg-slate-800 border-none text-white font-black h-12 text-xs placeholder:text-slate-500" />
           <Input value={userPM} onChange={e => setUserPM(e.target.value)} placeholder="Tlf PM" className="bg-slate-800 border-none text-white font-black h-12 text-xs placeholder:text-slate-500" />
           <Input value={userCedula} onChange={e => setUserCedula(e.target.value)} placeholder="Cédula" className="bg-slate-800 border-none text-white font-black h-12 text-xs placeholder:text-slate-500" />
