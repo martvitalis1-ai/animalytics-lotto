@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Trash2, Wallet, Landmark, ReceiptText, Plus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN DE LOGOS GITHUB ---
+// --- CONFIGURACIÓN DE LOGOS GITHUB (URL RAW) ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -67,7 +67,7 @@ export function ModuloJugadas() {
     if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
     const dic: any = animalitosAMostrar;
     setCurrentJugadas([...currentJugadas, {
-      loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
+      loteria: selectedLot, numero: selectedNum, animal: dic[selectedNum], emoji: ANIMAL_EMOJIS[selectedNum], monto: parseFloat(monto), horas: [...selectedHours]
     }]);
     setSelectedNum(null);
     toast.success("Añadido");
@@ -90,26 +90,37 @@ export function ModuloJugadas() {
   return (
     <div className="max-w-7xl mx-auto bg-[#F8FAFC] min-h-screen text-slate-900 pb-40">
       
-      {/* 1. SELECTOR DE AGENCIA - FONDO OSCURO PARA CONTRASTE */}
+      {/* 1. AGENCIA SELECTOR */}
       <div className="p-4 bg-[#0F172A] text-white shadow-xl rounded-b-[2rem]">
         <p className="text-[9px] font-black uppercase text-emerald-400 mb-3 text-center tracking-[0.3em]">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex gap-2 overflow-x-auto pb-2 justify-center no-scrollbar">
           {agencias.map(ag => (
-            <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black uppercase text-[11px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+            <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black uppercase text-[11px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
               {selectedAgencia?.id === ag.id && <CheckCircle2 size={16} />} {ag.nombre}
             </button>
           ))}
         </div>
       </div>
 
-      {/* 2. SELECTOR DE LOTERÍA - ICONOS GRANDES Y VISIBLES */}
+      {/* 2. LOTERÍA SELECTOR - SIN FILTROS DE GRIS */}
       <div className="mt-4 px-4">
         <div className="bg-white p-4 rounded-[2rem] shadow-sm overflow-x-auto flex justify-center no-scrollbar border border-slate-100">
           <div className="flex gap-6 min-w-max px-4">
             {LOTERIAS.map(lot => (
-              <button key={lot.id} onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} className={`flex flex-col items-center gap-2 transition-all ${selectedLot === lot.id ? 'scale-110 opacity-100' : 'opacity-30 grayscale hover:opacity-50'}`}>
-                <div className={`w-16 h-16 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-lg' : 'border-slate-100'} overflow-hidden bg-white p-1`}>
-                  <img src={lot.img} alt={lot.id} className="w-full h-full object-contain" crossOrigin="anonymous" onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} />
+              <button 
+                key={lot.id} 
+                onClick={() => { setSelectedLot(lot.id); setSelectedHours([]); setSelectedNum(null); }} 
+                className={`flex flex-col items-center gap-2 transition-all ${selectedLot === lot.id ? 'scale-110' : 'opacity-60'}`}
+              >
+                <div className={`w-16 h-16 rounded-full border-4 ${selectedLot === lot.id ? 'border-emerald-500 shadow-lg' : 'border-slate-100'} overflow-hidden bg-white p-1 flex items-center justify-center`}>
+                  <img 
+                    src={lot.img} 
+                    alt={lot.id} 
+                    className="w-full h-full object-contain" 
+                    style={{ filter: 'none', WebkitFilter: 'none' }} // FORZADO DE COLOR REAL
+                    crossOrigin="anonymous" 
+                    onError={(e: any) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/126/126501.png"; }} 
+                  />
                 </div>
                 <span className="text-[9px] font-black uppercase text-slate-600 tracking-tighter">{lot.id.replace("Activo", "").replace("Plus", "")}</span>
               </button>
@@ -121,7 +132,6 @@ export function ModuloJugadas() {
       <div className="grid lg:grid-cols-3 gap-4 p-4">
         <div className="lg:col-span-2 space-y-4">
           
-          {/* GRILLA DE ANIMALES CON NOMBRE Y EMOJI */}
           <Card className="p-4 bg-white rounded-[2rem] shadow-xl border-none">
             <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
               {Object.keys(animalitosAMostrar).map(n => (
@@ -138,7 +148,6 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
-          {/* HORARIOS VISIBLES */}
           <Card className="p-4 bg-white rounded-[2rem] shadow-xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
               {horasAMostrar.map(h => (
@@ -149,8 +158,7 @@ export function ModuloJugadas() {
         </div>
 
         <div className="space-y-4">
-          {/* PANEL MONTO */}
-          <Card className="p-6 bg-white rounded-[2.5rem] shadow-2xl border-none space-y-4 text-center">
+          <Card className="p-8 bg-white rounded-[2.5rem] shadow-2xl border-none space-y-4 text-center">
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase opacity-40 italic">Monto por Sorteo (Bs)</label>
               <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-16 text-center text-5xl font-black bg-slate-50 border-none rounded-2xl text-slate-900" />
@@ -166,7 +174,6 @@ export function ModuloJugadas() {
             </Button>
           </Card>
 
-          {/* TICKET VISUAL */}
           <div className="bg-white p-6 font-mono shadow-2xl rounded-[2.5rem] border-t-[14px] border-emerald-600 flex flex-col text-slate-900">
             <h4 className="text-center font-black uppercase text-sm italic border-b pb-2 mb-4">Ticket de Jugada</h4>
             <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px]">
@@ -189,7 +196,6 @@ export function ModuloJugadas() {
               <span>{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
             </div>
 
-            {/* BOTÓN ENVIAR - CLON DEL DE AÑADIR */}
             <a 
               href={msgUrl} 
               onClick={() => { localStorage.setItem('u_pm_banco', userBanco); localStorage.setItem('u_pm_tlf', userPM); localStorage.setItem('u_pm_cedula', userCedula); }}
@@ -202,7 +208,6 @@ export function ModuloJugadas() {
         </div>
       </div>
 
-      {/* FOOTER DATOS - ALTA VISIBILIDAD */}
       <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-4 border-t-4 border-emerald-500 flex gap-2 z-[100]">
           <Input value={userBanco} onChange={e => setUserBanco(e.target.value)} placeholder="Banco" className="bg-slate-800 border-none text-white font-black h-12 text-xs placeholder:text-slate-500" />
           <Input value={userPM} onChange={e => setUserPM(e.target.value)} placeholder="Tlf PM" className="bg-slate-800 border-none text-white font-black h-12 text-xs placeholder:text-slate-500" />
