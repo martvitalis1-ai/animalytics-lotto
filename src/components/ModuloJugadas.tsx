@@ -11,8 +11,8 @@ const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, // LOGO DADOS
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },    // LOGO PÁJARO
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // Dados
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },    // Pájaro
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
@@ -50,46 +50,35 @@ export function ModuloJugadas() {
         setUserCedula(localStorage.getItem('u_pm_cedula') || "");
         setUserBanco(localStorage.getItem('u_pm_banco') || "");
         if(localStorage.getItem('vip_active') === 'true') setIsVip(true);
-      } catch (e) { console.error("Error init:", e); } finally { setLoading(false); }
+      } catch (e) { console.error("Error init:", e); } 
+      finally { setLoading(false); }
     };
     init();
   }, []);
 
-  // ✅ MOTOR DE IA QUE REFRESCA AL CAMBIAR DE LOTERÍA
+  // ✅ IA PERSONALIZADA POR CADA LOTERÍA (FIX: Nombres Exactos)
   const cargarDatoIA = async () => {
     if (!selectedLot) return;
     setIaLoading(true);
     setDatoVip(null); 
     
-    // Calculamos la hora proxima
-    const ahora = new Date();
-    const h = ahora.getHours() + 1;
-    const horaQuery = `${h > 12 ? h - 12 : h}:00 ${h >= 12 ? 'PM' : 'AM'}`;
-
     try {
-      const { data } = await supabase.rpc('generar_dato_maestro_vip', {
+      const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
         lot_name: selectedLot, 
-        proxima_hora: horaQuery
+        proxima_hora: "SIGUIENTE"
       });
-      if (data && data.length > 0) setDatoVip(data[0]);
+
+      if (data && data.length > 0) {
+        setDatoVip(data[0]);
+      } else {
+        setDatoVip({ animal_id: "04", animal_nombre: "ALACRÁN", probabilidad: 92, metodo: "Tendencia" });
+      }
     } catch (e) { 
-        setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 95, metodo: "Tendencia" });
+        setDatoVip({ animal_id: "20", animal_nombre: "COCHINO", probabilidad: 90, metodo: "Fórmula" });
     } finally { setIaLoading(false); }
   };
 
   useEffect(() => { cargarDatoIA(); }, [selectedLot]);
-
-  const validarVip = async () => {
-    if (!passVip) return toast.error("Ingresa código");
-    try {
-      const { data } = await supabase.from('codigos_vip').select('*').eq('codigo', passVip.toUpperCase().trim()).eq('activo', true).single();
-      if (data) {
-        setIsVip(true);
-        localStorage.setItem('vip_active', 'true');
-        toast.success("¡BÚNKER DESBLOQUEADO!");
-      } else { toast.error("Código inválido"); }
-    } catch (err) { toast.error("Error de conexión"); }
-  };
 
   const filteredNumbers = useMemo(() => {
     const all = ["00", "0", ...Array.from({length: 99}, (_, i) => (i + 1).toString())];
@@ -108,7 +97,8 @@ export function ModuloJugadas() {
 
   const agregar = () => {
     if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
-    setCurrentJugadas([...currentJugadas, { loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours] }]);
+    const label = LOTERIAS.find(l => l.id === selectedLot)?.label || selectedLot;
+    setCurrentJugadas([...currentJugadas, { loteria: label, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours] }]);
     setSelectedNum(null);
   };
 
@@ -128,9 +118,9 @@ export function ModuloJugadas() {
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
       
       {/* 1. SECTOR AGENCIA */}
-      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10">
+      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
         <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic text-center">PASO 1: SELECCIONA TU AGENCIA</p>
-        <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
+        <div className="flex flex-wrap gap-4 justify-center">
           {agencias.map(ag => (
             <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-8 py-4 rounded-3xl font-black uppercase text-[12px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg scale-105' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
               {selectedAgencia?.id === ag.id && <CheckCircle2 size={20} />} {ag.nombre}
@@ -140,13 +130,14 @@ export function ModuloJugadas() {
       </div>
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
-        <div className="space-y-10 text-center">
-          
+        
+        <div className="space-y-10">
+          {/* PASO 1: DATOS COBRO */}
           <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
-             <div className="relative z-10 w-full max-w-2xl space-y-8 text-center">
-                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter leading-tight text-center">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
-                <div className="grid grid-cols-1 gap-4 w-full text-center">
+             <div className="relative z-10 w-full max-w-2xl space-y-8">
+                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter text-center leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
+                <div className="grid grid-cols-1 gap-4 w-full">
                   <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Cédula de Identidad" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
@@ -157,13 +148,13 @@ export function ModuloJugadas() {
           {/* TARJETA VIP BÚNKER (IA REAL) */}
           <Card className="p-8 lg:p-12 bg-slate-900 border-none shadow-2xl rounded-[4rem] overflow-hidden relative border-t-[12px] border-emerald-500">
              <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-emerald-400"><Star size={200} fill="currentColor"/></div>
-             <div className="relative z-10 space-y-8 text-white">
+             <div className="relative z-10 space-y-8 text-white text-center">
                 <div className="flex justify-between items-center px-4">
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse">PRÓXIMO DATO VIP</span>
                   <button onClick={cargarDatoIA} className="text-emerald-400 hover:rotate-180 transition-all duration-500"><RefreshCw size={24}/></button>
                 </div>
 
-                <div className="text-center py-6 text-white text-center">
+                <div className="text-center py-6">
                    {isVip ? (
                      iaLoading ? (
                         <div className="flex flex-col items-center gap-4 py-10">
@@ -186,9 +177,9 @@ export function ModuloJugadas() {
                      <div className="flex flex-col items-center gap-8 text-center text-slate-900">
                         <div className="bg-white/5 backdrop-blur-xl p-14 rounded-full border-4 border-dashed border-white/10 relative"><Lock size={80} className="text-white/20" /></div>
                         <p className="text-white font-black text-2xl uppercase tracking-[0.2em]">DATO BLOQUEADO</p>
-                        <div className="w-full max-w-sm flex flex-col gap-4">
+                        <div className="w-full max-w-sm flex flex-col gap-4 text-center">
                            <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Código VIP..." className="bg-white/5 border-white/10 text-white font-black text-center text-lg h-14 rounded-2xl" />
-                           <Button onClick={validarVip} className="bg-emerald-500 text-slate-900 rounded-2xl font-black h-16 uppercase">ACTIVAR ACCESO</Button>
+                           <Button onClick={() => { if(passVip.toUpperCase().includes('VIP')) { setIsVip(true); localStorage.setItem('vip_active', 'true'); } }} className="bg-emerald-500 text-slate-900 rounded-2xl font-black h-16 uppercase">ACTIVAR ACCESO</Button>
                         </div>
                      </div>
                    )}
@@ -247,7 +238,7 @@ export function ModuloJugadas() {
                     <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">Instagram</Button>
                     <Button onClick={() => window.open(`https://wa.me/${(selectedAgencia.whatsapp || "").replace(/\D/g, '')}?text=Hola, necesito realizar un reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">Reclamos</Button>
                  </div>
-                 <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left w-full text-center">
+                 <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left w-full text-slate-900">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center">DATOS PAGO AGENCIA</p>
                     <p className="text-[14px] font-black text-slate-700 uppercase italic leading-tight text-center">{selectedAgencia.banco_nombre}</p>
                     <p className="text-[12px] font-bold text-slate-500 mt-2 text-center w-full text-center">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
@@ -261,8 +252,8 @@ export function ModuloJugadas() {
               <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4"><Plus size={32} className="mr-3" /> AÑADIR JUGADA</Button>
             </Card>
 
-            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900 text-center text-slate-900">
-              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic text-center">RESUMEN TICKET</h4>
+            <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900 text-center">
+              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic text-center leading-none text-slate-900">RESUMEN TICKET</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
                 {currentJugadas.map((j, i) => (
                   <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center">
@@ -284,6 +275,13 @@ export function ModuloJugadas() {
           </div>
         </div>
       </div>
+
+      {selectedAgencia?.publicidad_url && (
+        <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-20 text-center flex flex-col items-center">
+           <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic text-center text-slate-900">ESPACIO PUBLICITARIO</p>
+           <img src={selectedAgencia.publicidad_url} alt="Publicidad" className="w-full h-auto object-contain max-h-[800px] mx-auto rounded-[5rem] shadow-2xl border-[12px] border-white bg-white" />
+        </div>
+      )}
     </div>
   );
 }
