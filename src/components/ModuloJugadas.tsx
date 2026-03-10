@@ -4,21 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock } from "lucide-react";
+import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+// --- RUTA GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, 
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // DADOS
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },    // PÁJARO
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
 
+// --- DICCIONARIOS ---
 const ANIMALS_MASTER: any = { '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS', '4': 'ALACRÁN', '5': 'LEÓN', '6': 'RANA', '7': 'PERICO', '8': 'RATÓN', '9': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' };
-const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "豹", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
+const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "1": "🐏", "2": "🐂", "3": "🐛", "4": "🦂", "5": "🦁", "6": "🐸", "7": "🦜", "8": "🐭", "9": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
 
 export function ModuloJugadas() {
   const [agencias, setAgencias] = useState<any[]>([]);
@@ -30,13 +32,13 @@ export function ModuloJugadas() {
   const [monto, setMonto] = useState("10");
   const [loading, setLoading] = useState(true);
 
-  // VIP
+  // VIP Logic
   const [isVip, setIsVip] = useState(false);
   const [passVip, setPassVip] = useState("");
   const [datoVip, setDatoVip] = useState<any>(null);
   const [validando, setValidando] = useState(false);
 
-  // User
+  // User States
   const [userPM, setUserPM] = useState("");
   const [userCedula, setUserCedula] = useState("");
   const [userBanco, setUserBanco] = useState("");
@@ -50,43 +52,46 @@ export function ModuloJugadas() {
         setUserCedula(localStorage.getItem('u_pm_cedula') || "");
         setUserBanco(localStorage.getItem('u_pm_banco') || "");
         if(localStorage.getItem('vip_active') === 'true') setIsVip(true);
-      } catch (e) { console.error(e); } finally { setLoading(false); }
+      } catch (e) { console.error("Error init:", e); } finally { setLoading(false); }
     };
     init();
   }, []);
 
-  // ✅ FUNCIÓN CARGAR DATO MAESTRO (JavaScript para Lovable)
-  const cargarDatoMaestro = async () => {
-    if (!selectedLot) return;
-    setDatoVip(null); // Efecto visual de carga
-
-    const { data } = await supabase.rpc('generar_dato_maestro_vip', {
-      lot_name: selectedLot, // Mandamos el nombre exacto
-      proxima_hora: "SIGUIENTE"
-    });
-
-    if (data && data.length > 0) {
-      setDatoVip(data[0]);
-    } else {
-      setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 85, metodo: "Frecuencia General" });
+  const cargarDatoIA = async () => {
+    try {
+      if (!selectedLot) return;
+      const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
+        lot_name: selectedLot, proxima_hora: "SIGUIENTE"
+      });
+      if (error) throw error;
+      if (data && data.length > 0) setDatoVip(data[0]);
+    } catch (e) { 
+      console.warn("IA no disponible");
+      setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 85, metodo: "Tendencia" });
     }
   };
 
-  useEffect(() => { cargarDatoMaestro(); }, [selectedLot]);
+  useEffect(() => { cargarDatoIA(); }, [selectedLot]);
 
   const validarVip = async () => {
-    if (!passVip) return toast.error("Ingresa un código");
+    if (!passVip) return toast.error("Ingresa tu código");
     setValidando(true);
     try {
-      const { data } = await supabase.from('codigos_vip').select('*').eq('codigo', passVip.toUpperCase().trim()).eq('activo', true).single();
+      const { data, error } = await supabase
+        .from('codigos_vip')
+        .select('*')
+        .eq('codigo', passVip.toUpperCase().trim())
+        .eq('activo', true)
+        .single();
+
       if (data) {
         setIsVip(true);
         localStorage.setItem('vip_active', 'true');
-        toast.success("¡BÚNKER DESBLOQUEADO!");
+        toast.success("¡ACCESO CONCEDIDO!");
       } else {
-        toast.error("Código inválido");
+        toast.error("Código no válido");
       }
-    } catch (err) { toast.error("Error de conexión"); }
+    } catch (err) { toast.error("Error al validar"); }
     finally { setValidando(false); }
   };
 
@@ -105,18 +110,24 @@ export function ModuloJugadas() {
     return (selectedLot === "Guacharito" || selectedLot === "Lotto Rey") ? m : p;
   }, [selectedLot]);
 
-  const agregarJugada = () => {
-    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Completa la jugada");
-    setCurrentJugadas([...currentJugadas, { loteria: selectedLot, numero: selectedNum, animal: ANIMALS_MASTER[selectedNum], monto: parseFloat(monto), horas: [...selectedHours] }]);
+  const agregar = () => {
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
+    setCurrentJugadas([...currentJugadas, { 
+      loteria: selectedLot, 
+      numero: selectedNum, 
+      animal: ANIMALS_MASTER[selectedNum] || "Animal", 
+      monto: parseFloat(monto), 
+      horas: [...selectedHours] 
+    }]);
     setSelectedNum(null);
   };
 
   const msgUrl = useMemo(() => {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
-    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '');
+    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '') || "";
     tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
     let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\n🏦 BANCO: ${userBanco}\n📞 TLF: ${userPM}\n🆔 CI: ${userCedula}\n--------------------------\n\n`;
-    currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`; });
+    currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto}\n----------\n`; });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs`;
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
@@ -124,13 +135,13 @@ export function ModuloJugadas() {
   if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando Búnker...</div>;
 
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
+    <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden flex flex-col items-center">
       
-      {/* 1. SECTOR AGENCIA */}
-      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10">
+      {/* SECCIÓN AGENCIA */}
+      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
         <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center">
-          {agencias.map(ag => (
+          {(agencias || []).map(ag => (
             <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-8 py-4 rounded-3xl font-black uppercase text-[12px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg scale-105' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
               {selectedAgencia?.id === ag.id && <CheckCircle2 size={20} />} {ag.nombre}
             </button>
@@ -140,11 +151,12 @@ export function ModuloJugadas() {
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
         <div className="space-y-10">
+          
           {/* DATOS COBRO */}
           <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
-                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter text-center leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
+                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
                 <div className="grid grid-cols-1 gap-4 w-full">
                   <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
@@ -153,8 +165,8 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
-          {/* TARJETA VIP BÚNKER */}
-          <Card className="p-8 lg:p-12 bg-slate-900 border-none shadow-2xl rounded-[4rem] overflow-hidden relative border-t-[12px] border-emerald-500 text-center">
+          {/* TARJETA VIP */}
+          <Card className="p-8 lg:p-12 bg-slate-900 border-none shadow-2xl rounded-[4rem] overflow-hidden relative border-t-[12px] border-emerald-500">
              <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-emerald-400"><Star size={200} fill="currentColor"/></div>
              <div className="relative z-10 space-y-8">
                 <div className="flex justify-between items-center px-4 text-white">
@@ -166,7 +178,7 @@ export function ModuloJugadas() {
                      <div className="space-y-6 animate-in zoom-in-95 duration-700">
                         <div className="text-6xl lg:text-8xl font-black tracking-tighter flex flex-col items-center gap-4">
                            <span className="text-5xl">{ANIMAL_EMOJIS[datoVip?.animal_id] || "🎲"}</span>
-                           {datoVip?.animal_id || "--"} - {datoVip?.animal_nombre || "ANALIZANDO"}
+                           {datoVip?.animal_id || "--"} - {datoVip?.animal_nombre || "CALCULANDO"}
                         </div>
                         <div className="flex flex-wrap justify-center gap-3">
                            <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🎯 {datoVip?.metodo || "Fórmula Maestra"}</span>
@@ -180,9 +192,9 @@ export function ModuloJugadas() {
                         <div className="w-full max-w-sm flex flex-col gap-4">
                            <div className="flex gap-2 bg-white/5 p-2 rounded-3xl border border-white/10">
                               <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Código VIP..." className="bg-transparent border-none text-white font-black text-center text-lg h-14" />
-                              <Button onClick={validarVip} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase">ACTIVAR</Button>
+                              <Button onClick={validarVip} disabled={validando} className="bg-emerald-500 text-slate-900 rounded-2xl px-6 font-black h-14 uppercase">ACTIVAR</Button>
                            </div>
-                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl">COMPRAR CÓDIGO VIP</Button>
+                           <Button onClick={() => window.open(`https://wa.me/584242542797?text=Hola, quiero activar mi Búnker VIP`, '_blank')} className="w-full h-20 bg-amber-500 text-slate-900 font-black text-xl rounded-3xl uppercase italic shadow-2xl hover:scale-105 transition-all">SOLICITAR CÓDIGO VIP</Button>
                         </div>
                      </div>
                    )}
@@ -190,6 +202,7 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
+          {/* LOTERIAS */}
           <Card className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-xl border-none flex justify-center">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4 lg:gap-10 items-center justify-items-center">
               {LOTERIAS.map(lot => (
@@ -203,6 +216,7 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
+          {/* GRILLA ANIMALITOS */}
           <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none text-slate-900">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {filteredNumbers.map(n => (
@@ -217,9 +231,10 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
+          {/* HORARIOS */}
           <Card className="p-8 bg-white rounded-[3.5rem] shadow-2xl border-none">
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
-              {horas.map(h => (
+              {horasAMostrar.map(h => (
                 <button key={h} onClick={() => setSelectedHours(prev => prev.includes(h) ? prev.filter(x => x !== h) : [...prev, h])} className={`h-14 lg:h-16 rounded-2xl text-[12px] lg:text-[14px] font-black border-2 transition-all ${selectedHours.includes(h) ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xl' : 'bg-[#F8FAFC] border-transparent text-slate-500'}`}>{h}</button>
               ))}
             </div>
@@ -242,19 +257,19 @@ export function ModuloJugadas() {
               </Card>
             )}
 
-            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-4">
-              <label className="text-[11px] font-black uppercase opacity-40 italic tracking-widest">MONTO POR SORTEO (BS)</label>
+            <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-4 text-center">
+              <label className="text-[11px] font-black uppercase opacity-40 italic tracking-widest text-center">MONTO POR SORTEO (BS)</label>
               <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] shadow-inner focus:ring-0" />
               <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4"><Plus size={32} className="mr-3" /> AÑADIR JUGADA</Button>
             </Card>
 
             <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col">
-              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic">RESUMEN TICKET</h4>
+              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic text-center">RESUMEN TICKET</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar">
                 {currentJugadas.map((j, i) => (
                   <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{j.loteria}</p>
-                    <p className="font-black text-xl italic leading-none">#{j.numero} - {j.animal}</p>
+                    <p className="font-black text-xl italic text-slate-800 leading-none">#{j.numero} - {j.animal}</p>
                     <div className="flex items-center gap-4 mt-2">
                        <span className="font-black text-lg">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
                        <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-2 rounded-2xl"><Trash2 size={18}/></button>
@@ -262,7 +277,7 @@ export function ModuloJugadas() {
                   </div>
                 ))}
               </div>
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 text-right">
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 text-right text-slate-900">
                 <span className="text-sm uppercase opacity-40">TOTAL:</span>
                 <span className="underline decoration-emerald-500 decoration-8">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
