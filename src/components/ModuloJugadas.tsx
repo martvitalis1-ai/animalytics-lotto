@@ -4,15 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock, Loader2, RefreshCw, Calculator } from "lucide-react";
+import { Send, Trash2, Wallet, Landmark, CheckCircle2, Instagram, MessageCircle, Plus, Star, Key, Lock, Loader2, RefreshCw, Calculator, Target } from "lucide-react";
 import { toast } from "sonner";
 
+// --- RUTA GITHUB ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 const LOTERIAS = [
   { id: "Lotto Activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "La Granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, 
-  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "Guácharo Activo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // Dados
+  { id: "Guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` },    // Pájaro
   { id: "Lotto Rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "Selva Plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
@@ -50,23 +51,31 @@ export function ModuloJugadas() {
         setUserCedula(localStorage.getItem('u_pm_cedula') || "");
         setUserBanco(localStorage.getItem('u_pm_banco') || "");
         if(localStorage.getItem('vip_active') === 'true') setIsVip(true);
-      } catch (e) { console.error(e); } finally { setLoading(false); }
+      } catch (e) { console.error("Error init:", e); } 
+      finally { setLoading(false); }
     };
     init();
   }, []);
 
-  // ✅ IA QUE EXPLICA LA CUENTA
+  // ✅ IA TRIANGULADA: FÓRMULA + SECUENCIA + FRECUENCIA
   const cargarDatoIA = async () => {
     if (!selectedLot) return;
     setIaLoading(true);
     setDatoVip(null); 
+
+    const ahora = new Date();
+    const h = ahora.getHours() + 1;
+    const horaQuery = `${h > 12 ? h - 12 : (h === 0 ? 12 : h)}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+    
     try {
-      const { data } = await supabase.rpc('generar_dato_maestro_vip', {
-        lot_name: selectedLot, proxima_hora: "SIGUIENTE"
+      const { data, error } = await supabase.rpc('generar_dato_maestro_vip', {
+        lot_name: selectedLot, 
+        proxima_hora: horaQuery
       });
       if (data && data.length > 0) setDatoVip(data[0]);
-    } catch (e) { console.warn("IA esperando datos"); }
-    finally { setIaLoading(false); }
+    } catch (e) { 
+        console.warn("IA esperando señal...");
+    } finally { setIaLoading(false); }
   };
 
   useEffect(() => { cargarDatoIA(); }, [selectedLot]);
@@ -114,7 +123,7 @@ export function ModuloJugadas() {
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
-  if (loading) return <div className="p-20 text-center font-black bg-white">Sincronizando Búnker...</div>;
+  if (loading) return <div className="p-20 text-center font-black bg-white">Conectando Búnker...</div>;
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
@@ -132,11 +141,13 @@ export function ModuloJugadas() {
       </div>
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
-        <div className="space-y-10">
+        <div className="space-y-10 text-center">
+          
+          {/* PASO 1: DATOS COBRO */}
           <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
-                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter text-center leading-tight">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
+                <h2 className="text-2xl lg:text-3xl font-black uppercase italic tracking-tighter leading-tight text-center">¿DÓNDE TE ENVIAMOS TU PAGO?</h2>
                 <div className="grid grid-cols-1 gap-4 w-full">
                   <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
                   <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-16 rounded-3xl font-black text-xl placeholder:text-white/40 text-center" />
@@ -145,11 +156,11 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
-          {/* TARJETA VIP BÚNKER (DATO IA QUE EXPLICA) */}
+          {/* TARJETA VIP BÚNKER (DATO IA TRIANGULADO) */}
           <Card className="p-8 lg:p-12 bg-slate-900 border-none shadow-2xl rounded-[4rem] overflow-hidden relative border-t-[12px] border-emerald-500">
              <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-emerald-400"><Star size={200} fill="currentColor"/></div>
              <div className="relative z-10 space-y-8 text-white">
-                <div className="flex justify-between items-center px-4">
+                <div className="flex justify-between items-center px-4 text-center">
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse">PRÓXIMO DATO VIP</span>
                   <button onClick={cargarDatoIA} className="text-emerald-400 hover:rotate-180 transition-all duration-500"><RefreshCw size={24}/></button>
                 </div>
@@ -159,23 +170,24 @@ export function ModuloJugadas() {
                      iaLoading ? (
                         <div className="flex flex-col items-center gap-4 py-10">
                            <Loader2 size={64} className="animate-spin text-emerald-500" />
-                           <p className="font-black uppercase tracking-widest text-emerald-500 text-sm">Analizando sorteos...</p>
+                           <p className="font-black uppercase tracking-widest text-emerald-500 text-sm italic">Triangulando Datos...</p>
                         </div>
                      ) : (
                         <div className="space-y-6 animate-in zoom-in-95 duration-700">
                            <div className="text-6xl lg:text-8xl font-black tracking-tighter flex flex-col items-center gap-4 leading-none">
                               <span className="text-5xl">{ANIMAL_EMOJIS[datoVip?.animal_id] || "🎲"}</span>
-                              {datoVip?.animal_id || "--"} - {datoVip?.animal_nombre || "SIN DATOS"}
+                              {datoVip?.animal_id || "--"} - {datoVip?.animal_nombre || "CALCULANDO"}
                            </div>
                            <div className="flex flex-wrap justify-center gap-3">
-                              <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🎯 {datoVip?.metodo}</span>
-                              <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase italic">🔥 {datoVip?.probabilidad || "0"}% ÉXITO</span>
+                              <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-sm uppercase italic tracking-widest flex items-center gap-2">
+                                <Target size={16}/> {datoVip?.metodo}
+                              </span>
+                              <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-sm uppercase italic tracking-widest">🔥 {datoVip?.probabilidad || "0"}% ÉXITO</span>
                            </div>
-                           {/* ✅ EXPLICACIÓN DE LA CUENTA */}
-                           <div className="mt-4 bg-white/5 p-4 rounded-2xl border border-white/10 flex items-start gap-3 text-left">
-                              <Calculator className="text-emerald-500 shrink-0" size={20}/>
-                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase">
-                                 {datoVip?.debug_suma || "Calculando malicia..."}
+                           <div className="mt-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-left">
+                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase italic tracking-wider">
+                                 <Calculator className="inline mr-2 text-emerald-500" size={14}/>
+                                 {datoVip?.debug_suma || "PROCESANDO COINCIDENCIA PERFECTA..."}
                               </p>
                            </div>
                         </div>
@@ -186,7 +198,7 @@ export function ModuloJugadas() {
                         <p className="text-white font-black text-2xl uppercase tracking-[0.2em]">DATO BLOQUEADO</p>
                         <div className="w-full max-w-sm flex flex-col gap-4">
                            <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Código VIP..." className="bg-white/5 border-white/10 text-white font-black text-center text-lg h-14 rounded-2xl" />
-                           <Button onClick={validarVip} className="bg-emerald-500 text-slate-900 rounded-2xl font-black h-16 uppercase">ACTIVAR ACCESO</Button>
+                           <Button onClick={validarVip} className="bg-emerald-500 text-slate-900 rounded-2xl font-black h-16 uppercase shadow-xl active:scale-95 transition-all">ACTIVAR ACCESO</Button>
                         </div>
                      </div>
                    )}
@@ -194,6 +206,7 @@ export function ModuloJugadas() {
              </div>
           </Card>
 
+          {/* LOTERIAS */}
           <Card className="bg-white p-6 lg:p-10 rounded-[3.5rem] shadow-xl border-none flex justify-center text-center">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4 lg:gap-10 items-center justify-items-center">
               {LOTERIAS.map(lot => (
@@ -207,11 +220,12 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
+          {/* GRILLA ANIMALITOS (CORREGIDO CUERVO) */}
           <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none text-slate-900 text-center">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {filteredNumbers.map(n => (
                 <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
-                  <span className="text-3xl lg:text-5xl mb-1 leading-none">{ANIMAL_EMOJIS[n] || "🎲"}</span>
+                  <span className="text-3xl lg:text-5xl mb-1 leading-none">{ANIMAL_EMOJIS[n]}</span>
                   <span className="text-[18px] lg:text-[22px] font-black leading-none text-slate-900">{n}</span>
                   <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-hidden text-slate-400">
                     <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">
@@ -251,17 +265,17 @@ export function ModuloJugadas() {
               <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic text-center text-slate-900">RESUMEN TICKET</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-center text-slate-900">
                 {currentJugadas.map((j, i) => (
-                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center text-slate-900">
+                  <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center text-slate-900 text-center">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 text-center">{j.loteria}</p>
                     <p className="font-black text-xl italic text-slate-800 leading-none text-center">#{j.numero} - {j.animal}</p>
-                    <div className="flex items-center gap-4 mt-2 text-slate-900">
+                    <div className="flex items-center gap-4 mt-2">
                        <span className="font-black text-lg">{(j.monto * j.horas.length).toFixed(2)} Bs</span>
                        <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-2 rounded-2xl"><Trash2 size={18}/></button>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 text-right text-slate-900 tracking-tighter">
+              <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 text-right tracking-tighter text-slate-900">
                 <span className="text-sm uppercase opacity-40 text-slate-900">TOTAL:</span>
                 <span className="underline decoration-emerald-500 decoration-8 text-slate-900">{currentJugadas.reduce((a, c) => a + (c.monto * c.horas.length), 0).toFixed(2)} Bs</span>
               </div>
