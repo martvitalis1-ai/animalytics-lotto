@@ -6,14 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Send, Trash2, Wallet, CheckCircle2, Star, Key, Lock, Loader2, RefreshCw, Calculator, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN MAESTRA ---
+// --- CONFIGURACIÓN MAESTRA CORREGIDA ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
   { id: "lotto_activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
   { id: "granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
-  { id: "guacharo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharo.png` }, // Corregido el logo
-  { id: "guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharito.png` }, // Corregido el logo
+  // AQUÍ ESTÁ EL TRUCO: Intercambiamos los nombres de los archivos para corregir el error visual
+  { id: "guacharo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, 
+  { id: "guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
   { id: "lotto_rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
   { id: "selva_plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
