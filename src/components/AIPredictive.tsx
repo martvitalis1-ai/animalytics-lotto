@@ -13,14 +13,22 @@ import {
 } from '@/lib/predictionCache';
 import { getAnimalName } from '@/lib/animalData';
 
+// --- FUNCIÓN DE NORMALIZACIÓN BLINDADA ---
 const normalizeCode = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   const str = String(value).trim();
   if (!str) return null;
-  if (str === '0' || str === '00') return str;
+
+  // REGLA SAGRADA: Preservar identidades únicas de texto
+  if (str === '00') return '00';
+  if (str === '0') return '0';
+
   const num = Number(str);
   if (Number.isNaN(num)) return null;
-  return Math.max(0, Math.min(99, num)).toString();
+
+  // REGLA DE ORO: Forzar 01-09 para números menores a 10
+  const n = Math.max(0, Math.min(99, num));
+  return n < 10 ? `0${n}` : n.toString();
 };
 
 const buildCached = (lotteryId: string, rows: any[]): CachedPrediction => {
@@ -36,15 +44,22 @@ const buildCached = (lotteryId: string, rows: any[]): CachedPrediction => {
 
     return items
       .filter((item) => !!item.code)
-      .map((item) => ({
-        number: item.code as string,
-        animal: getAnimalName(item.code as string) || `Animal ${(item.code as string).padStart(2, '0')}`,
-        probability: item.probability,
-        status: item.status as 'HOT' | 'COLD' | 'OVERDUE' | 'NEUTRAL',
-        frequency: 0,
-        daysSince: 0,
-        reason: item.reason,
-      }));
+      .map((item) => {
+        const finalCode = item.code as string;
+        // Buscamos el nombre usando el código normalizado (01, 02, 00, 0, etc)
+        const name = getAnimalName(finalCode);
+        
+        return {
+          number: finalCode,
+          // Si el diccionario falla, generamos un nombre genérico pero con el número bien formateado
+          animal: name || `Animal ${finalCode}`,
+          probability: item.probability,
+          status: item.status as 'HOT' | 'COLD' | 'OVERDUE' | 'NEUTRAL',
+          frequency: 0,
+          daysSince: 0,
+          reason: item.reason,
+        };
+      });
   });
 
   const deduped = mapped.filter((item, index, arr) => {
@@ -155,7 +170,7 @@ export function AIPredictive() {
               <CardHeader className="pb-2 bg-muted/20 border-b">
                 <div className="flex items-center gap-3">
                   <img src={getLotteryLogo(lottery.id)} alt={lottery.name} className="w-10 h-10 rounded-full shadow-md border-2 border-white" />
-                  <CardTitle className="text-base font-black uppercase tracking-tighter">{lottery.name}</CardTitle>
+                  <CardTitle className="text-base font-black uppercase tracking-tighter text-left">{lottery.name}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
@@ -163,7 +178,7 @@ export function AIPredictive() {
                   <div className="grid grid-cols-3 gap-2">
                     {lotteryPredictions.slice(0, 3).map((pred, idx) => (
                       <RichAnimalCard
-                        key={pred.number}
+                        key={`${lottery.id}-${pred.number}`}
                         code={pred.number}
                         probability={pred.probability}
                         status={pred.status}
@@ -176,7 +191,7 @@ export function AIPredictive() {
                 ) : (
                   <div className="flex flex-col items-center py-8 opacity-40 grayscale">
                     <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                    <p className="text-[10px] font-black uppercase">Sin datos en super_pronostico_final</p>
+                    <p className="text-[10px] font-black uppercase text-center">Sin data en super_pronostico_final</p>
                   </div>
                 )}
 
