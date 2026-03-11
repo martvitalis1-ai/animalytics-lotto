@@ -60,20 +60,33 @@ export function ModuloJugadas() {
   }, []);
 
   // IA - REGLA 5: Usa los slugs de selectedLot
-  const cargarDatoIA = async () => {
-    if (!selectedLot) return;
-    setIaLoading(true);
-    setDatoVip(null); 
-    try {
-      const { data } = await supabase.rpc('generar_dato_maestro_vip', {
-        lot_name: selectedLot, proxima_hora: "SIGUIENTE"
+  // Cambia tu función cargarDatoIA por esta:
+const cargarDatoIA = async () => {
+  if (!selectedLot) return;
+  setIaLoading(true);
+  try {
+    // Llamamos a la nueva función blindada
+    const { data, error } = await supabase.rpc('obtener_dato_vip_blindado', {
+      lot_name: selectedLot // Enviamos el slug: lotto_activo, granjita, etc.
+    });
+
+    if (data && data.length > 0) {
+      // Mapeamos el nombre real desde nuestro ANIMALS_MASTER para que no falle
+      const info = data[0];
+      setDatoVip({
+        ...info,
+        animal_nombre: ANIMALS_MASTER[info.animal_id] || "PROCESANDO"
       });
-      if (data && data.length > 0) setDatoVip(data[0]);
-      else setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 95, metodo: "Protección Búnker" });
-    } catch (e) { 
-      setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 95, metodo: "Seguridad Activa" });
-    } finally { setIaLoading(false); }
-  };
+    } else {
+      // Fallback de seguridad (Regla 5: El Perico)
+      setDatoVip({ animal_id: "07", animal_nombre: "PERICO", probabilidad: 95, metodo: "PROTECCIÓN BÚNKER" });
+    }
+  } catch (e) { 
+    console.error("Error IA:", e);
+  } finally { 
+    setIaLoading(false); 
+  }
+};
 
   useEffect(() => { cargarDatoIA(); }, [selectedLot]);
 
