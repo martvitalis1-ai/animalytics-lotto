@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Send, Trash2, Wallet, CheckCircle2, Star, Lock, Loader2, RefreshCw, Calculator, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN MAESTRA BÚNKER v5.0 ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -18,18 +17,8 @@ const LOTERIAS = [
   { id: "selva_plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
 
-// DICCIONARIO BLINDADO: 01-09 con ceros obligatorios
-const ANIMALS_MASTER: any = { 
-  '0': 'DELFÍN', '00': 'BALLENA', 
-  '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS', '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN', '09': 'ÁGUILA', 
-  '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' 
-};
-
-const ANIMAL_EMOJIS: any = { 
-  "0": "🐬", "00": "🐋", 
-  "01": "🐏", "02": "🐂", "03": "🐛", "04": "🦂", "05": "🦁", "06": "🐸", "07": "🦜", "08": "🐭", "09": "🦅", 
-  "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" 
-};
+const ANIMALS_MASTER: any = { '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS', '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN', '09': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' };
+const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "01": "🐏", "02": "🐂", "03": "🐛", "04": "🦂", "05": "🦁", "06": "🐸", "07": "🦜", "08": "🐭", "09": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
 
 export function ModuloJugadas() {
   const [agencias, setAgencias] = useState<any[]>([]);
@@ -63,7 +52,6 @@ export function ModuloJugadas() {
     init();
   }, []);
 
-  // CARGAR DATO IA CON BLINDAJE DE IDENTIDAD 0 Y 00
   const cargarDatoIA = async () => {
     if (!selectedLot) return;
     setIaLoading(true);
@@ -71,13 +59,7 @@ export function ModuloJugadas() {
       const { data } = await supabase.rpc('obtener_dato_vip_blindado', { lot_name: selectedLot });
       if (data && data.length > 0) {
         const info = data[0];
-        let idReal = info.animal_id.toString();
-        
-        // REGLA DE ORO: Forzar 01-09 si no es 0 o 00
-        if (idReal !== "0" && idReal !== "00" && idReal.length === 1) {
-            idReal = "0" + idReal;
-        }
-
+        const idReal = info.animal_id.toString(); 
         setDatoVip({
           ...info,
           animal_id: idReal,
@@ -104,14 +86,12 @@ export function ModuloJugadas() {
   };
 
   const filteredNumbers = useMemo(() => {
-    // Generamos los números respetando el formato de los diccionarios
     const base = ["00", "0"];
     const rest = Array.from({length: 99}, (_, i) => {
         const num = (i + 1).toString();
         return num.length === 1 ? "0" + num : num;
     });
     const all = [...base, ...rest];
-
     return all.filter(n => {
       if (selectedLot === "guacharito") return true; 
       if (selectedLot === "guacharo") return n === "00" || n === "0" || parseInt(n) <= 75;
@@ -146,8 +126,6 @@ export function ModuloJugadas() {
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
-      
-      {/* 1. SECTOR AGENCIA */}
       <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
         <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
@@ -161,7 +139,6 @@ export function ModuloJugadas() {
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
         <div className="space-y-10">
-          
           <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
@@ -181,13 +158,12 @@ export function ModuloJugadas() {
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse text-[10px]">DATOS VIP BÚNKER</span>
                   <button onClick={cargarDatoIA} className="text-emerald-400 hover:rotate-180 transition-all duration-500"><RefreshCw size={24}/></button>
                 </div>
-
                 <div className="text-center py-6">
                    {isVip ? (
                      iaLoading ? (
                         <div className="flex flex-col items-center gap-4 py-10 opacity-50 text-emerald-500">
                            <Loader2 size={64} className="animate-spin" />
-                           <p className="font-black uppercase tracking-widest text-sm italic">Analizando Gemas...</p>
+                           <p className="font-black uppercase tracking-widest text-sm italic">Estudiando patrones...</p>
                         </div>
                      ) : (
                         <div className="space-y-6 animate-in zoom-in-95 duration-700">
@@ -197,12 +173,12 @@ export function ModuloJugadas() {
                            </div>
                            <div className="flex flex-wrap justify-center gap-3">
                               <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-[10px] lg:text-sm uppercase italic tracking-widest flex items-center gap-2">
-                                <Plus size={16}/> MÉTODO: {datoVip?.metodo}
+                                <Plus size={16}/> {datoVip?.metodo}
                               </span>
                               <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-[10px] lg:text-sm uppercase italic tracking-widest">🔥 {datoVip?.probabilidad || "0"}% ÉXITO</span>
                            </div>
                            <div className="mt-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-center">
-                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase tracking-wider italic text-center"><Calculator className="inline mr-2 text-emerald-500" size={14}/>{datoVip?.debug_suma || "ESTADÍSTICA DE FLUJO ACTIVA"}</p>
+                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase tracking-wider italic text-center"><Calculator className="inline mr-2 text-emerald-500" size={14}/>LÓGICA: {datoVip?.debug_suma || "ESTADÍSTICA ACTIVA"}</p>
                            </div>
                         </div>
                      )
@@ -243,9 +219,7 @@ export function ModuloJugadas() {
                   <span className="text-3xl lg:text-5xl mb-1 leading-none text-center">{ANIMAL_EMOJIS[n] || "🎲"}</span>
                   <span className="text-[18px] lg:text-[22px] font-black leading-none text-slate-900 text-center">{n}</span>
                   <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-hidden text-slate-400">
-                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">
-                        {ANIMALS_MASTER[n]}
-                    </span>
+                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">{ANIMALS_MASTER[n]}</span>
                   </div>
                 </button>
               ))}
@@ -307,7 +281,6 @@ export function ModuloJugadas() {
         </div>
       </div>
 
-      {/* SECCIÓN DE PUBLICIDAD DE AGENCIA */}
       {selectedAgencia?.publicidad_url && (
         <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-40 text-center flex flex-col items-center">
            <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic text-center">ESPACIO PUBLICITARIO</p>
