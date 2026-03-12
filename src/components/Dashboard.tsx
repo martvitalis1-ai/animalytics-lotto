@@ -63,7 +63,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
+    // Si es Dueño de Agencia, lo dejamos entrar a Admin sin pedir código extra
+    if (isAgencyManager && tab === 'admin') {
+      setActiveTab(tab);
+      return;
+    }
     if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
@@ -84,7 +88,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
   return (
     <div className="min-h-screen bg-background text-left">
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
@@ -93,18 +97,31 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
                 {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                {isAgencyManager ? "Gestión de Mi Banca" : `${totalResults.toLocaleString()}+ sorteos`}
+                {isAgencyManager ? "Gestión de Mi Agencia" : `${totalResults.toLocaleString()}+ sorteos`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* BOTÓN DE ACCESO RÁPIDO A CONFIGURACIÓN (Solo para Dueños o Master Admin) */}
+            {(isMasterAdmin || isAgencyManager) && (
+              <Button 
+                variant={activeTab === 'admin' ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setActiveTab("admin")}
+                className="font-black text-[10px] uppercase gap-2 border-emerald-500/20"
+              >
+                <Settings className="w-4 h-4" /> 
+                <span className="hidden md:inline">{isAgencyManager ? 'Configurar Mi Banca' : 'Panel Maestro'}</span>
+              </Button>
+            )}
+
             <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="hidden md:flex h-9 bg-[#24A1DE] text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4 border-none">
               <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
             </Button>
             <ThemeToggle />
             <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
-              {isMasterAdmin ? '👑 Admin Maestro' : isAgencyManager ? '🏦 Banca Alquilada' : 'Usuario'}
+              {isMasterAdmin ? '👑 Admin Maestro' : isAgencyManager ? '🏦 Dueño Agencia' : 'Usuario'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
           </div>
@@ -113,7 +130,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
       <main className="container mx-auto px-4 py-4">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50 justify-center">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
             <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" />Explosivo</TabsTrigger>
             <TabsTrigger value="deportes"><Trophy className="w-4 h-4 mr-1.5" />Deportes</TabsTrigger>
@@ -146,7 +163,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="ruleta" className="space-y-6">
             <UniversalRoulette />
-            {/* MAPA PERSONALIZADO POR AGENCIA */}
             <DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} />
           </TabsContent>
 
@@ -184,15 +200,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
               <div className="space-y-6">
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                    <ShieldAlert className="text-amber-600" />
-                   <p className="text-xs font-bold text-amber-700 uppercase">Gestión de Franquicia: Solo puedes editar tus datos.</p>
+                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Gestión de Franquicia. Solo puedes editar tus datos operativos.</p>
                 </div>
+                {/* Aquí la agencia entra directo a gestionar su fila */}
                 <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
               </div>
             )}
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
       <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
       <RicardoBot />
     </div>
