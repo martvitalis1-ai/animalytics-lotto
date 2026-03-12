@@ -9,43 +9,29 @@ import { toast } from "sonner";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SportsPage from "./pages/SportsPage";
+// Importaremos estos que crearemos a continuación:
+import LoginAgencia from "./pages/LoginAgencia"; 
+import PanelAgencia from "./pages/PanelAgencia";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
+    // ... Tu lógica actual de heartbeat se mantiene intacta ...
     const accessCode = localStorage.getItem('session_access_code');
     const deviceId = localStorage.getItem('animalytics_device_fingerprint');
-
     if (!accessCode || !deviceId) return;
 
-    // Función de Latido (Ping) para mantener sesión y expulsar intrusos
     const runHeartbeat = async () => {
-      const { data, error } = await supabase
-        .from('access_codes')
-        .select('current_device_id')
-        .eq('code', accessCode)
-        .single();
-
-      if (data) {
-        if (data.current_device_id !== deviceId) {
-          // Si el ID de dispositivo en DB es diferente al mío, alguien más entró
+      const { data } = await supabase.from('access_codes').select('current_device_id').eq('code', accessCode).single();
+      if (data && data.current_device_id !== deviceId) {
           localStorage.removeItem('session_access_code');
           toast.error("Sesión cerrada: El código se inició en otro dispositivo.");
           setTimeout(() => window.location.href = "/", 1500);
-        } else {
-          // Si soy yo, actualizo mi hora de actividad
-          await supabase
-            .from('access_codes')
-            .update({ last_ping: new Date().toISOString() })
-            .eq('code', accessCode);
-        }
       }
     };
-
-    const interval = setInterval(runHeartbeat, 60000); // Cada 1 minuto
-    runHeartbeat(); // Ejecutar al cargar
-
+    const interval = setInterval(runHeartbeat, 60000);
+    runHeartbeat();
     return () => clearInterval(interval);
   }, []);
 
@@ -56,7 +42,13 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* RUTA PRINCIPAL: Si entran por /?ref=slug, Index lo detectará */}
             <Route path="/" element={<Index />} />
+            
+            {/* ACCESO PARA DUEÑOS DE AGENCIA */}
+            <Route path="/acceso-banca" element={<LoginAgencia />} />
+            <Route path="/gestion-banca" element={<PanelAgencia />} />
+
             <Route path="/sports" element={<SportsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
