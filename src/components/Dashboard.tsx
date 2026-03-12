@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -39,14 +39,18 @@ import logoAnimalytics from "@/assets/logo-animalytics.png";
 interface DashboardProps {
   userRole: string;
   onLogout: () => void;
+  tenantAgency?: any; // Recibe la agencia del link de afiliado
 }
 
-export function Dashboard({ userRole, onLogout }: DashboardProps) {
+export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) {
   const [activeTab, setActiveTab] = useState("ia");
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [totalResults, setTotalResults] = useState<number>(0);
+
+  const isMasterAdmin = userRole === 'admin';
+  const isAgencyManager = userRole === 'agency_manager';
 
   const TELEGRAM_LINK = "https://t.me/+6zATqXM1ucQzNzEx";
 
@@ -61,7 +65,14 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if ((tab === 'admin' || tab === 'insertar') && userRole !== 'admin') {
+    // Si es Dueño de Agencia, lo dejamos entrar a Admin sin pedir código extra
+    if (isAgencyManager && (tab === 'admin')) {
+      setActiveTab(tab);
+      return;
+    }
+
+    // Seguridad para usuarios normales
+    if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
       else setShowInsertModal(true);
@@ -86,8 +97,12 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
           <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
-              <h1 className="font-black text-lg leading-none uppercase italic">ANIMALYTICS PRO</h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
+              <h1 className="font-black text-lg leading-none uppercase italic">
+                {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
+              </h1>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                {isAgencyManager ? "Panel de Gestión de Banca" : `${totalResults.toLocaleString()}+ sorteos`}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -96,8 +111,8 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
             </Button>
             <ThemeToggle />
             <NotificationCenter />
-            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${userRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {userRole === 'admin' ? '👑 Admin' : 'Usuario'}
+            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
+              {isMasterAdmin ? '👑 Jefe Maestro' : isAgencyManager ? '🏦 Dueño de Banca' : 'Usuario'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
           </div>
@@ -105,44 +120,84 @@ export function Dashboard({ userRole, onLogout }: DashboardProps) {
       </header>
 
       <main className="container mx-auto px-4 py-4">
-        <div className="md:hidden mb-4 text-center">
-          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="w-full h-10 bg-[#24A1DE] text-white font-black text-xs uppercase italic gap-2 rounded-xl shadow-xl">
-            <Send className="w-4 h-4 fill-white" /> Telegram 💰🏁
-          </Button>
-        </div>
-
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
             <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" />Explosivo</TabsTrigger>
-            <TabsTrigger value="deportes"><Trophy className="w-4 h-4 mr-1.5" />Deportes</TabsTrigger>
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
-            <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
-            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
-            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />Agencias</TabsTrigger>
-            <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
-            <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
+            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+               <ShoppingCart className="w-4 h-4 mr-1.5" /> {tenantAgency ? "Mi Agencia" : "Agencias"}
+            </TabsTrigger>
+            
+            {/* Solo el Maestro Admin ve el botón de Insertar Resultados */}
+            {isMasterAdmin && (
+              <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>
+            )}
+
+            {/* El Admin y el Agency Manager ven el botón de Configuración */}
+            {(isMasterAdmin || isAgencyManager) && (
+              <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>
+            )}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
-          <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection /><FrequencyHeatmap /></TabsContent>
-          <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
-          <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay /></TabsContent>
-          <TabsContent value="resultados"><ResultsPanel isAdmin={userRole === 'admin'} /></TabsContent>
-          <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
-          <TabsContent value="guia"><GuiaUso /></TabsContent>
-          <TabsContent value="jugadas"><ModuloJugadas /></TabsContent>
-          <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
+          <TabsContent value="ia" className="space-y-6">
+            <HourlyPredictionView />
+            <AIPredictive />
+          </TabsContent>
+
+          <TabsContent value="explosivo" className="space-y-6">
+            <ExplosiveData />
+            {/* Pasamos el nombre personalizado de la agencia al botón del dato */}
+            <DatoRicardoSection 
+               customName={tenantAgency?.nombre_dato_personalizado || "DATO RICARDO"} 
+            />
+          </TabsContent>
+
+          <TabsContent value="ruleta" className="space-y-6">
+            <UniversalRoulette />
+            {/* Mostramos el mapa personalizado si la agencia tiene uno */}
+            <DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} />
+          </TabsContent>
+
+          <TabsContent value="resultados">
+            <ResultsPanel isAdmin={isMasterAdmin} />
+          </TabsContent>
+
+          <TabsContent value="jugadas">
+            {/* BLOQUEO DE AGENCIA: Si hay tenantAgency, el módulo de jugadas solo mostrará ESA agencia */}
+            <ModuloJugadas forcedAgency={tenantAgency} />
+          </TabsContent>
+
+          <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4">
+            <ResultsInsert onInserted={() => {}} />
+            <TodayResults />
+          </TabsContent>
+
           <TabsContent value="admin" className="space-y-4">
-            <AdminAgencias />
-            <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
-            <AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit />
+            {isMasterAdmin ? (
+              // VISTA TOTAL DEL JEFE
+              <>
+                <AdminAgencias />
+                <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
+                <AdminManualOverrides /><DatoRicardo /><HistoryManager />
+              </>
+            ) : (
+              // VISTA RESTRINGIDA PARA EL DUEÑO DE AGENCIA
+              <div className="space-y-6">
+                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-center gap-3">
+                   <ShieldAlert className="text-amber-600" />
+                   <p className="text-xs font-bold text-amber-700 uppercase">Estás en modo gestión de banca. Solo puedes modificar tus datos operativos.</p>
+                </div>
+                {/* Aquí le pasaremos el ID de la agencia al componente para que solo edite la suya */}
+                <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
+              </div>
+            )
+            }
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
       <RicardoBot />
     </div>
   );
