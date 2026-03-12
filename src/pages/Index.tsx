@@ -12,6 +12,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [tenantAgency, setTenantAgency] = useState<any>(null);
 
+  // 🛡️ DETECCIÓN DE AGENCIA POR LINK (?ref=slug)
   useEffect(() => {
     const checkTenant = async () => {
       const ref = searchParams.get("ref");
@@ -37,41 +38,54 @@ const Index = () => {
       return;
     }
 
-    const { data: agencyOwner } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
-    if (agencyOwner) {
+    // Si el código existe en la tabla de AGENCIAS, entra como MANAGER
+    const { data: agency } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
+    if (agency) {
       localStorage.setItem('session_access_code', cleanCode);
-      localStorage.setItem('agency_owner_id', agencyOwner.id);
+      localStorage.setItem('agency_owner_id', agency.id);
       setUserRole("agency_manager");
       setIsLoggedIn(true);
       return;
     }
 
-    try {
-      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-      if (codeData) {
-        localStorage.setItem('session_access_code', cleanCode);
-        setUserRole(role);
-        setIsLoggedIn(true);
-      } else { toast.error("CÓDIGO NO VÁLIDO"); }
-    } catch (err) { toast.error("ERROR DE CONEXIÓN"); }
+    // Usuario normal con código VIP o gratis
+    const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
+    if (codeData) {
+      localStorage.setItem('session_access_code', cleanCode);
+      setUserRole("user");
+      setIsLoggedIn(true);
+    } else { toast.error("CÓDIGO NO VÁLIDO"); }
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('session_access_code');
-    if (saved) {
-      setIsLoggedIn(true);
-      setUserRole(saved === "GANADOR2026" ? "admin" : "user");
-    }
-    setLoading(false);
+    const checkSession = async () => {
+      const saved = localStorage.getItem('session_access_code');
+      if (saved) {
+        if (saved === "GANADOR2026") {
+          setUserRole("admin");
+          setIsLoggedIn(true);
+        } else {
+          const { data } = await supabase.from('agencias').select('id').eq('llave_agencia', saved).maybeSingle();
+          if (data) {
+            setUserRole("agency_manager");
+            setIsLoggedIn(true);
+          } else {
+            setUserRole("user");
+            setIsLoggedIn(true);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    checkSession();
   }, []);
 
   if (loading) return null;
 
   return isLoggedIn ? (
-    <Dashboard userRole={userRole} onLogout={() => { localStorage.clear(); setIsLoggedIn(false); }} tenantAgency={tenantAgency} />
+    <Dashboard userRole={userRole} onLogout={() => { localStorage.clear(); window.location.href="/"; }} tenantAgency={tenantAgency} />
   ) : (
     <LoginScreen onLogin={handleLogin} />
   );
 };
-
 export default Index;
