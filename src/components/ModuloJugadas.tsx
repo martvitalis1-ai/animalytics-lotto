@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Send, Trash2, Wallet, CheckCircle2, Star, Lock, Loader2, RefreshCw, Calculator, Plus } from "lucide-react";
+import { Send, Trash2, Wallet, CheckCircle2, Star, Lock, Loader2, RefreshCw, Calculator, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
+// --- CONFIGURACIÓN MAESTRA BÚNKER v5.2 ---
 const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
 
 const LOTERIAS = [
@@ -17,6 +18,7 @@ const LOTERIAS = [
   { id: "selva_plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
 ];
 
+// DICCIONARIO BLINDADO (0, 00 y 01-09)
 const ANIMALS_MASTER: any = { '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS', '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN', '09': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO', '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO', '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA', '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO', '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO', '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA', '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO', '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA', '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO', '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO', '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO' };
 const ANIMAL_EMOJIS: any = { "0": "🐬", "00": "🐋", "01": "🐏", "02": "🐂", "03": "🐛", "04": "🦂", "05": "🦁", "06": "🐸", "07": "🦜", "08": "🐭", "09": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️", "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪", "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊", "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬", "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆", "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗", "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔", "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬", "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌", "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂", "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃", "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣" };
 
@@ -59,7 +61,13 @@ export function ModuloJugadas() {
       const { data } = await supabase.rpc('obtener_dato_vip_blindado', { lot_name: selectedLot });
       if (data && data.length > 0) {
         const info = data[0];
-        const idReal = info.animal_id.toString(); 
+        let idReal = info.animal_id.toString(); 
+        
+        // REGLA DE ORO: Forzar 01-09 si no es 0 o 00
+        if (idReal !== "0" && idReal !== "00" && idReal.length === 1) {
+            idReal = "0" + idReal;
+        }
+
         setDatoVip({
           ...info,
           animal_id: idReal,
@@ -116,9 +124,13 @@ export function ModuloJugadas() {
     if (!selectedAgencia || currentJugadas.length === 0 || !userPM) return "#";
     let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '');
     tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
-    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\nBANCO: ${userBanco}\nTLF: ${userPM}\nCI: ${userCedula}\n--------------------------\n\n`;
+    let msg = `SOLICITUD DE JUGADA\n--------------------------\nDATOS DE COBRO:\n🏦 BANCO: ${userBanco}\n📞 TLF: ${userPM}\n🆔 CI: ${userCedula}\n--------------------------\n\n`;
     currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero} - ${j.animal}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto} x sorteo\n----------\n`; });
     msg += `\nTOTAL A PAGAR: ${currentJugadas.reduce((a, c) => a + (c.monto * (c.horas?.length || 0)), 0).toFixed(2)} Bs`;
+    
+    // NOTA LEGAL EN TICKET
+    msg += `\n\n--------------------------\nNOTA: Animalytics Pro es una herramienta de gestion estadistica. Esta jugada es un compromiso directo entre el Usuario y la Agencia. Animalytics no gestiona fondos ni se hace responsable por pagos, pero ofrece mediacion en caso de incidentes.`;
+    
     return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
   }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
 
@@ -126,8 +138,10 @@ export function ModuloJugadas() {
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen text-slate-900 pb-40 overflow-x-hidden text-center flex flex-col items-center">
-      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center">
-        <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic">PASO 1: SELECCIONA TU AGENCIA</p>
+      
+      {/* 1. SECTOR AGENCIA */}
+      <div className="w-full bg-[#0F172A] p-6 lg:p-10 text-white shadow-2xl rounded-b-[3rem] mb-10 flex flex-col items-center text-center">
+        <p className="text-[10px] font-black uppercase text-emerald-400 mb-6 tracking-[0.4em] italic text-center">PASO 1: SELECCIONA TU AGENCIA</p>
         <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
           {agencias.map(ag => (
             <button key={ag.id} onClick={() => setSelectedAgencia(ag)} className={`flex items-center gap-2 px-8 py-4 rounded-3xl font-black uppercase text-[12px] transition-all border-2 ${selectedAgencia?.id === ag.id ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg scale-105' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
@@ -139,6 +153,7 @@ export function ModuloJugadas() {
 
       <div className="max-w-[1600px] w-full grid lg:grid-cols-[1fr_450px] gap-8 px-4 lg:px-10">
         <div className="space-y-10">
+          
           <Card className="p-8 lg:p-12 bg-emerald-600 text-white rounded-[3.5rem] shadow-2xl border-none relative overflow-hidden flex flex-col items-center text-center">
              <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Wallet size={150}/></div>
              <div className="relative z-10 w-full max-w-2xl space-y-8">
@@ -158,6 +173,7 @@ export function ModuloJugadas() {
                   <span className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest animate-pulse text-[10px]">DATOS VIP BÚNKER</span>
                   <button onClick={cargarDatoIA} className="text-emerald-400 hover:rotate-180 transition-all duration-500"><RefreshCw size={24}/></button>
                 </div>
+
                 <div className="text-center py-6">
                    {isVip ? (
                      iaLoading ? (
@@ -173,20 +189,20 @@ export function ModuloJugadas() {
                            </div>
                            <div className="flex flex-wrap justify-center gap-3">
                               <span className="bg-emerald-500/20 text-emerald-400 px-5 py-2 rounded-2xl font-black text-[10px] lg:text-sm uppercase italic tracking-widest flex items-center gap-2">
-                                <Plus size={16}/> {datoVip?.metodo}
+                                <Plus size={16}/> MÉTODO: {datoVip?.metodo}
                               </span>
                               <span className="bg-white/10 text-white px-5 py-2 rounded-2xl font-black text-[10px] lg:text-sm uppercase italic tracking-widest">🔥 {datoVip?.probabilidad || "0"}% ÉXITO</span>
                            </div>
-                           <div className="mt-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-center">
-                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase tracking-wider italic text-center"><Calculator className="inline mr-2 text-emerald-500" size={14}/>LÓGICA: {datoVip?.debug_suma || "ESTADÍSTICA ACTIVA"}</p>
+                           <div className="mt-4 bg-white/5 p-4 rounded-2xl border border-white/10 text-center text-center">
+                              <p className="text-[10px] font-bold text-slate-400 leading-snug uppercase tracking-wider italic"><Calculator className="inline mr-2 text-emerald-500" size={14}/>LÓGICA: {datoVip?.debug_suma || "ESTADÍSTICA ACTIVA"}</p>
                            </div>
                         </div>
                      )
                    ) : (
-                     <div className="flex flex-col items-center gap-8 text-center">
+                     <div className="flex flex-col items-center gap-8 text-center text-center">
                         <div className="bg-white/5 backdrop-blur-xl p-14 rounded-full border-4 border-dashed border-white/10 relative"><Lock size={80} className="text-white/20" /></div>
                         <p className="text-white font-black text-2xl uppercase tracking-[0.2em]">DATO BLOQUEADO</p>
-                        <div className="w-full max-w-sm flex flex-col gap-4">
+                        <div className="w-full max-w-sm flex flex-col gap-4 text-center">
                            <Button onClick={() => window.open('https://t.me/Animalytics', '_blank')} className="w-full h-16 bg-[#229ED9] text-white font-black uppercase rounded-2xl shadow-xl flex items-center justify-center gap-3"><Send size={24} className="fill-white"/> VER EN TELEGRAM</Button>
                            <div className="flex gap-2 bg-white/5 p-2 rounded-3xl border border-white/10">
                               <Input value={passVip} onChange={e => setPassVip(e.target.value)} placeholder="Código VIP..." className="bg-transparent border-none text-white font-black text-center text-lg h-14 rounded-2xl placeholder:text-white/20" />
@@ -212,14 +228,16 @@ export function ModuloJugadas() {
             </div>
           </Card>
 
-          <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none text-slate-900 text-center">
+          <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none text-slate-900 text-center text-center">
             <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 text-center">
               {filteredNumbers.map(n => (
                 <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-3 rounded-[2rem] border-2 transition-all h-32 lg:h-40 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-inner scale-110 z-10' : 'bg-[#F8FAFC] border-transparent text-slate-600 hover:bg-slate-200'}`}>
                   <span className="text-3xl lg:text-5xl mb-1 leading-none text-center">{ANIMAL_EMOJIS[n] || "🎲"}</span>
                   <span className="text-[18px] lg:text-[22px] font-black leading-none text-slate-900 text-center">{n}</span>
                   <div className="mt-1 w-full px-1 flex items-center justify-center min-h-[30px] overflow-hidden text-slate-400">
-                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">{ANIMALS_MASTER[n]}</span>
+                    <span className="text-[8px] lg:text-[10px] font-black uppercase text-center leading-tight">
+                        {ANIMALS_MASTER[n]}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -235,37 +253,37 @@ export function ModuloJugadas() {
           </Card>
         </div>
 
-        <div className="space-y-8 flex flex-col items-center w-full text-slate-900">
-          <div className="lg:sticky lg:top-10 space-y-8 w-full text-center text-slate-900">
+        <div className="space-y-8 flex flex-col items-center w-full text-slate-900 text-center">
+          <div className="lg:sticky lg:top-10 space-y-8 w-full text-center">
             {selectedAgencia && (
               <Card className="p-8 bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 flex flex-col gap-6 items-center">
                  <div className="grid grid-cols-2 gap-3 w-full text-center">
-                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg">Instagram</Button>
-                    <Button onClick={() => window.open(`https://wa.me/${(selectedAgencia.whatsapp || "").replace(/\D/g, '')}?text=Hola, necesito realizar un reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg">Reclamos</Button>
+                    <Button onClick={() => selectedAgencia.instagram_url ? window.open(selectedAgencia.instagram_url, '_blank') : toast.error("Sin Instagram")} className="h-16 rounded-3xl font-black text-xs uppercase bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-600 text-white shadow-lg text-center">Instagram</Button>
+                    <Button onClick={() => window.open(`https://wa.me/${(selectedAgencia.whatsapp || "").replace(/\D/g, '')}?text=Hola, necesito realizar un reclamo`, '_blank')} className="h-16 rounded-3xl font-black text-xs uppercase bg-amber-500 text-white shadow-lg text-center">Reclamos</Button>
                  </div>
-                 <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-left w-full text-center text-slate-900">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center">DATOS PAGO AGENCIA</p>
+                 <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-[2rem] text-center w-full text-slate-900">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center text-center">DATOS PAGO AGENCIA</p>
                     <p className="text-[14px] font-black text-slate-700 uppercase italic leading-tight text-center">{selectedAgencia.banco_nombre}</p>
-                    <p className="text-[12px] font-bold text-slate-500 mt-2 text-center">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
+                    <p className="text-[12px] font-bold text-slate-500 mt-2 text-center text-center">Tlf: {selectedAgencia.banco_telefono} | CI: {selectedAgencia.banco_cedula}</p>
                  </div>
               </Card>
             )}
 
             <Card className="p-10 bg-white rounded-[4rem] shadow-2xl border-none space-y-4 text-center">
               <label className="text-[11px] font-black uppercase opacity-40 italic tracking-widest text-center">MONTO POR SORTEO (BS)</label>
-              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] shadow-inner focus:ring-0 text-slate-900" />
-              <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4"><Plus size={32} className="mr-3" /> AÑADIR JUGADA</Button>
+              <Input type="number" value={monto} onChange={e => setMonto(e.target.value)} className="h-24 text-center text-7xl font-black bg-slate-50 border-none rounded-[3rem] shadow-inner focus:ring-0 text-slate-900 text-center" />
+              <Button onClick={agregar} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase rounded-[2.5rem] text-xl lg:text-2xl shadow-xl mt-4"><Plus size={32} className="mr-3 text-center" /> AÑADIR JUGADA</Button>
             </Card>
 
             <div className="bg-white p-8 lg:p-12 font-mono shadow-2xl rounded-[4rem] border-t-[18px] border-emerald-600 min-h-[500px] flex flex-col text-slate-900 text-center">
-              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic leading-none text-center text-slate-900">RESUMEN TICKET</h4>
+              <h4 className="text-center font-black uppercase text-lg border-b border-slate-100 pb-4 mb-8 italic leading-none text-slate-900 text-center">RESUMEN TICKET</h4>
               <div className="flex-1 space-y-5 overflow-y-auto max-h-[350px] no-scrollbar text-center text-slate-900">
                 {currentJugadas.map((j, i) => (
                   <div key={i} className="border-b border-slate-50 pb-5 flex flex-col items-center justify-center text-center text-slate-900">
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 text-center">{j.loteria}</p>
                     <p className="font-black text-xl italic text-slate-800 leading-none text-center">#{j.numero} - {j.animal}</p>
                     <div className="flex items-center gap-4 mt-2 text-slate-900 text-center">
-                       <span className="font-black text-lg">{(j.monto * (j.horas?.length || 0)).toFixed(2)} Bs</span>
+                       <span className="font-black text-lg text-center">{(j.monto * (j.horas?.length || 0)).toFixed(2)} Bs</span>
                        <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500 bg-red-50 p-2 rounded-2xl"><Trash2 size={18}/></button>
                     </div>
                   </div>
@@ -273,18 +291,32 @@ export function ModuloJugadas() {
               </div>
               <div className="mt-8 pt-8 border-t-4 border-double border-slate-900 flex justify-between items-center font-black text-3xl italic mb-10 tracking-tighter text-slate-900 text-right">
                 <span className="text-sm uppercase opacity-40 text-slate-900">TOTAL:</span>
-                <span className="underline decoration-emerald-500 decoration-8 text-slate-900">{currentJugadas.reduce((a, c) => a + (c.monto * (c.horas?.length || 0)), 0).toFixed(2)} Bs</span>
+                <span className="underline decoration-emerald-500 decoration-8 text-slate-900 text-center">{currentJugadas.reduce((a, c) => a + (c.monto * (c.horas?.length || 0)), 0).toFixed(2)} Bs</span>
               </div>
-              <Button onClick={() => { if (!userPM || !userBanco || !userCedula) return toast.error("¡Faltan tus datos de pago!"); window.open(msgUrl, '_blank'); }} className={`w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3.5rem] font-black text-2xl shadow-xl active:scale-95 leading-none ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}><Send size={32} className="mr-3" /> ENVIAR A AGENCIA</Button>
+
+              {/* BLOQUE DE DESCARGO DE RESPONSABILIDAD */}
+              <div className="mt-4 mb-6 p-4 bg-slate-50 border border-slate-200 rounded-3xl text-center text-center">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 italic text-center flex items-center justify-center gap-1">
+                  <ShieldCheck size={12} className="text-emerald-500" /> CLÁUSULA DE SEGURIDAD
+                </p>
+                <p className="text-[10px] leading-tight text-slate-500 font-medium text-center">
+                  Animalytics Pro facilita la gestión técnica. El compromiso de pago y cobro es <span className="text-emerald-600 font-bold">exclusivo entre usted y la agencia seleccionada</span>. 
+                </p>
+                <p className="text-[10px] mt-2 text-slate-400 italic text-center text-center">
+                  En caso de incidentes, nuestro equipo puede acompañar a ambas partes en la mediación.
+                </p>
+              </div>
+
+              <Button onClick={() => { if (!userPM || !userBanco || !userCedula) return toast.error("¡Faltan tus datos de pago!"); window.open(msgUrl, '_blank'); }} className={`w-full h-24 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[3.5rem] font-black text-2xl shadow-xl active:scale-95 leading-none ${currentJugadas.length === 0 ? 'opacity-20 pointer-events-none grayscale' : ''} text-center`}><Send size={32} className="mr-3" /> ENVIAR A AGENCIA</Button>
             </div>
           </div>
         </div>
       </div>
 
       {selectedAgencia?.publicidad_url && (
-        <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-40 text-center flex flex-col items-center">
+        <div className="max-w-[1600px] w-full mx-auto mt-24 px-6 pb-40 text-center flex flex-col items-center text-center">
            <p className="text-[11px] font-black text-slate-400 uppercase mb-8 tracking-[0.6em] italic text-center">ESPACIO PUBLICITARIO</p>
-           <div className="relative w-full group">
+           <div className="relative w-full group text-center">
              <img 
                src={selectedAgencia.publicidad_url} 
                alt="Publicidad Agencia" 
