@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card"; // Añadido para el contenedor de la agencia
 import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
-  const TELEGRAM_LINK = "https://t.me/+6zATqXM1ucQzNzEx";
+  const TELEGRAM_LINK = "https://t.me/Animalytics";
 
   useEffect(() => {
     const loadCount = async () => {
@@ -63,7 +64,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   }, []);
 
   const handleTabChange = (tab: string) => {
-    // Si es Dueño de Agencia, lo dejamos entrar a Admin sin pedir código extra
     if (isAgencyManager && tab === 'admin') {
       setActiveTab(tab);
       return;
@@ -87,7 +87,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   };
 
   return (
-    <div className="min-h-screen bg-background text-left">
+    <div className="min-h-screen bg-background text-left text-slate-900">
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -97,13 +97,14 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
                 {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                {isAgencyManager ? "Gestión de Mi Agencia" : `${totalResults.toLocaleString()}+ sorteos`}
+                {isAgencyManager ? "Panel de Gestión de Banca" : `${totalResults.toLocaleString()}+ sorteos`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* BOTÓN DE ACCESO RÁPIDO A CONFIGURACIÓN (Solo para Dueños o Master Admin) */}
-            {(isMasterAdmin || isAgencyManager) && (
+            
+            {/* 1. EL BOTÓN SOLO APARECE PARA LA AGENCIA. EL ADMIN ENTRA POR LA PESTAÑA DE ABAJO */}
+            {isAgencyManager && (
               <Button 
                 variant={activeTab === 'admin' ? "default" : "outline"}
                 size="sm" 
@@ -111,7 +112,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
                 className="font-black text-[10px] uppercase gap-2 border-emerald-500/20"
               >
                 <Settings className="w-4 h-4" /> 
-                <span className="hidden md:inline">{isAgencyManager ? 'Configurar Mi Banca' : 'Panel Maestro'}</span>
+                <span>Configurar Mi Banca</span>
               </Button>
             )}
 
@@ -152,42 +153,21 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="explosivo" className="space-y-6">
             <ExplosiveData />
-            {/* AQUÍ ESTÁ SU RECOMENDACIÓN DEL SISTEMA CON NOMBRE PERSONALIZABLE */}
-            <DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} />
+            {/* PASAMOS EL ID DE LA AGENCIA PARA QUE MUESTRE EL DATO MANUAL DE ESA BANCA SI EXISTE */}
+            <DatoRicardoSection 
+              customName={tenantAgency?.nombre_dato_personalizado} 
+              agencyId={tenantAgency?.id}
+            />
             <FrequencyHeatmap />
           </TabsContent>
 
-          <TabsContent value="deportes">
-            <SportsAnalytics />
-          </TabsContent>
-
-          <TabsContent value="ruleta" className="space-y-6">
-            <UniversalRoulette />
-            <DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} />
-          </TabsContent>
-
-          <TabsContent value="resultados">
-            <ResultsPanel isAdmin={isMasterAdmin} />
-          </TabsContent>
-
-          <TabsContent value="matriz" className="space-y-6">
-            <SequenceMatrixView />
-            <HourlyMatrix />
-            <FrequencyHeatmap />
-          </TabsContent>
-
-          <TabsContent value="guia">
-            <GuiaUso />
-          </TabsContent>
-
-          <TabsContent value="jugadas">
-            <ModuloJugadas forcedAgency={tenantAgency} />
-          </TabsContent>
-
-          <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4">
-            <ResultsInsert onInserted={() => {}} />
-            <TodayResults />
-          </TabsContent>
+          <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
+          <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
+          <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
+          <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
+          <TabsContent value="guia"><GuiaUso /></TabsContent>
+          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
+          <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
 
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
@@ -200,9 +180,18 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
               <div className="space-y-6">
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                    <ShieldAlert className="text-amber-600" />
-                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Gestión de Franquicia. Solo puedes editar tus datos operativos.</p>
+                   <p className="text-xs font-bold text-amber-700 uppercase">Gestión de Agencia Alquilada: Puedes publicar tus propios pronósticos manuales.</p>
                 </div>
-                {/* Aquí la agencia entra directo a gestionar su fila */}
+
+                {/* 2. LA AGENCIA TIENE EL PODER DE DAR SU PRONÓSTICO MANUAL */}
+                <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none">
+                  <h3 className="font-black uppercase italic mb-4 flex items-center gap-2">
+                    <Plus className="text-emerald-600" /> Publicar Pronóstico de la Hora
+                  </h3>
+                  {/* Le pasamos el ID de la agencia para que se guarde en su propia "parcela" */}
+                  <DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} />
+                </Card>
+
                 <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
               </div>
             )}
@@ -210,7 +199,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
         </Tabs>
       </main>
       <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
       <RicardoBot />
     </div>
   );
