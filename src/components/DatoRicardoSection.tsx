@@ -1,51 +1,51 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MessageCircle, Sparkles, Clock, AlertCircle } from "lucide-react";
+import { MessageCircle, Sparkles, AlertCircle } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
-import { getAnimalByCode } from '@/lib/animalData';
+import { getAnimalName, getAnimalEmoji } from '@/lib/animalData';
 
-interface RicardoPrediction {
-  id: number;
-  lottery_type: string;
-  draw_time: string;
-  predicted_numbers: string[];
-  notes: string | null;
-  prediction_date: string;
+interface DatoRicardoSectionProps {
+  customName?: string;
+  agencyId?: string; // El ID de la agencia bloqueada por URL
 }
 
-export function DatoRicardoSection() {
-  const [predictions, setPredictions] = useState<RicardoPrediction[]>([]);
+export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionProps) {
+  const [predictions, setPredictions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPredictions = async () => {
-    // Filtramos por fecha pero permitimos ver los últimos si no hay de hoy aún
-    const { data, error } = await supabase
+    let query = supabase
       .from('dato_ricardo_predictions')
       .select('*')
       .order('prediction_date', { ascending: false })
-      .order('draw_time', { ascending: true })
-      .limit(10);
+      .order('draw_time', { ascending: true });
 
-    if (!error && data) {
-      setPredictions(data);
+    // LÓGICA DE FILTRADO INTELIGENTE
+    if (agencyId) {
+      // Si el cliente entró por link de agencia, buscamos PRIMERO los datos de esa agencia
+      query = query.eq('agencia_id', agencyId);
+    } else {
+      // Si es la web general, buscamos el Dato Ricardo Maestro (NULL)
+      query = query.is('agencia_id', null);
     }
+
+    const { data } = await query.limit(12);
+    if (data) setPredictions(data);
     setLoading(false);
   };
 
   useEffect(() => {
     loadPredictions();
-    // Suscripción Realtime para que cuando borres/edites en el Admin, cambie aquí al instante
     const channel = supabase.channel('dato_ricardo_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dato_ricardo_predictions' }, loadPredictions)
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [agencyId]);
 
   const groupedPredictions = useMemo(() => {
-    const groups: Record<string, RicardoPrediction[]> = {};
+    const groups: Record<string, any[]> = {};
     predictions.forEach(pred => {
       if (!groups[pred.lottery_type]) groups[pred.lottery_type] = [];
       groups[pred.lottery_type].push(pred);
@@ -53,64 +53,67 @@ export function DatoRicardoSection() {
     return groups;
   }, [predictions]);
 
-  if (loading) return null; // No mostramos nada mientras carga para ahorrar espacio
-
-  if (predictions.length === 0) {
-    return (
-      <Card className="glass-card border-dashed">
-        <CardContent className="py-6 text-center text-muted-foreground italic">
-          <AlertCircle className="w-5 h-5 mx-auto mb-1 opacity-20" />
-          Esperando pronósticos del experto...
-        </CardContent>
-      </Card>
-    );
-  }
+  if (loading) return null;
 
   return (
-    <Card className="glass-card border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden">
-      <CardHeader className="pb-2 bg-primary/5">
-        <CardTitle className="flex items-center gap-2 text-lg font-black text-primary">
-          <MessageCircle className="w-5 h-5" />
-          DATO RICARDO
-          <Sparkles className="w-4 h-4 text-amber-500 animate-bounce" />
+    <Card className="glass-card border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden rounded-[3rem] shadow-2xl">
+      <CardHeader className="pb-2 bg-primary/5 text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl font-black text-primary uppercase italic">
+          <MessageCircle className="w-6 h-6" />
+          {customName || "DATO RICARDO"}
+          <Sparkles className="w-5 h-5 text-amber-500 animate-bounce" />
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4 pt-4">
-        {Object.entries(groupedPredictions).map(([lotteryId, preds]) => {
-          const lottery = LOTTERIES.find(l => l.id === lotteryId);
-          return (
-            <div key={lotteryId} className="space-y-2 border-l-2 border-primary/20 pl-3">
-              <div className="flex items-center gap-2">
-                <img src={getLotteryLogo(lotteryId)} alt="" className="w-5 h-5 rounded-full" />
-                <span className="font-bold text-sm uppercase tracking-tighter">{lottery?.name || lotteryId}</span>
-              </div>
+      <CardContent className="space-y-6 pt-6">
+        {predictions.length === 0 ? (
+          <div className="py-10 text-center opacity-40 italic flex flex-col items-center gap-2">
+            <AlertCircle size={40} />
+            <p className="font-black uppercase text-xs tracking-widest">Esperando el próximo bombazo...</p>
+          </div>
+        ) : (
+          Object.entries(groupedPredictions).map(([lotteryId, preds]) => {
+            const lottery = LOTTERIES.find(l => l.id === lotteryId);
+            return (
+              <div key={lotteryId} className="space-y-4">
+                <div className="flex items-center justify-center gap-2 bg-slate-100 py-2 rounded-full mx-auto max-w-[200px]">
+                  <img src={getLotteryLogo(lotteryId)} alt="" className="w-6 h-6 rounded-full" />
+                  <span className="font-black text-xs uppercase tracking-tighter text-slate-600">{lottery?.name || lotteryId}</span>
+                </div>
 
-              <div className="grid gap-2">
-                {preds.map((pred) => (
-                  <div key={pred.id} className="flex items-center gap-2 p-2 bg-card border rounded-lg shadow-sm">
-                    <div className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded">
-                      {pred.draw_time}
+                <div className="grid gap-3">
+                  {preds.map((pred) => (
+                    <div key={pred.id} className="flex flex-col items-center gap-3 p-4 bg-white border-2 rounded-[2rem] shadow-md">
+                      <div className="text-[10px] font-black text-white bg-primary px-4 py-1 rounded-full uppercase tracking-widest">
+                        {pred.draw_time}
+                      </div>
+                      
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        {pred.predicted_numbers.map((num: string, idx: number) => {
+                          const idLimpio = num.trim();
+                          const emoji = getAnimalEmoji(idLimpio);
+                          const name = getAnimalName(idLimpio);
+                          return (
+                            <div key={idx} className="flex flex-col items-center gap-1 p-3 bg-slate-50 rounded-2xl border border-slate-100 min-w-[70px]">
+                              <span className="text-3xl">{emoji}</span>
+                              <span className="text-sm font-black">{idLimpio.padStart(2, '0')}</span>
+                              <span className="text-[8px] font-bold uppercase opacity-50">{name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {pred.notes && (
+                        <div className="w-full pt-2 border-t border-dashed text-center">
+                           <p className="text-[11px] font-bold italic text-muted-foreground uppercase">{pred.notes}</p>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="flex gap-1.5 flex-wrap">
-                      {pred.predicted_numbers.map((num, idx) => {
-                        const animal = getAnimalByCode(num);
-                        return (
-                          <div key={idx} className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 rounded border border-accent/20">
-                            <span className="text-xs font-black">{num.padStart(2, '0')}</span>
-                            <span className="text-[10px] uppercase opacity-70">{animal?.name || ''}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {pred.notes && <p className="text-[10px] italic text-muted-foreground ml-auto truncate max-w-[80px]">{pred.notes}</p>}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );
