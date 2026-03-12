@@ -38,7 +38,7 @@ import logoAnimalytics from "@/assets/logo-animalytics.png";
 interface DashboardProps {
   userRole: string;
   onLogout: () => void;
-  tenantAgency?: any; // Recibe la agencia del link de afiliado
+  tenantAgency?: any;
 }
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) {
@@ -63,10 +63,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (isAgencyManager && tab === 'admin') {
-      setActiveTab(tab);
-      return;
-    }
+    if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
     if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
@@ -96,7 +93,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
                 {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                {isAgencyManager ? "Gestión de Mi Agencia" : `${totalResults.toLocaleString()}+ sorteos`}
+                {isAgencyManager ? "Gestión de Mi Banca" : `${totalResults.toLocaleString()}+ sorteos`}
               </p>
             </div>
           </div>
@@ -107,7 +104,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
             <ThemeToggle />
             <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
-              {isMasterAdmin ? '👑 Admin Maestro' : isAgencyManager ? '🏦 Dueño Agencia' : 'Usuario'}
+              {isMasterAdmin ? '👑 Admin Maestro' : isAgencyManager ? '🏦 Banca Alquilada' : 'Usuario'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
           </div>
@@ -123,8 +120,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
-            <TabsTrigger value="guia" className="bg-primary/10 text-primary border border-primary/20"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
-            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />{tenantAgency ? "Mi Agencia" : "Agencias"}</TabsTrigger>
+            <TabsTrigger value="guia"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
+            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />Agencias</TabsTrigger>
             {isMasterAdmin && <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>}
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
           </TabsList>
@@ -138,7 +135,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="explosivo" className="space-y-6">
             <ExplosiveData />
-            <DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado || "DATO RICARDO"} />
+            {/* AQUÍ ESTÁ SU RECOMENDACIÓN DEL SISTEMA CON NOMBRE PERSONALIZABLE */}
+            <DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} />
             <FrequencyHeatmap />
           </TabsContent>
 
@@ -148,6 +146,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="ruleta" className="space-y-6">
             <UniversalRoulette />
+            {/* MAPA PERSONALIZADO POR AGENCIA */}
             <DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} />
           </TabsContent>
 
@@ -183,9 +182,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
               </>
             ) : (
               <div className="space-y-6">
-                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-center gap-3">
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                    <ShieldAlert className="text-amber-600" />
-                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Gestión de Franquicia. Solo puedes editar tus datos operativos.</p>
+                   <p className="text-xs font-bold text-amber-700 uppercase">Gestión de Franquicia: Solo puedes editar tus datos.</p>
                 </div>
                 <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
               </div>
@@ -193,7 +192,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
       <RicardoBot />
     </div>
   );
