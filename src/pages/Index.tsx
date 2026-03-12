@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom"; // IMPORTANTE para el link ?ref=
+import { useSearchParams } from "react-router-dom";
 import { LoginScreen } from "@/components/LoginScreen";
 import { Dashboard } from "@/components/Dashboard";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,20 +10,8 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  
-  // Información de la agencia dueña del link (para el alquiler)
   const [tenantAgency, setTenantAgency] = useState<any>(null);
 
-  const getDeviceId = () => {
-    let id = localStorage.getItem('animalytics_device_fingerprint');
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
-      localStorage.setItem('animalytics_device_fingerprint', id);
-    }
-    return id;
-  };
-
-  // 🛡️ DETECCIÓN DE AGENCIA POR URL
   useEffect(() => {
     const checkTenant = async () => {
       const ref = searchParams.get("ref");
@@ -33,94 +21,57 @@ const Index = () => {
           setTenantAgency(data);
           localStorage.setItem('tenant_agency_id', data.id);
         }
-      } else {
-        const savedId = localStorage.getItem('tenant_agency_id');
-        if (savedId) {
-          const { data } = await supabase.from('agencias').select('*').eq('id', savedId).maybeSingle();
-          if (data) setTenantAgency(data);
-        }
       }
     };
     checkTenant();
   }, [searchParams]);
 
   const handleLogin = async (role: string, accessCode: string) => {
-    const deviceId = getDeviceId();
     const ADMIN_CODE = "GANADOR2026";
     const cleanCode = accessCode.toUpperCase().trim();
     
-    // 1. JEFE SUPREMO
     if (cleanCode === ADMIN_CODE) {
       localStorage.setItem('session_access_code', cleanCode);
       setUserRole("admin");
       setIsLoggedIn(true);
-      toast.success("¡BIENVENIDO JEFE MAESTRO!");
       return;
     }
 
-    // 2. DUEÑOS DE AGENCIA (Alquiler)
     const { data: agencyOwner } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
     if (agencyOwner) {
       localStorage.setItem('session_access_code', cleanCode);
       localStorage.setItem('agency_owner_id', agencyOwner.id);
       setUserRole("agency_manager");
       setIsLoggedIn(true);
-      toast.success(`BIENVENIDO DUEÑO DE ${agencyOwner.nombre.toUpperCase()}`);
       return;
     }
 
-    // 3. USUARIOS NORMALES
     try {
-      const { data: codeData, error } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-      if (error || !codeData) {
-        toast.error("CÓDIGO NO ENCONTRADO");
-        return;
-      }
-      const ahora = new Date();
-      const ultimoLatido = codeData.last_ping ? new Date(codeData.last_ping) : null;
-      if (codeData.current_device_id && codeData.current_device_id !== deviceId && ultimoLatido && (ahora.getTime() - ultimoLatido.getTime()) < 180000) {
-        toast.error("⚠️ CÓDIGO EN USO");
-        return;
-      }
-      await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: ahora.toISOString() }).eq('code', cleanCode);
-      localStorage.setItem('session_access_code', cleanCode);
-      setUserRole(role);
-      setIsLoggedIn(true);
-      toast.success("ACCESO CONCEDIDO.");
+      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
+      if (codeData) {
+        localStorage.setItem('session_access_code', cleanCode);
+        setUserRole(role);
+        setIsLoggedIn(true);
+      } else { toast.error("CÓDIGO NO VÁLIDO"); }
     } catch (err) { toast.error("ERROR DE CONEXIÓN"); }
   };
 
-  const handleLogout = async () => {
-    const code = localStorage.getItem('session_access_code');
-    if (code && code !== "GANADOR2026") {
-      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
-    }
-    localStorage.clear();
-    setIsLoggedIn(false);
-  };
-
   useEffect(() => {
-    const checkSession = async () => {
-      const saved = localStorage.getItem('session_access_code');
-      if (saved) {
-        setIsLoggedIn(true);
-        if (saved === "GANADOR2026") setUserRole("admin");
-        else {
-          const { data } = await supabase.from('agencias').select('id').eq('llave_agencia', saved).maybeSingle();
-          setUserRole(data ? "agency_manager" : "user");
-        }
-      }
-      setLoading(false);
-    };
-    checkSession();
+    const saved = localStorage.getItem('session_access_code');
+    if (saved) {
+      setIsLoggedIn(true);
+      setUserRole(saved === "GANADOR2026" ? "admin" : "user");
+    }
+    setLoading(false);
   }, []);
 
   if (loading) return null;
 
   return isLoggedIn ? (
-    <Dashboard userRole={userRole} onLogout={handleLogout} tenantAgency={tenantAgency} />
+    <Dashboard userRole={userRole} onLogout={() => { localStorage.clear(); setIsLoggedIn(false); }} tenantAgency={tenantAgency} />
   ) : (
     <LoginScreen onLogin={handleLogin} />
   );
 };
+
 export default Index;
