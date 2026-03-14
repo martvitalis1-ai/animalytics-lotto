@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card"; // Añadido para el contenedor de la agencia
+import { Card } from "@/components/ui/card";
 import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,12 +51,14 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
-  const TELEGRAM_LINK = "https://t.me/Animalytics";
+  
+  // LINK MAESTRO ACTUALIZADO
+  const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const { count } = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        const { data: { count } } = await (supabase as any).from('lottery_results').select('*', { count: 'exact', head: true });
         if (count) setTotalResults(count);
       } catch (e) { console.error(e); }
     };
@@ -103,7 +105,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
           </div>
           <div className="flex items-center gap-2">
             
-            {/* 1. EL BOTÓN SOLO APARECE PARA LA AGENCIA. EL ADMIN ENTRA POR LA PESTAÑA DE ABAJO */}
             {isAgencyManager && (
               <Button 
                 variant={activeTab === 'admin' ? "default" : "outline"}
@@ -130,6 +131,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
       </header>
 
       <main className="container mx-auto px-4 py-4">
+        <div className="md:hidden mb-4 text-center">
+          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="w-full h-10 bg-[#24A1DE] text-white font-black text-xs uppercase italic gap-2 rounded-xl shadow-xl">
+            <Send className="w-4 h-4 fill-white" /> Telegram 💰🏁
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50 justify-center">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
@@ -153,7 +160,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="explosivo" className="space-y-6">
             <ExplosiveData />
-            {/* PASAMOS EL ID DE LA AGENCIA PARA QUE MUESTRE EL DATO MANUAL DE ESA BANCA SI EXISTE */}
             <DatoRicardoSection 
               customName={tenantAgency?.nombre_dato_personalizado} 
               agencyId={tenantAgency?.id}
@@ -183,12 +189,10 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
                    <p className="text-xs font-bold text-amber-700 uppercase">Gestión de Agencia Alquilada: Puedes publicar tus propios pronósticos manuales.</p>
                 </div>
 
-                {/* 2. LA AGENCIA TIENE EL PODER DE DAR SU PRONÓSTICO MANUAL */}
                 <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none">
                   <h3 className="font-black uppercase italic mb-4 flex items-center gap-2">
                     <Plus className="text-emerald-600" /> Publicar Pronóstico de la Hora
                   </h3>
-                  {/* Le pasamos el ID de la agencia para que se guarde en su propia "parcela" */}
                   <DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} />
                 </Card>
 
