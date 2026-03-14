@@ -12,7 +12,17 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [tenantAgency, setTenantAgency] = useState<any>(null);
 
-  // 🛡️ DETECCIÓN DE AGENCIA POR LINK (?ref=slug)
+  // 🛠️ FUNCIÓN MAESTRA: GENERAR HUELLA DEL DISPOSITIVO
+  const getDeviceId = () => {
+    let id = localStorage.getItem('animalytics_device_fingerprint');
+    if (!id) {
+      // Creamos una huella única para este teléfono/PC
+      id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+      localStorage.setItem('animalytics_device_fingerprint', id);
+    }
+    return id;
+  };
+
   useEffect(() => {
     const checkTenant = async () => {
       const ref = searchParams.get("ref");
@@ -28,17 +38,25 @@ const Index = () => {
   }, [searchParams]);
 
   const handleLogin = async (role: string, accessCode: string) => {
+    const deviceId = getDeviceId(); // Obtenemos la huella antes de entrar
     const ADMIN_CODE = "GANADOR2026";
     const cleanCode = accessCode.toUpperCase().trim();
     
+    // 1. ADMIN MAESTRO
     if (cleanCode === ADMIN_CODE) {
       localStorage.setItem('session_access_code', cleanCode);
+      // Registramos el ping del admin para que usted también aparezca en el radar
+      await supabase.from('access_codes').update({ 
+        current_device_id: deviceId, 
+        last_ping: new Date().toISOString() 
+      }).eq('code', cleanCode);
+
       setUserRole("admin");
       setIsLoggedIn(true);
       return;
     }
 
-    // Si el código existe en la tabla de AGENCIAS, entra como MANAGER
+    // 2. DUEÑOS DE AGENCIA
     const { data: agency } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
     if (agency) {
       localStorage.setItem('session_access_code', cleanCode);
@@ -48,13 +66,25 @@ const Index = () => {
       return;
     }
 
-    // Usuario normal con código VIP o gratis
-    const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-    if (codeData) {
-      localStorage.setItem('session_access_code', cleanCode);
-      setUserRole("user");
-      setIsLoggedIn(true);
-    } else { toast.error("CÓDIGO NO VÁLIDO"); }
+    // 3. USUARIOS NORMALES (BLINDAJE DE DISPOSITIVO)
+    try {
+      const { data: codeData, error } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
+      
+      if (codeData) {
+        // ACTUALIZAMOS EL RADAR EN SUPABASE AL ENTRAR
+        await supabase.from('access_codes').update({ 
+          current_device_id: deviceId,
+          last_ping: new Date().toISOString()
+        }).eq('code', cleanCode);
+
+        localStorage.setItem('session_access_code', cleanCode);
+        setUserRole("user");
+        setIsLoggedIn(true);
+        toast.success("ACCESO CONCEDIDO");
+      } else { 
+        toast.error("CÓDIGO NO VÁLIDO"); 
+      }
+    } catch (err) { toast.error("ERROR DE CONEXIÓN CON EL BÚNKER"); }
   };
 
   useEffect(() => {
