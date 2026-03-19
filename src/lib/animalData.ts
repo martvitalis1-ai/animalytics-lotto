@@ -1,5 +1,5 @@
 // ============================================================
-// ANIMAL DATA - REPARACIÓN TOTAL (0-99)
+// ANIMAL DATA - VERSIÓN SUPREMA v106.3 (CON RUTA GITHUB)
 // ============================================================
 
 export interface AnimalInfo {
@@ -8,6 +8,9 @@ export interface AnimalInfo {
   name: string;
   category: string;
 }
+
+// RUTA MAESTRA DE SU CARPETA BLING-BLING
+const ASSETS_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/Carga%20de%20animales/";
 
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '1': 'CARNERO', '2': 'TORO', '3': 'CIEMPIÉS',
@@ -51,7 +54,7 @@ export const ANIMAL_EMOJIS: Record<string, string> = {
   "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗",
   "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔",
   "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬",
-  "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦅", "77": "🐧", "78": "🦌",
+  "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌",
   "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂",
   "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃",
   "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣"
@@ -68,68 +71,33 @@ export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = {
   "34": { row: 7, col: 0 }, "35": { row: 7, col: 1 }, "36": { row: 7, col: 2 },
 };
 
-export const getAnimalMappingForLottery = (lotteryId: string): Record<string, string> => {
-  if (lotteryId === 'guacharito') return ANIMALS_GUACHARITO;
-  if (lotteryId === 'guacharo') return ANIMALS_GUACHARO;
-  return ANIMALS_STANDARD;
+// --- FUNCIONES DE APOYO ACTUALIZADAS (CON BLINDAJE) ---
+
+export const getAnimalImageUrl = (code: string): string => {
+  // Blindamos el código: '0' y '00' quedan igual, 1-9 pasan a '01'-'09'
+  const normalized = (code === '0' || code === '00') ? code : code.toString().padStart(2, '0');
+  return `${ASSETS_URL}${normalized}.png`;
 };
 
 export const getAnimalByCode = (code: string, lotteryId?: string): AnimalInfo | undefined => {
   if (!code) return undefined;
-  const normalizedCode = code.toString().trim();
-  const mapping = lotteryId ? getAnimalMappingForLottery(lotteryId) : ANIMALS_GUACHARITO;
-  const name = mapping[normalizedCode] || mapping[parseInt(normalizedCode).toString()];
+  const normalized = (code === '0' || code === '00') ? code : code.toString().padStart(2, '0');
   
+  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
+                  lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  
+  const name = mapping[normalized];
   if (name) {
-    return {
-      id: parseInt(normalizedCode) || 0,
-      code: normalizedCode,
-      name,
-      category: "general",
-    };
+    return { id: parseInt(normalized), code: normalized, name, category: "general" };
   }
   return undefined;
 };
 
 export const getAnimalEmoji = (code: string): string => {
-  const normalized = code?.toString().trim() || "";
-  const cleanCode = normalized === "00" || normalized === "0" ? normalized : parseInt(normalized).toString();
-  return ANIMAL_EMOJIS[cleanCode] || "🔢";
+  const normalized = (code === '0' || code === '00') ? code : code.toString().padStart(2, '0');
+  return ANIMAL_EMOJIS[normalized] || "🔢";
 };
 
 export const getAnimalName = (code: string, lotteryId?: string): string => {
   return getAnimalByCode(code, lotteryId)?.name || "ANIMAL";
-};
-
-export const getCodesForLottery = (lotteryId: string): string[] => {
-  const max = lotteryId === 'guacharito' ? 99 : lotteryId === 'guacharo' ? 75 : 36;
-  return ['0', '00', ...Array.from({ length: max }, (_, i) => (i + 1).toString())];
-};
-
-export const getMaxNumberForLottery = (lotteryId: string): number => {
-  if (lotteryId === 'guacharito') return 99;
-  if (lotteryId === 'guacharo') return 75;
-  return 36;
-};
-
-export type HeatStatus = 'hot' | 'warm' | 'cold' | 'overdue';
-
-export const getHeatStatusColor = (status: HeatStatus): string => {
-  switch (status) {
-    case 'hot': return 'hsl(0, 84%, 60%)';
-    case 'warm': return 'hsl(30, 92%, 50%)';
-    case 'cold': return 'hsl(210, 100%, 50%)';
-    default: return 'hsl(220, 10%, 60%)';
-  }
-};
-
-export const formatAnimalDisplay = (code: string, lotteryId?: string): string => {
-  const name = getAnimalName(code, lotteryId);
-  const displayCode = (code === '0' || code === '00') ? code : code.padStart(2, '0');
-  return `${displayCode} - ${name}`;
-};
-
-export const getFullAnimalListString = (lotteryId: string): string => {
-  const mapping = getAnimalMappingForLottery(lotteryId);
-  return Object.entries(mapping).map(([c, n]) => `${c}:${n}`).join(', ');
 };
