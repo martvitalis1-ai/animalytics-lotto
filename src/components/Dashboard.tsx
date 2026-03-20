@@ -52,7 +52,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
- // Busca la función useEffect que carga el contador (aprox línea 50) y reemplázala por esta:
+// Busca el useEffect que carga el conteo de sorteos
 useEffect(() => {
   const loadCount = async () => {
     try {
@@ -60,14 +60,14 @@ useEffect(() => {
         .from('lottery_results')
         .select('*', { count: 'exact', head: true });
       
-      // BLINDAJE TOTAL: Si response es null o da error, ponemos 0 y la App sigue viva
-      if (response && response.count !== null && response.count !== undefined) {
+      // EL BLINDAJE: Usamos ?. para que si response es null, NO explote la app
+      if (response?.count !== null && response?.count !== undefined) {
         setTotalResults(response.count);
       } else {
         setTotalResults(0);
       }
     } catch (e) {
-      console.warn("Falla controlada en contador.");
+      console.warn("Falla controlada en contador de sorteos.");
       setTotalResults(0);
     }
   };
