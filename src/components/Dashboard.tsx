@@ -38,23 +38,28 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-// Busca el useEffect que carga el contador y reemplázalo:
+// Reemplace el useEffect del contador por este bloque exacto:
 useEffect(() => {
+  let isMounted = true;
   const loadCount = async () => {
     try {
+      // Pedimos los datos sin desestructurar para que no explote si falla
       const response = await supabase
         .from('lottery_results')
         .select('*', { count: 'exact', head: true });
       
-      // EL BLINDAJE: Si response es null, totalResults será 0 pero NO habrá error rojo.
-      const total = response?.count ?? 0;
-      setTotalResults(Number(total));
+      // BLINDAJE DE SEGURIDAD: Solo si la respuesta es válida y la app sigue cargada
+      if (isMounted && response && typeof response === 'object' && response.count !== null) {
+        setTotalResults(Number(response.count));
+      }
     } catch (e) {
-      setTotalResults(0);
+      console.warn("Búnker protegiendo conexión...");
+      if (isMounted) setTotalResults(0);
     }
   };
   loadCount();
-}, []);
+  return () => { isMounted = false; }; // ESTO FRENA EL BUCLE INFINITO
+}, []); // El array vacío es OBLIGATORIO aquí
 
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
