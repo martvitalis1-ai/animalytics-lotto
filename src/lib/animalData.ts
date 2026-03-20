@@ -1,7 +1,8 @@
-export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
+  // Blindaje: '0' y '00' se quedan igual, del 1 al 9 pasan a '01', '02'...
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
@@ -32,12 +33,14 @@ export const getAnimalName = (code: string | number): string => {
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return `${SUPA_STORAGE_URL}${normalized}.png`;
+  return `${SUPA_IMG_URL}${normalized}.png`;
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎲";
 
 export const getAnimalByCode = (code: string | number) => {
   const name = getAnimalName(code);
-  return { id: parseInt(String(code)), code: String(code), name, category: "general" };
+  const strCode = String(code).trim();
+  const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+  return { id: parseInt(normalized) || 0, code: normalized, name, category: "general" };
 };
