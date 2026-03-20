@@ -11,33 +11,17 @@ export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, 
 
   const sizeConfig = {
     sm: { card: 'p-2 min-w-[90px]', img: 'w-16 h-16', num: 'text-sm' },
-    md: { card: 'p-4 min-w-[120px]', img: 'w-28 h-28', num: 'text-xl' },
-    lg: { card: 'p-6 min-w-[180px]', img: 'w-44 h-44', num: 'text-3xl' }
+    md: { card: 'p-4 min-w-[120px]', img: 'w-24 h-24', num: 'text-xl' },
+    lg: { card: 'p-6 min-w-[160px]', img: 'w-44 h-44', num: 'text-3xl' }
   };
   const config = sizeConfig[size as keyof typeof sizeConfig] || sizeConfig.md;
 
   return (
-    <div 
-      className={cn(
-        "relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100",
-        config.card, className
-      )} 
-      onClick={onClick}
-    >
-      {rank && rank <= 3 && (
-        <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black z-20 shadow-lg">
-          #{rank}
-        </div>
-      )}
+    <div className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100", config.card, className)} onClick={onClick}>
+      {rank && rank <= 3 && <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black z-20 shadow-lg">#{rank}</div>}
       <div className={cn(config.img, "relative flex items-center justify-center mb-2")}>
         {!imgError ? (
-          <img 
-            src={imageUrl} 
-            alt={animal?.name} 
-            className="w-full h-full object-contain z-10 drop-shadow-xl" 
-            crossOrigin="anonymous" 
-            onError={() => setImgError(true)} 
-          />
+          <img src={imageUrl} alt={animal?.name} className="w-full h-full object-contain z-10 drop-shadow-xl" crossOrigin="anonymous" onError={() => setImgError(true)} />
         ) : (
           <span className="text-4xl">🎲</span>
         )}
