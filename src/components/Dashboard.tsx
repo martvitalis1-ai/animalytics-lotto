@@ -39,26 +39,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN BLINDADA: ELIMINA EL ERROR 'COUNT' Y EL BUCLE 429 ---
-  useEffect(() => {
-    let isMounted = true;
-    const loadStats = async () => {
-      try {
-        const response = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        
-        // Verificación de seguridad extrema
-        if (isMounted && response && typeof response.count === 'number') {
-          setTotalResults(response.count);
-        }
-      } catch (e) {
-        if (isMounted) setTotalResults(0);
-      }
-    };
-    loadStats();
-    return () => { isMounted = false; };
-  }, []); // Array vacío = SE EJECUTA SOLO UNA VEZ. Adiós bucle infinito.
+ // Array vacío = SE EJECUTA SOLO UNA VEZ. Adiós bucle infinito.
 
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
