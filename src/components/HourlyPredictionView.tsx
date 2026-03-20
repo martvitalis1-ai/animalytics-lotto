@@ -13,7 +13,8 @@ export function HourlyPredictionView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+
+  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -41,15 +42,14 @@ export function HourlyPredictionView() {
       if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
       return h * 60 + parseInt(match[2]);
     };
-    for (const time of getDrawTimesForLottery(selectedLottery)) { if (toMin(time) >= currentMinutes - 5) return time; }
-    return getDrawTimesForLottery(selectedLottery)[0];
-  }, [selectedLottery]);
+    for (const time of drawTimes) { if (toMin(time) >= currentMinutes - 5) return time; }
+    return drawTimes[0];
+  }, [drawTimes]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    const forecasts = generateDayForecast(selectedLottery, [nextDrawTime], history, today);
-    return forecasts[0] || null;
-  }, [history, selectedLottery, nextDrawTime, today]);
+    return generateDayForecast(selectedLottery, [nextDrawTime], history, new Date().toISOString().split('T')[0])[0] || null;
+  }, [history, selectedLottery, nextDrawTime]);
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
@@ -77,11 +77,11 @@ export function HourlyPredictionView() {
                 <span className="absolute inset-0 flex items-center justify-center text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">{nextPrediction.topPick.code.padStart(2, '0')}</span>
               </div>
               <h3 className="text-4xl font-black uppercase mt-4 tracking-tighter text-slate-800">{nextPrediction.topPick.name}</h3>
-              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-emerald-800">
+              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl">
                 <Zap className="w-7 h-7 fill-yellow-300 text-yellow-300" /> {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
               </div>
             </div>
-          ) : <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm text-center">Cargando Inteligencia...</p></div>}
+          ) : <div className="py-20 flex flex-col items-center opacity-30 grayscale text-center"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm">Escaneando Inteligencia...</p></div>}
         </div>
       </CardContent>
     </Card>
