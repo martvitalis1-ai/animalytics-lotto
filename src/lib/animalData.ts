@@ -34,9 +34,3 @@ export const getAnimalImageUrl = (code: string | number): string => {
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   return `${SUPA_IMG_URL}${normalized}.png`;
 };
-
-export const getAnimalEmoji = (code: string | number): string => "🎲";
-export const getAnimalByCode = (code: string | number) => {
-  const name = getAnimalName(code);
-  return { id: 0, code: String(code), name, category: "general" };
-};
