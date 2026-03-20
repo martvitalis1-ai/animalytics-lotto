@@ -6,12 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Send, Trash2, Wallet, CheckCircle2, Star, Lock, Loader2, RefreshCw, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-// --- CONFIGURACIÓN MAESTRA BÚNKER v106.2 (CORREGIDA) ---
-// Quitamos la barra final de assets para evitar el error de doble barra //
-const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets";
-const FOLDER_NAME = "Carga de animales";
-// Armamos la ruta limpia inyectando el espacio codificado
-const ANIMAL_IMG_BASE = `${IMG_BASE}/${encodeURIComponent(FOLDER_NAME)}/`;
+// --- CONFIGURACIÓN MAESTRA BÚNKER v106.4 ---
+// Apuntamos directo a assets, que es donde muestra tu captura que están las fotos
+const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
+const ANIMAL_IMG_BASE = IMG_BASE; 
+
+// Función para obtener la imagen (Mantiene el 05, 06, etc.)
+const getAnimalImg = (n: string) => {
+  const formattedName = (n === '0' || n === '00') ? n : n.padStart(2, '0');
+  return `${ANIMAL_IMG_BASE}${formattedName}.png`;
+};
 
 const LOTERIAS = [
   { id: "lotto_activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}/logo-lotto-activo.png` },
