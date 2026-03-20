@@ -47,18 +47,23 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
   // --- REPARACIÓN ATÓMICA DE ERROR 'COUNT' ---
-  useEffect(() => {
-    const loadCount = async () => {
-      try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        // Verificación profesional: evitamos desestructurar el null
-        if (response && response.count !== null && response.count !== undefined) {
-          setTotalResults(response.count);
-        }
-      } catch (e) { setTotalResults(0); }
-    };
-    loadCount();
-  }, []);
+  // Dentro de Dashboard.tsx, reemplace la función loadCount por esta:
+useEffect(() => {
+  const loadCount = async () => {
+    try {
+      const response = await supabase
+        .from('lottery_results')
+        .select('*', { count: 'exact', head: true });
+      
+      // BLINDAJE: Si 'response' es null o no tiene 'count', ponemos 0
+      const total = response?.count ?? 0;
+      setTotalResults(Number(total));
+    } catch (e) {
+      setTotalResults(0);
+    }
+  };
+  loadCount();
+}, []);
 
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
