@@ -13,8 +13,7 @@ export function HourlyPredictionView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
+  const today = new Date().toISOString().split('T')[0];
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -38,13 +37,14 @@ export function HourlyPredictionView() {
       if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
       return h * 60 + parseInt(match[2]);
     };
-    for (const time of drawTimes) { if (toMin(time) >= currentMinutes - 5) return time; }
-    return drawTimes[0];
-  }, [drawTimes]);
+    const times = getDrawTimesForLottery(selectedLottery);
+    for (const time of times) { if (toMin(time) >= currentMinutes - 5) return time; }
+    return times[0];
+  }, [selectedLottery]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    return generateDayForecast(selectedLottery, [nextDrawTime], history, new Date().toISOString().split('T')[0])[0] || null;
+    return generateDayForecast(selectedLottery, [nextDrawTime], history, today)[0] || null;
   }, [history, selectedLottery, nextDrawTime]);
 
   return (
@@ -62,19 +62,15 @@ export function HourlyPredictionView() {
         </div>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="text-center space-y-6 text-slate-900">
+        <div className="text-center space-y-6">
           <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
             {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
           {nextPrediction?.topPick ? (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden flex flex-col items-center">
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
-                <img 
-                   src={getAnimalImageUrl(nextPrediction.topPick.code)} 
-                   className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
-                   crossOrigin="anonymous" 
-                   onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-                />
+                {/* CARGA DIRECTA 3D */}
+                <img key={nextPrediction.topPick.code} src={getAnimalImageUrl(nextPrediction.topPick.code)} className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" crossOrigin="anonymous" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">{nextPrediction.topPick.code.padStart(2, '0')}</span>
               </div>
               <h3 className="text-4xl font-black uppercase mt-4 tracking-tighter text-slate-800">{nextPrediction.topPick.name}</h3>
