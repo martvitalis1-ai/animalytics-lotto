@@ -31,21 +31,27 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN ATÓMICA: ELIMINA EL ERROR 'COUNT' DE LA CONSOLA ---
+ // Reemplace el bloque useEffect que carga el contador por este código blindado:
+
   useEffect(() => {
-    let isMounted = true;
-    const fetchStats = async () => {
+    const loadCount = async () => {
       try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        if (isMounted && response && response.count !== null && response.count !== undefined) {
+        const response = await supabase
+          .from('lottery_results')
+          .select('*', { count: 'exact', head: true });
+        
+        // EL BLINDAJE: Verificamos que 'response' no sea nulo antes de tocarlo
+        if (response && response.count !== null && response.count !== undefined) {
           setTotalResults(response.count);
+        } else {
+          setTotalResults(0);
         }
       } catch (e) {
-        if (isMounted) setTotalResults(0);
+        console.warn("Falla controlada en contador de sorteos.");
+        setTotalResults(0);
       }
     };
-    fetchStats();
-    return () => { isMounted = false; };
+    loadCount();
   }, []);
 
   const handleTabChange = (tab: string) => {
