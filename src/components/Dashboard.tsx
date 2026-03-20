@@ -17,15 +17,20 @@ import { AdminAgencias } from "./AdminAgencias";
 import { ResultsInsert } from "./ResultsInsert";
 import { TodayResults } from "./TodayResults";
 import { ThemeToggle } from "./ThemeToggle";
+import { AdminCodeModal } from "./AdminCodeModal";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
   const [totalResults, setTotalResults] = useState<number>(0);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showInsertModal, setShowInsertModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN BLINDADA: EVITA EL BUCLE INFINITO Y EL ERROR 'COUNT' ---
+  // --- REPARACIÓN BLINDADA: CARGA ÚNICA PARA EVITAR EL ERROR 429 ---
   useEffect(() => {
     let isMounted = true;
     const loadCount = async () => {
@@ -34,29 +39,53 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        // Verificamos que response exista antes de leer count para evitar el error rojo
         if (isMounted && response && response.count !== null && response.count !== undefined) {
           setTotalResults(response.count);
         }
       } catch (e) {
-        console.warn("Supabase está saturado, reintentando en breve...");
+        console.warn("Esperando reconexión de búnker...");
       }
     };
     loadCount();
     return () => { isMounted = false; };
   }, []);
 
+  const handleTabChange = (tab: string) => {
+    if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
+    if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
+      setPendingTab(tab);
+      if (tab === 'admin') setShowAdminModal(true);
+      else setShowInsertModal(true);
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const handleAdminVerified = () => {
+    setShowAdminModal(false);
+    setShowInsertModal(false);
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setPendingTab(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-slate-900">
       <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
-          <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
+          <img src={logoAnimalytics} alt="Logo" className="h-10" />
           <div className="hidden sm:block">
             <h1 className="font-black text-lg uppercase italic">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos registrados</p>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isAgencyManager && (
+            <Button variant="outline" size="sm" onClick={() => setActiveTab("admin")} className="font-black text-[10px] uppercase gap-2 border-emerald-500/20">
+              <Settings className="w-4 h-4" /> <span>BANCA</span>
+            </Button>
+          )}
           <ThemeToggle />
           <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
             {isMasterAdmin ? '👑 ADMIN' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
@@ -66,7 +95,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <main className="container mx-auto p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" /> IA</TabsTrigger>
             <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" /> EXPLOSIVO</TabsTrigger>
@@ -86,6 +115,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
         </Tabs>
       </main>
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
     </div>
   );
 }
