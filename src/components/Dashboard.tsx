@@ -52,27 +52,28 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-// Busca el useEffect que carga el conteo de sorteos
+// Busca el useEffect del contador y reemplázalo por este:
 useEffect(() => {
+  let isMounted = true;
   const loadCount = async () => {
     try {
       const response = await supabase
         .from('lottery_results')
         .select('*', { count: 'exact', head: true });
       
-      // EL BLINDAJE: Usamos ?. para que si response es null, NO explote la app
-      if (response?.count !== null && response?.count !== undefined) {
-        setTotalResults(response.count);
-      } else {
-        setTotalResults(0);
+      // BLINDAJE: Verificamos que 'isMounted' y 'response' existan
+      if (isMounted && response && response.count !== null) {
+        setTotalResults(Number(response.count));
       }
     } catch (e) {
-      console.warn("Falla controlada en contador de sorteos.");
-      setTotalResults(0);
+      console.error("Error silencioso en búnker");
     }
   };
   loadCount();
+  return () => { isMounted = false; }; // Limpiador para evitar bucles
 }, []);
+  
+  // Array vacío para que solo se ejecute UNA VEZ al cargar
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
     if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
