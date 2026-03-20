@@ -20,22 +20,25 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN ATÓMICA: SIN BUCLES Y SIN ERRORES DE LECTURA ---
-  useEffect(() => {
-    let isMounted = true;
-    const loadStats = async () => {
-      try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        if (isMounted && response && response.count !== null) {
-          setTotalResults(Number(response.count));
-        }
-      } catch (e) {
-        if (isMounted) setTotalResults(0);
+// Dentro de Dashboard.tsx, busque el bloque useEffect y reemplácelo:
+useEffect(() => {
+  const loadCount = async () => {
+    try {
+      const response = await supabase
+        .from('lottery_results')
+        .select('*', { count: 'exact', head: true });
+      
+      // BLINDAJE: Si response es null, no explota, usa 0 por defecto.
+      if (response && response.count !== null) {
+        setTotalResults(Number(response.count));
       }
-    };
-    loadStats();
-    return () => { isMounted = false; };
-  }, []);
+    } catch (e) {
+      console.warn("Falla controlada en carga de sorteos.");
+      setTotalResults(0);
+    }
+  };
+  loadCount();
+}, []);
 
   return (
     <div className="min-h-screen bg-background text-slate-900">
