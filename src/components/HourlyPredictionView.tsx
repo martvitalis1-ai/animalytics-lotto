@@ -77,16 +77,14 @@ export function HourlyPredictionView() {
                    crossOrigin="anonymous" 
                    onError={(e) => { e.currentTarget.style.display = 'none'; }} 
                 />
-              // Reemplaza el div de la imagen (donde sale el zorro actualmente) por este:
+             // Busca el bloque donde sale la imagen del animal y cámbialo por este:
 <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
   <img 
     key={nextPrediction.topPick.code}
-    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '00' || nextPrediction.topPick.code === '0' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
+    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
     className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
     crossOrigin="anonymous"
-    onError={(e) => {
-      e.currentTarget.style.display = 'none';
-    }}
+    onError={(e) => { e.currentTarget.style.display = 'none'; }}
   />
   <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
     {nextPrediction.topPick.code.padStart(2, '0')}
