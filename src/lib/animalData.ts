@@ -36,7 +36,7 @@ export const ANIMALS_STANDARD: Record<string, string> = buildDict(36);
 export const ANIMALS_GUACHARO: Record<string, string> = buildDict(75);
 export const ANIMALS_GUACHARITO: Record<string, string> = buildDict(99);
 
-export const SPRITE_POSITIONS: Record<string, { x: number; y: number }> = {};
+export const SPRITE_POSITIONS: Record<string, { x: number; y: number; col: number; row: number }> = {};
 
 const EMOJI_MAP: Record<string, string> = {
   '0': '🐬', '00': '🐋', '1': '🐏', '01': '🐏', '2': '🐂', '02': '🐂', '3': '🐛', '03': '🐛',
