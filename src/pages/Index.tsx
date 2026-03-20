@@ -29,16 +29,13 @@ const Index = () => {
   }, []);
 
   const handleLogin = async (role: string, accessCode: string) => {
-    const ADMIN_CODE = "GANADOR2026";
     const cleanCode = accessCode.toUpperCase().trim();
-    
-    if (cleanCode === ADMIN_CODE) {
+    if (cleanCode === "GANADOR2026") {
       localStorage.setItem('session_access_code', cleanCode);
       setUserRole("admin");
       setIsLoggedIn(true);
       return;
     }
-
     const { data: agency } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
     if (agency) {
       localStorage.setItem('session_access_code', cleanCode);
@@ -47,14 +44,13 @@ const Index = () => {
       setIsLoggedIn(true);
       return;
     }
-
     const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
     if (codeData) {
       localStorage.setItem('session_access_code', cleanCode);
       setUserRole("user");
       setIsLoggedIn(true);
     } else {
-      toast.error("CÓDIGO NO VÁLIDO");
+      toast.error("CÓDIGO INVÁLIDO");
     }
   };
 
@@ -66,4 +62,5 @@ const Index = () => {
     <LoginScreen onLogin={handleLogin} />
   );
 };
+
 export default Index;
