@@ -8,7 +8,7 @@ import { getAnimalName, getAnimalEmoji } from '@/lib/animalData';
 
 interface DatoRicardoSectionProps {
   customName?: string;
-  agencyId?: string; // El ID de la agencia bloqueada por URL
+  agencyId?: string;
 }
 
 export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionProps) {
@@ -22,14 +22,8 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
       .order('prediction_date', { ascending: false })
       .order('draw_time', { ascending: true });
 
-    // LÓGICA DE FILTRADO INTELIGENTE
-    if (agencyId) {
-      // Si el cliente entró por link de agencia, buscamos PRIMERO los datos de esa agencia
-      query = query.eq('agencia_id', agencyId);
-    } else {
-      // Si es la web general, buscamos el Dato Ricardo Maestro (NULL)
-      query = query.is('agencia_id', null);
-    }
+    if (agencyId) query = query.eq('agencia_id', agencyId);
+    else query = query.is('agencia_id', null);
 
     const { data } = await query.limit(12);
     if (data) setPredictions(data);
@@ -53,6 +47,12 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
     return groups;
   }, [predictions]);
 
+  const getAnimalImage = (code: string) => {
+    const strCode = String(code).trim();
+    const finalCode = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+    return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
+  };
+
   if (loading) return null;
 
   return (
@@ -65,11 +65,11 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-6 pt-6">
+      <CardContent className="space-y-6 pt-6 text-center">
         {predictions.length === 0 ? (
           <div className="py-10 text-center opacity-40 italic flex flex-col items-center gap-2">
             <AlertCircle size={40} />
-            <p className="font-black uppercase text-xs tracking-widest">Esperando el próximo bombazo...</p>
+            <p className="font-black uppercase text-xs tracking-widest text-center">Esperando el próximo bombazo...</p>
           </div>
         ) : (
           Object.entries(groupedPredictions).map(([lotteryId, preds]) => {
@@ -83,30 +83,30 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
 
                 <div className="grid gap-3">
                   {preds.map((pred) => (
-                    <div key={pred.id} className="flex flex-col items-center gap-3 p-4 bg-white border-2 rounded-[2rem] shadow-md">
+                    <div key={pred.id} className="flex flex-col items-center gap-3 p-4 bg-white border-2 rounded-[2.5rem] shadow-md">
                       <div className="text-[10px] font-black text-white bg-primary px-4 py-1 rounded-full uppercase tracking-widest">
                         {pred.draw_time}
                       </div>
                       
-                      <div className="flex gap-2 justify-center flex-wrap">
+                      <div className="flex gap-4 justify-center flex-wrap">
                         {pred.predicted_numbers.map((num: string, idx: number) => {
-                          const idLimpio = num.trim();
-                          const emoji = getAnimalEmoji(idLimpio);
-                          const name = getAnimalName(idLimpio);
+                          const idL = num.trim();
+                          const img = getAnimalImage(idL);
+                          const name = getAnimalName(idL);
+                          const emoji = getAnimalEmoji(idL);
                           return (
-                            <div key={idx} className="flex flex-col items-center gap-1 p-3 bg-slate-50 rounded-2xl border border-slate-100 min-w-[70px]">
-                              <span className="text-3xl">{emoji}</span>
-                              <span className="text-sm font-black">{idLimpio.padStart(2, '0')}</span>
-                              <span className="text-[8px] font-bold uppercase opacity-50">{name}</span>
+                            <div key={idx} className="flex flex-col items-center gap-1 p-4 bg-slate-50 rounded-[2rem] border border-slate-100 min-w-[90px]">
+                              <div className="relative w-16 h-16 mb-1">
+                                <img src={img} className="w-full h-full object-contain z-10 relative" alt="" crossOrigin="anonymous" onError={(e) => (e.currentTarget.style.opacity = '0')} />
+                                <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-10">{emoji}</span>
+                              </div>
+                              <span className="text-sm font-black">{idL === '0' || idL === '00' ? idL : idL.padStart(2, '0')}</span>
+                              <span className="text-[9px] font-bold uppercase opacity-50">{name}</span>
                             </div>
                           );
                         })}
                       </div>
-                      {pred.notes && (
-                        <div className="w-full pt-2 border-t border-dashed text-center">
-                           <p className="text-[11px] font-bold italic text-muted-foreground uppercase">{pred.notes}</p>
-                        </div>
-                      )}
+                      {pred.notes && <p className="text-[11px] font-bold italic text-muted-foreground uppercase text-center border-t border-dashed w-full pt-2">{pred.notes}</p>}
                     </div>
                   ))}
                 </div>
