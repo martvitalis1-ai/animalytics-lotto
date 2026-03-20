@@ -20,7 +20,7 @@ export function HourlyPredictionView() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', selectedLottery).order('draw_date', { ascending: false }).order('created_at', { ascending: false }).limit(500);
+      const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', selectedLottery).order('created_at', { ascending: false }).limit(500);
       if (data) setHistory(data);
     } catch (error) { console.error(error); }
     setLoading(false);
@@ -28,7 +28,7 @@ export function HourlyPredictionView() {
 
   useEffect(() => {
     loadData();
-    const channel = supabase.channel('hourly-atomic').on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData()).subscribe();
+    const channel = supabase.channel('hourly-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData()).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
@@ -38,10 +38,10 @@ export function HourlyPredictionView() {
     const toMin = (t: string) => {
       const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
       if (!match) return 0;
-      let hours = parseInt(match[1]);
-      if (match[3].toUpperCase() === 'PM' && hours !== 12) hours += 12;
-      if (match[3].toUpperCase() === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + parseInt(match[2]);
+      let h = parseInt(match[1]);
+      if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
+      return h * 60 + parseInt(match[2]);
     };
     for (const time of drawTimes) { if (toMin(time) >= currentMinutes - 5) return time; }
     return drawTimes[0];
@@ -55,16 +55,15 @@ export function HourlyPredictionView() {
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
-      <CardHeader className="pb-2 bg-muted/10 border-b">
+      <CardHeader className="pb-2 bg-muted/10 border-b text-slate-900">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter">
             <Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {LOTTERIES.map(l => (<SelectItem key={l.id} value={l.id} className="font-bold"><div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div></SelectItem>))}</SelectContent>
+              <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg text-slate-900"><SelectValue /></SelectTrigger>
+              <SelectContent>{LOTTERIES.map(l => (<SelectItem key={l.id} value={l.id} className="font-bold text-slate-900"><div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div></SelectItem>))}</SelectContent>
             </Select>
             <Button onClick={loadData} variant="ghost" size="icon" className="text-primary"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
           </div>
@@ -78,7 +77,7 @@ export function HourlyPredictionView() {
           {nextPrediction?.topPick ? (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden">
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
-                {/* CARGA DE IMAGEN 3D DESDE SUPABASE */}
+                {/* LA IMAGEN 3D DESDE SUPABASE */}
                 <img 
                   key={nextPrediction.topPick.code}
                   src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code.padStart(2, '0')}.png`} 
@@ -94,7 +93,7 @@ export function HourlyPredictionView() {
               </div>
             </div>
           ) : (
-            <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm">Escaneando Patrones...</p></div>
+            <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm">Cargando Búnker...</p></div>
           )}
         </div>
       </CardContent>
