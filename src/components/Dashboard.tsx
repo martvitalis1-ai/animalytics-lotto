@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-center";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -51,23 +50,22 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
-  
-  // LINK MAESTRO ACTUALIZADO
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
+  // --- SOLUCIÓN AL ERROR ROJO 'COUNT' ---
   useEffect(() => {
     const loadCount = async () => {
       try {
-        // Versión blindada: Extraemos count directamente para evitar el error de 'null'
-        const { count, error } = await supabase
+        const response = await supabase
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        if (error) throw error;
-        if (count !== null) setTotalResults(count);
+        // Verificación de seguridad para que no sea null
+        if (response && response.count !== null) {
+          setTotalResults(response.count);
+        }
       } catch (e) { 
-        console.error("Error cargando contador:", e);
-        setTotalResults(0); // Fallback de seguridad
+        console.error("Error en búnker:", e); 
       }
     };
     loadCount();
@@ -131,7 +129,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
             <ThemeToggle />
             <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
-              {isMasterAdmin ? '👑 Admin Maestro' : isAgencyManager ? '🏦 Dueño Agencia' : 'Usuario'}
+              {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
           </div>
@@ -139,12 +137,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
       </header>
 
       <main className="container mx-auto px-4 py-4">
-        <div className="md:hidden mb-4 text-center">
-          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="w-full h-10 bg-[#24A1DE] text-white font-black text-xs uppercase italic gap-2 rounded-xl shadow-xl">
-            <Send className="w-4 h-4 fill-white" /> Telegram 💰🏁
-          </Button>
-        </div>
-
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50 justify-center">
             <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
@@ -168,10 +160,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
 
           <TabsContent value="explosivo" className="space-y-6">
             <ExplosiveData />
-            <DatoRicardoSection 
-              customName={tenantAgency?.nombre_dato_personalizado} 
-              agencyId={tenantAgency?.id}
-            />
+            <DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} agencyId={tenantAgency?.id} />
             <FrequencyHeatmap />
           </TabsContent>
 
@@ -180,30 +169,22 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
-          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
+          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /> </TabsContent>
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
 
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
-              <>
-                <AdminAgencias />
-                <div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div>
-                <AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit />
-              </>
+              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
             ) : (
               <div className="space-y-6">
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                    <ShieldAlert className="text-amber-600" />
-                   <p className="text-xs font-bold text-amber-700 uppercase">Gestión de Agencia Alquilada: Puedes publicar tus propios pronósticos manuales.</p>
+                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Franquicia: Edita tus datos y tus propios pronósticos manuales.</p>
                 </div>
-
                 <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none">
-                  <h3 className="font-black uppercase italic mb-4 flex items-center gap-2">
-                    <Plus className="text-emerald-600" /> Publicar Pronóstico de la Hora
-                  </h3>
+                  <h3 className="font-black uppercase italic mb-4 flex items-center gap-2"><Plus className="text-emerald-600" /> Publicar Mi Dato de la Hora</h3>
                   <DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} />
                 </Card>
-
                 <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
               </div>
             )}
