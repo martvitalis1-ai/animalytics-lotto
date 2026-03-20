@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminCodeModal } from "./AdminCodeModal";
 import { TodayResults } from "./TodayResults";
 import { ResultsInsert } from "./ResultsInsert";
 import { ResultsPanel } from "./ResultsPanel";
@@ -33,6 +31,7 @@ import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
+import { AdminCodeModal } from "./AdminCodeModal";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
@@ -46,8 +45,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-// Dentro de Dashboard.tsx, busque el useEffect de loadCount y reemplácelo:
-
+  // --- REPARACIÓN ATÓMICA DEL ERROR 'COUNT' ---
   useEffect(() => {
     const loadCount = async () => {
       try {
@@ -55,12 +53,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        // EL BLINDAJE: Si response es null, esto NO crashea, solo pone 0.
-        const total = response?.count ?? 0;
-        setTotalResults(Number(total));
-      } catch (e) {
-        console.warn("Falla controlada en contador.");
-        setTotalResults(0);
+        // Verificación profesional: evitamos desestructurar si la respuesta es null
+        if (response && response.count !== null && response.count !== undefined) {
+          setTotalResults(response.count);
+        }
+      } catch (e) { 
+        setTotalResults(0); 
       }
     };
     loadCount();
@@ -91,11 +89,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
-            <div className="hidden sm:block">
-              <h1 className="font-black text-lg leading-none uppercase italic">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
-            </div>
+            <img src={logoAnimalytics} alt="Logo" className="h-10" />
+            <h1 className="font-black text-lg uppercase italic">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
           </div>
           <div className="flex items-center gap-2">
             {isAgencyManager && (
@@ -107,7 +102,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
             </Button>
             <ThemeToggle />
-            <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
               {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
             </span>
@@ -125,7 +119,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
-            <TabsTrigger value="guia"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
             <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />Agencias</TabsTrigger>
             {isMasterAdmin && <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>}
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
@@ -138,7 +131,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
-          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
+          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /> </TabsContent>
           <TabsContent value="insertar" className="space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
