@@ -2,7 +2,6 @@ export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
-  // Blindaje absoluto de texto: 0 y 00 son llaves diferentes
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
