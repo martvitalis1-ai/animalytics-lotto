@@ -17,7 +17,6 @@ import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
 import { ThemeToggle } from "./ThemeToggle";
 import { DatoRicardoSection } from "./DatoRicardoSection";
-import { HypothesisAudit } from "./HypothesisAudit";
 import { AdminImageUpload } from "./AdminImageUpload";
 import { DataMapDisplay } from "./DataMapDisplay";
 import { HourlyPredictionView } from "./HourlyPredictionView";
@@ -43,22 +42,22 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN ATÓMICA DE ERROR 'COUNT' ---
+  // --- REPARACIÓN DE GRADO MILITAR PARA EL ERROR 'COUNT' ---
   useEffect(() => {
-    const loadCount = async () => {
+    async function loadCount() {
       try {
-        const response = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
+        // Consultamos sin desestructurar para que no explote si la red falla
+        const res = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
         
-        // Verificación profesional de nulidad
-        if (response && 'count' in response && response.count !== null) {
-          setTotalResults(response.count);
+        // Verificamos existencia del objeto antes de leer la propiedad
+        if (res && typeof res === 'object' && res.count !== null) {
+          setTotalResults(Number(res.count));
         }
-      } catch (e) { 
-        setTotalResults(0); 
+      } catch (err) {
+        console.warn("Falla controlada en contador.");
+        setTotalResults(0);
       }
-    };
+    }
     loadCount();
   }, []);
 
@@ -73,15 +72,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
     setActiveTab(tab);
   };
 
-  const handleAdminVerified = () => {
-    setShowAdminModal(false);
-    setShowInsertModal(false);
-    if (pendingTab) {
-      setActiveTab(pendingTab);
-      setPendingTab(null);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-left text-slate-900">
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border shadow-sm">
@@ -93,7 +83,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase font-bold">
-                {totalResults.toLocaleString()}+ sorteos
+                {totalResults.toLocaleString()}+ sorteos registrados
               </p>
             </div>
           </div>
@@ -130,12 +120,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6">
-            <HourlyPredictionView />
-            <QuickPrediction />
-            <TrendAnalysis />
-            <AIPredictive />
-          </TabsContent>
+          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
           <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
@@ -147,7 +132,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
-              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
+              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /></>
             ) : (
               <div className="space-y-6">
                 <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none"><h3 className="font-black uppercase italic mb-4 flex items-center gap-2"><Plus className="text-emerald-600" /> Publicar Mi Dato</h3><DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} /></Card>
@@ -157,8 +142,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Maestro" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Maestro" />
       <RicardoBot />
     </div>
   );
