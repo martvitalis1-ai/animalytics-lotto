@@ -77,7 +77,7 @@ export function HourlyPredictionView() {
                    crossOrigin="anonymous" 
                    onError={(e) => { e.currentTarget.style.display = 'none'; }} 
                 />
-               // Busca el bloque de la imagen (aprox línea 80) y reemplázalo por este:
+              // Reemplaza el div de la imagen (donde sale el zorro actualmente) por este:
 <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
   <img 
     key={nextPrediction.topPick.code}
@@ -85,13 +85,10 @@ export function HourlyPredictionView() {
     className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
     crossOrigin="anonymous"
     onError={(e) => {
-      // Si falla la imagen, que no se vea el icono de error roto
       e.currentTarget.style.display = 'none';
     }}
   />
-  {/* Número de fondo para diseño premium */}
   <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
     {nextPrediction.topPick.code.padStart(2, '0')}
   </span>
 </div>
-}
