@@ -96,3 +96,8 @@ export function ResultsPanel({ isAdmin }: { isAdmin: boolean }) {
     </div>
   ))}
 </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
