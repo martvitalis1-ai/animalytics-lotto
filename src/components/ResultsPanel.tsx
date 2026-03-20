@@ -73,34 +73,26 @@ export function ResultsPanel({ isAdmin }: { isAdmin: boolean }) {
         {loading ? (
           <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>
         ) : (
-          <div className="grid gap-3">
-            {results.map((r) => (
-              <div key={r.id} className="flex items-center justify-between p-4 bg-white rounded-xl border shadow-sm">
-                <span className="font-mono font-black">{r.draw_time}</span>
-                <div className="flex items-center gap-4">
-                  {editingId === r.id ? (
-                    <Input value={editNumber} onChange={(e) => setEditNumber(e.target.value)} className="w-20 text-center font-black" />
-                  ) : (
-                    <>
-                      <img src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${r.result_number === '0' || r.result_number === '00' ? r.result_number : r.result_number.padStart(2, '0')}.png`} className="w-10 h-10 object-contain" alt="" />
-                      <span className="font-black text-2xl">#{r.result_number}</span>
-                    </>
-                  )}
-                </div>
-                {isAdmin && (
-                  editingId === r.id ? (
-                    <Button size="sm" onClick={() => saveEdit(r.id)}><Save size={16}/></Button>
-                  ) : (
-                    <Button size="sm" variant="ghost" onClick={() => { setEditingId(r.id); setEditNumber(r.result_number); }}><Pencil size={16}/></Button>
-                  )
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-import { Pencil } from 'lucide-react';
+// Dentro de su ResultsPanel.tsx, reemplace la parte del mapeo visual por esta:
+<div className="grid gap-3">
+  {results.map((r) => (
+    <div key={r.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border-2 border-slate-50 shadow-sm hover:shadow-md transition-all">
+      <div className="flex flex-col">
+        <span className="text-[10px] font-black text-slate-400 uppercase">Sorteo</span>
+        <span className="font-mono font-black text-lg">{r.draw_time}</span>
+      </div>
+      <div className="flex items-center gap-4 bg-slate-50 px-6 py-2 rounded-2xl">
+        <img 
+          src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${(r.result_number === '0' || r.result_number === '00') ? r.result_number : r.result_number.padStart(2, '0')}.png`} 
+          className="w-12 h-12 object-contain drop-shadow-md" 
+          alt="" 
+        />
+        <div className="text-left">
+          <span className="block font-mono font-black text-3xl leading-none text-primary">#{r.result_number}</span>
+          <span className="text-[10px] font-black uppercase text-slate-400">{r.animal_name}</span>
+        </div>
+      </div>
+      {isAdmin && <Button size="sm" variant="ghost" onClick={() => { setEditingId(r.id); setEditNumber(r.result_number); }}><Pencil size={18}/></Button>}
+    </div>
+  ))}
+</div>
