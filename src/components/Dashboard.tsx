@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-center";
+import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, Ticket, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCodeModal } from "./AdminCodeModal";
@@ -52,7 +52,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- SOLUCIÓN AL ERROR ROJO 'COUNT' ---
+  // --- REPARACIÓN DEL ERROR ROJO (Cannot read count of null) ---
   useEffect(() => {
     const loadCount = async () => {
       try {
@@ -60,22 +60,19 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        // Verificación de seguridad para que no sea null
+        // Verificamos que la respuesta no sea nula antes de leer el count
         if (response && response.count !== null) {
           setTotalResults(response.count);
         }
       } catch (e) { 
-        console.error("Error en búnker:", e); 
+        console.error("Error cargando contador:", e); 
       }
     };
     loadCount();
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (isAgencyManager && tab === 'admin') {
-      setActiveTab(tab);
-      return;
-    }
+    if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
     if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
       setPendingTab(tab);
       if (tab === 'admin') setShowAdminModal(true);
@@ -110,7 +107,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
             </div>
           </div>
           <div className="flex items-center gap-2">
-            
             {isAgencyManager && (
               <Button 
                 variant={activeTab === 'admin' ? "default" : "outline"}
@@ -151,27 +147,15 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6">
-            <HourlyPredictionView />
-            <QuickPrediction />
-            <TrendAnalysis />
-            <AIPredictive />
-          </TabsContent>
-
-          <TabsContent value="explosivo" className="space-y-6">
-            <ExplosiveData />
-            <DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} agencyId={tenantAgency?.id} />
-            <FrequencyHeatmap />
-          </TabsContent>
-
+          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
+          <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
-          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /> </TabsContent>
+          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
           <TabsContent value="insertar" className="max-w-xl mx-auto space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
-
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
               <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
@@ -179,20 +163,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
               <div className="space-y-6">
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                    <ShieldAlert className="text-amber-600" />
-                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Franquicia: Edita tus datos y tus propios pronósticos manuales.</p>
+                   <p className="text-xs font-bold text-amber-700 uppercase italic">Modo Gestión de Franquicia. Solo puedes editar tus datos operativos.</p>
                 </div>
-                <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none">
-                  <h3 className="font-black uppercase italic mb-4 flex items-center gap-2"><Plus className="text-emerald-600" /> Publicar Mi Dato de la Hora</h3>
-                  <DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} />
-                </Card>
                 <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
               </div>
             )}
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Insertar" />
       <RicardoBot />
     </div>
   );
