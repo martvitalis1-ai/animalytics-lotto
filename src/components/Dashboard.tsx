@@ -44,23 +44,22 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN ATÓMICA PARA MATAR EL ERROR EN EL INDEX.JS ---
-  useEffect(() => {
-    let isMounted = true;
-    const loadStats = async () => {
+useEffect(() => {
+    const loadCount = async () => {
       try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        const response = await supabase
+          .from('lottery_results')
+          .select('*', { count: 'exact', head: true });
         
-        // Verificación Senior de nulidad: Evita que el index-CCbzca9p.js colapse
-        if (isMounted && response && response.count !== null && response.count !== undefined) {
-          setTotalResults(Number(response.count));
-        }
+        // REPARACIÓN DEFINITIVA: Si response es null o da error, ponemos 0 pero NO crasheamos
+        const total = response?.count ?? 0;
+        setTotalResults(Number(total));
       } catch (e) {
-        if (isMounted) setTotalResults(0);
+        console.warn("Falla controlada en contador de búnker.");
+        setTotalResults(0); 
       }
     };
-    loadStats();
-    return () => { isMounted = false; };
+    loadCount();
   }, []);
 
   const handleTabChange = (tab: string) => {
