@@ -45,3 +45,7 @@ export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, 
     </div>
   );
 }
+
+export function RichAnimalCardCompact({ code, probability, className = '' }: any) {
+  return <RichAnimalCard code={code} probability={probability} size="sm" className={className} />;
+}
