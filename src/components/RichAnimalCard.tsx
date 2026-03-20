@@ -1,35 +1,46 @@
 import { useMemo, useState } from 'react';
-import { getAnimalByCode, getAnimalEmoji, getAnimalImageUrl } from '@/lib/animalData';
+import { getAnimalByCode, getAnimalEmoji } from '@/lib/animalData';
 import { Badge } from '@/components/ui/badge';
 import { Zap } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, className = '' }: any) {
   const animal = useMemo(() => getAnimalByCode(code), [code]);
-  const imageUrl = useMemo(() => getAnimalImageUrl(code), [code]);
   const emoji = useMemo(() => getAnimalEmoji(code), [code]);
   const [imgError, setImgError] = useState(false);
 
+  // --- CONSTRUCCIÓN DIRECTA DEL LINK (SIN INTERMEDIARIOS) ---
+  const imageUrl = useMemo(() => {
+    const strCode = String(code).trim();
+    // Forzamos el formato: 0, 00, 01, 02... 99
+    const finalCode = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+    return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
+  }, [code]);
+
   const sizeConfig = {
     sm: { card: 'p-2 min-w-[90px]', img: 'w-16 h-16', num: 'text-sm' },
-    md: { card: 'p-4 min-w-[120px]', img: 'w-24 h-24', num: 'text-xl' },
+    md: { card: 'p-4 min-w-[120px]', img: 'w-28 h-28', num: 'text-xl' },
     lg: { card: 'p-6 min-w-[180px]', img: 'w-44 h-44', num: 'text-3xl' }
   };
   const config = sizeConfig[size as keyof typeof sizeConfig] || sizeConfig.md;
 
   return (
-    <div className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100", config.card, className)} onClick={onClick}>
+    <div 
+      className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100", config.card, className)} 
+      onClick={onClick}
+    >
       {rank && <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black z-20 shadow-lg">#{rank}</div>}
 
       <div className={cn(config.img, "relative flex items-center justify-center mb-2")}>
         {!imgError ? (
           <img 
+            key={imageUrl}
             src={imageUrl} 
             alt={animal?.name || "animal"} 
             className="w-full h-full object-contain z-10 drop-shadow-xl"
-            // QUITAMOS crossOrigin para que Supabase no bloquee la App
+            crossOrigin="anonymous"
             onError={() => {
-              console.log("Error en ruta:", imageUrl);
+              console.log("Falla en:", imageUrl);
               setImgError(true);
             }}
           />
