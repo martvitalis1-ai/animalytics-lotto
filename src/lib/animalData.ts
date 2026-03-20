@@ -1,6 +1,6 @@
 // src/lib/animalData.ts
 
-export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
