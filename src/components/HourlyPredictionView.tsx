@@ -23,7 +23,7 @@ export function HourlyPredictionView() {
 
   const pred = useMemo(() => {
     if (history.length === 0) return null;
-    return generateDayForecast(selectedLottery, ["03:00 PM"], history, new Date().toISOString().split('T')[0])[0] || null;
+    return generateDayForecast(selectedLottery, ["04:00 PM"], history, new Date().toISOString().split('T')[0])[0] || null;
   }, [history, selectedLottery]);
 
   return (
@@ -35,14 +35,13 @@ export function HourlyPredictionView() {
       {pred?.topPick ? (
         <div className="flex flex-col items-center animate-in zoom-in duration-500">
           <div className="relative w-48 h-48 lg:w-64 lg:h-64 mb-6 flex items-center justify-center">
-            {/* CARGA FORZADA PNG DE SUPABASE */}
             <img 
-              src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${pred.topPick.code === '00' || pred.topPick.code === '0' ? pred.topPick.code : pred.topPick.code.padStart(2, '0')}.png`} 
+              src={getAnimalImageUrl(pred.topPick.code)} 
               className="w-full h-full object-contain z-10 drop-shadow-2xl" 
               crossOrigin="anonymous"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-            <span className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-emerald-500/5 select-none">
+            <span className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-emerald-500/5 select-none font-mono">
               {pred.topPick.code === '00' || pred.topPick.code === '0' ? pred.topPick.code : pred.topPick.code.padStart(2, '0')}
             </span>
           </div>
