@@ -52,7 +52,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
- // Dentro de Dashboard.tsx, busque el useEffect del contador y reemplácelo completo:
+ // Busca la función useEffect que carga el contador (aprox línea 50) y reemplázala por esta:
 useEffect(() => {
   const loadCount = async () => {
     try {
@@ -60,12 +60,15 @@ useEffect(() => {
         .from('lottery_results')
         .select('*', { count: 'exact', head: true });
       
-      // EL BLINDAJE: Usamos el operador ?? para que si 'response' es null, el valor sea 0
-      const total = response?.count ?? 0;
-      setTotalResults(Number(total));
+      // BLINDAJE TOTAL: Si response es null o da error, ponemos 0 y la App sigue viva
+      if (response && response.count !== null && response.count !== undefined) {
+        setTotalResults(response.count);
+      } else {
+        setTotalResults(0);
+      }
     } catch (e) {
-      console.warn("Falla controlada en búnker:", e);
-      setTotalResults(0); 
+      console.warn("Falla controlada en contador.");
+      setTotalResults(0);
     }
   };
   loadCount();
