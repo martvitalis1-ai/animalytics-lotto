@@ -23,7 +23,7 @@ export function AnimalImage({
   showBallenaStyle = false
 }: AnimalImageProps) {
   const animal = useMemo(() => getAnimalByCode(code), [code]);
-  const position = SPRITE_POSITIONS[code] || SPRITE_POSITIONS["0"];
+  const position = SPRITE_POSITIONS[code] || SPRITE_POSITIONS["0"] || { x: 0, y: 0, col: 0, row: 0 };
   
   const sizeClasses = {
     sm: 'w-8 h-8',
