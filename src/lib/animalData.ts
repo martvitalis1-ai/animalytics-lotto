@@ -1,13 +1,10 @@
 // src/lib/animalData.ts
-
-// RUTA MAESTRA DE SUPABASE (Bucket: ANIMALITOS)
 export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
-  // Blindaje: '0' y '00' se quedan como texto puro. 1-9 pasan a '01', '02'...
+  // Blindaje: '0' y '00' se quedan igual. 1-9 pasan a '01', '02'...
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
     '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -44,5 +41,3 @@ export const getAnimalByCode = (code: string | number) => {
   const name = getAnimalName(code);
   return { id: 0, code: String(code), name, category: "general" };
 };
-
-export const getAnimalEmoji = (code: string | number): string => "🎲";
