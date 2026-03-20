@@ -58,9 +58,17 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const { data: { count } } = await (supabase as any).from('lottery_results').select('*', { count: 'exact', head: true });
-        if (count) setTotalResults(count);
-      } catch (e) { console.error(e); }
+        // Versión blindada: Extraemos count directamente para evitar el error de 'null'
+        const { count, error } = await supabase
+          .from('lottery_results')
+          .select('*', { count: 'exact', head: true });
+        
+        if (error) throw error;
+        if (count !== null) setTotalResults(count);
+      } catch (e) { 
+        console.error("Error cargando contador:", e);
+        setTotalResults(0); // Fallback de seguridad
+      }
     };
     loadCount();
   }, []);
