@@ -14,20 +14,16 @@ import { DatoRicardo } from "./DatoRicardo";
 import { RicardoBot } from "./RicardoBot";
 import { TrendAnalysis } from "./TrendAnalysis";
 import { NotificationCenter } from "./NotificationCenter";
-import { ExportTools } from "./ExportTools";
 import { QuickPrediction } from "./QuickPrediction";
 import { ExplosiveData } from "./ExplosiveData";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
 import { ThemeToggle } from "./ThemeToggle";
 import { DatoRicardoSection } from "./DatoRicardoSection";
-import { HypothesisAudit } from "./HypothesisAudit";
-import { AdminImageUpload } from "./AdminImageUpload";
 import { DataMapDisplay } from "./DataMapDisplay";
 import { HourlyPredictionView } from "./HourlyPredictionView";
 import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
-import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
@@ -43,23 +39,23 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
+  const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-useEffect(() => {
-    const loadCount = async () => {
+  // --- REPARACIÓN BLINDADA PARA EVITAR EL CRASH DE 'COUNT' ---
+  useEffect(() => {
+    let isMounted = true;
+    const loadStats = async () => {
       try {
-        const response = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        
-        // REPARACIÓN DEFINITIVA: Si response es null o da error, ponemos 0 pero NO crasheamos
-        const total = response?.count ?? 0;
-        setTotalResults(Number(total));
+        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        if (isMounted && response && response.count !== null && response.count !== undefined) {
+          setTotalResults(response.count);
+        }
       } catch (e) {
-        console.warn("Falla controlada en contador de búnker.");
-        setTotalResults(0); 
+        if (isMounted) setTotalResults(0);
       }
     };
-    loadCount();
+    loadStats();
+    return () => { isMounted = false; };
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -83,16 +79,19 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b p-4 flex justify-between items-center shadow-sm">
+    <div className="min-h-screen bg-background text-slate-900">
+      <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <div>
-            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
+          <div className="text-left">
+            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ sorteos registrados</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="hidden md:flex h-9 bg-[#24A1DE] text-white font-black text-[10px] uppercase italic gap-2 rounded-full px-4 border-none shadow-md">
+            <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
+          </Button>
           <ThemeToggle />
           <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
             {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
@@ -103,12 +102,12 @@ useEffect(() => {
 
       <main className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto bg-slate-200/50 p-1 justify-center rounded-2xl">
-            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
-            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" />EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />RULETA</TabsTrigger>
-            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />RESULTADOS</TabsTrigger>
-            <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />AGENCIAS</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center rounded-2xl">
+            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" /> IA</TabsTrigger>
+            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" /> EXPLOSIVO</TabsTrigger>
+            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" /> RULETA</TabsTrigger>
+            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" /> RESULTADOS</TabsTrigger>
+            <TabsTrigger value="jugadas"><ShoppingCart className="w-4 h-4 mr-1.5" /> AGENCIAS</TabsTrigger>
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
@@ -119,7 +118,7 @@ useEffect(() => {
           <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
-              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
+              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /></>
             ) : (
               <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
             )}
