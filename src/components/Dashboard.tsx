@@ -26,10 +26,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
     const loadCount = async () => {
       try {
         const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        // Si response es null o count no existe, usamos 0. No explota.
-        const valor = response?.count ?? 0;
-        setTotalResults(Number(valor));
+        // BLINDAJE: Si response es null, no explota, usa 0 por defecto.
+        if (response && response.count !== null) {
+          setTotalResults(Number(response.count));
+        }
       } catch (e) {
+        console.warn("Falla controlada en carga de sorteos.");
         setTotalResults(0);
       }
     };
@@ -58,11 +60,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       <main className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center rounded-2xl">
-            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1" /> IA</TabsTrigger>
-            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1" /> EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1" /> RULETA</TabsTrigger>
-            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1" /> RESULTADOS</TabsTrigger>
-            <TabsTrigger value="jugadas"><ShoppingCart className="w-4 h-4 mr-1" /> AGENCIAS</TabsTrigger>
+            <TabsTrigger value="ia">IA</TabsTrigger>
+            <TabsTrigger value="explosivo">EXPLOSIVO</TabsTrigger>
+            <TabsTrigger value="ruleta">RULETA</TabsTrigger>
+            <TabsTrigger value="resultados">RESULTADOS</TabsTrigger>
+            <TabsTrigger value="jugadas">AGENCIAS</TabsTrigger>
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
