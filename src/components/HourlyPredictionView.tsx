@@ -1,84 +1,71 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, RefreshCw, Loader2, ChevronRight, Zap } from "lucide-react";
-import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
-import { getLotteryLogo } from './LotterySelector';
-import { getAnimalName } from '@/lib/animalData';
-import { generateDayForecast, HourlyForecast } from '@/lib/advancedProbability';
+import { Card, CardContent } from "@/components/ui/card";
+import { Zap, Clock } from "lucide-react";
+import { getDrawTimesForLottery } from '@/lib/constants';
+import { getAnimalName, getAnimalEmoji } from '@/lib/animalData';
+import { generateDayForecast } from '@/lib/advancedProbability';
 
 export function HourlyPredictionView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await supabase.from('lottery_results').select('*').eq('lottery_type', selectedLottery).order('created_at', { ascending: false }).limit(500);
-      if (response.data) setHistory(response.data);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }, [selectedLottery]);
-
-  useEffect(() => { loadData(); }, [loadData]);
 
   const nextDrawTime = useMemo(() => {
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const toMin = (t: string) => {
-      const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (!match) return 0;
-      let h = parseInt(match[1]);
-      if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
-      if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-      return h * 60 + parseInt(match[2]);
-    };
     const times = getDrawTimesForLottery(selectedLottery);
-    for (const time of times) { if (toMin(time) >= currentMinutes - 5) return time; }
-    return times[0];
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    const toMin = (t: string) => {
+        const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (!m) return 0;
+        let h = parseInt(m[1]);
+        if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+        if (m[3].toUpperCase() === 'AM' && h === 12) h = 0;
+        return h * 60 + parseInt(m[2]);
+    };
+    return times.find(t => toMin(t) >= currentMin - 5) || times[0];
   }, [selectedLottery]);
 
-  const nextPrediction = useMemo((): HourlyForecast | null => {
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', selectedLottery).order('created_at', { ascending: false }).limit(500);
+      if (data) setHistory(data);
+    };
+    load();
+  }, [selectedLottery]);
+
+  const pred = useMemo(() => {
     if (history.length === 0) return null;
     return generateDayForecast(selectedLottery, [nextDrawTime], history, new Date().toISOString().split('T')[0])[0] || null;
   }, [history, selectedLottery, nextDrawTime]);
 
+  // URL DE SUPABASE DIRECTA
+  const get3D = (c: string) => `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${c.padStart(2, '0').replace('00', '00').replace(/^0(\d)$/, '0$1')}.png`;
+
   return (
-    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
-      <CardHeader className="pb-2 bg-muted/10 border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter"><Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg text-slate-900"><SelectValue /></SelectTrigger>
-              <SelectContent>{LOTTERIES.map(l => (<SelectItem key={l.id} value={l.id} className="font-bold text-slate-900"><div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div></SelectItem>))}</SelectContent>
-            </Select>
-            <Button onClick={loadData} variant="ghost" size="icon"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
+    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden p-6 text-center">
+      <div className="inline-flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-full font-black mb-6">
+        <Clock size={20} /> {nextDrawTime} - PRÓXIMO
+      </div>
+
+      {pred?.topPick && (
+        <div className="bg-white rounded-[3rem] p-8 border-4 border-slate-100 shadow-2xl relative flex flex-col items-center">
+          <div className="relative w-48 h-48 mb-4 flex items-center justify-center">
+            <img 
+              src={get3D(pred.topPick.code)} 
+              className="w-full h-full object-contain z-10 drop-shadow-2xl" 
+              crossOrigin="anonymous"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <span className="absolute bottom-0 text-[130px] font-black text-emerald-500/5 leading-none select-none">
+              {pred.topPick.code.padStart(2, '0')}
+            </span>
+          </div>
+          <h2 className="text-4xl font-black uppercase text-slate-800 tracking-tighter">{pred.topPick.name}</h2>
+          <div className="mt-6 inline-flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">
+            <Zap size={20} fill="yellow" /> {Math.floor(pred.topPick.probability)}% PROBABILIDAD
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="text-center space-y-6">
-          <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
-            {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
-          </div>
-          {nextPrediction?.topPick ? (
-           // Solo la parte de la imagen para que vea el cambio:
-<div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-inner border-2 border-slate-50">
-  <img 
-    key={nextPrediction.topPick.code}
-    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
-    className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
-    crossOrigin="anonymous"
-    onError={(e) => {
-      // SI FALLA LA IMAGEN, NO SE PONE NEGRO, SE MUESTRA EL NÚMERO GRANDE
-      e.currentTarget.style.display = 'none';
-    }}
-  />
-  <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-600/5 leading-none select-none">
-    {nextPrediction.topPick.code.padStart(2, '0')}
-  </span>
-</div>
+      )}
+    </Card>
+  );
+}
