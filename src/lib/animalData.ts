@@ -1,11 +1,18 @@
 // src/lib/animalData.ts
 
-// RUTA MAESTRA DE IMÁGENES 3D EN SUPABASE
-export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+export interface AnimalInfo {
+  id: number;
+  code: string;  
+  name: string;
+  category: string;
+}
+
+// RUTA MAESTRA A TU BUCKET DE SUPABASE
+const SUPA_BASE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
-  // Blindaje absoluto: '0' y '00' son llaves distintas de texto
+  // Blindaje 0 y 00: Si es '0' o '00' se queda igual, si es 1-9 se pone '01'-'09'
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   
   const names: Record<string, string> = {
@@ -37,7 +44,7 @@ export const getAnimalName = (code: string | number): string => {
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return `${SUPA_IMG_URL}${normalized}.png`;
+  return `${SUPA_BASE_URL}${normalized}.png`;
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎲";
