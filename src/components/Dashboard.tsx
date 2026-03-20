@@ -10,10 +10,7 @@ import { HistoryManager } from "./HistoryManager";
 import { AdminUserManagement } from "./AdminUserManagement";
 import { HourlyMatrix } from "./HourlyMatrix";
 import { AIPredictive } from "./AIPredictive";
-import { DatoRicardo } from "./DatoRicardo";
-import { RicardoBot } from "./RicardoBot";
 import { TrendAnalysis } from "./TrendAnalysis";
-import { NotificationCenter } from "./NotificationCenter";
 import { QuickPrediction } from "./QuickPrediction";
 import { ExplosiveData } from "./ExplosiveData";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
@@ -41,16 +38,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
-  const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- BLOQUE DE SEGURIDAD PARA EL CONTADOR ---
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const { count, error } = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        if (!error && count !== null) setTotalResults(count);
+        const res = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        if (res && res.count !== null) setTotalResults(res.count);
       } catch (e) { setTotalResults(0); }
     };
     loadCount();
@@ -77,8 +70,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
           <div className="flex items-center gap-2">
             {isAgencyManager && (
-              <Button variant="outline" size="sm" onClick={() => setActiveTab("admin")} className="font-black text-[10px] uppercase gap-2">
-                <Settings className="w-4 h-4" /> <span>CONFIGURAR BANCA</span>
+              <Button variant="outline" size="sm" onClick={() => setActiveTab("admin")} className="font-black text-[10px] uppercase gap-2 border-emerald-500/20">
+                <Settings className="w-4 h-4" /> <span>MI BANCA</span>
               </Button>
             )}
             <ThemeToggle />
@@ -99,6 +92,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" />Ruleta</TabsTrigger>
             <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" />Resultados</TabsTrigger>
             <TabsTrigger value="matriz"><Grid3X3 className="w-4 h-4 mr-1.5" />Matriz</TabsTrigger>
+            <TabsTrigger value="guia"><PlayCircle className="w-4 h-4 mr-1.5" />Guía</TabsTrigger>
             <TabsTrigger value="jugadas" className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"><ShoppingCart className="w-4 h-4 mr-1.5" />Agencias</TabsTrigger>
             {isMasterAdmin && <TabsTrigger value="insertar" className="bg-foreground text-background"><Plus className="w-4 h-4" /></TabsTrigger>}
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
@@ -110,6 +104,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="matriz" className="space-y-6"><SequenceMatrixView /><HourlyMatrix /><FrequencyHeatmap /></TabsContent>
+          <TabsContent value="guia"><GuiaUso /></TabsContent>
           <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
           <TabsContent value="insertar" className="space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
           <TabsContent value="admin" className="space-y-4">
@@ -126,7 +121,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </main>
       <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Admin" />
       <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Insertar" />
-      <RicardoBot />
     </div>
   );
 }
