@@ -42,10 +42,8 @@ export function HourlyPredictionView() {
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
-  // LÓGICA DE RELOJ EN TIEMPO REAL (MANDA LA HORA DEL CELULAR)
   const nextDrawTime = useMemo(() => {
     const now = new Date();
-    // Ajuste de hora local (Venezuela es UTC-4, pero el sistema usa la del dispositivo)
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     const toMin = (t: string) => {
@@ -59,16 +57,13 @@ export function HourlyPredictionView() {
       return hours * 60 + mins;
     };
 
-    // Buscamos el próximo sorteo que va a ocurrir (o que está ocurriendo justo ahora)
-    // Damos un margen de 10 minutos después de la hora del sorteo
     for (const time of drawTimes) {
       const drawMin = toMin(time);
-      if (drawMin >= currentMinutes - 5) { // Si faltan minutos o pasaron menos de 5 min
+      if (drawMin >= currentMinutes - 5) {
         return time;
       }
     }
-
-    return drawTimes[0]; // Si ya pasó el último del día, mostrar el primero de mañana
+    return drawTimes[0];
   }, [drawTimes]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
@@ -77,8 +72,16 @@ export function HourlyPredictionView() {
     return forecasts[0] || null;
   }, [history, selectedLottery, nextDrawTime, today]);
 
+  // --- FUNCIÓN DE IMAGEN BLINDADA PARA EL BÚNKER ---
+  const getAnimalImage = (code: string) => {
+    const strCode = String(code).trim();
+    // Forzamos: 0 y 00 quedan igual, del 1 al 9 les pone el 0 adelante (01, 02...)
+    const finalCode = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+    return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
+  };
+
   return (
-    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden">
+    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
       <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter italic">
@@ -90,7 +93,7 @@ export function HourlyPredictionView() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LOTTERIES.map(l => (
+                {LOTERIAS_LIST_FIX.map(l => (
                   <SelectItem key={l.id} value={l.id} className="font-bold">
                     <div className="flex items-center gap-2">
                        <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
@@ -106,36 +109,56 @@ export function HourlyPredictionView() {
       
       <CardContent className="pt-6">
         <div className="text-center space-y-6">
-          {/* CARTEL DE LA HORA ACTUALIZADA */}
           <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
             {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
 
           {nextPrediction?.topPick ? (
-            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-primary/10 via-background to-accent/10 border-4 border-primary/20 relative shadow-2xl">
-              <span className="text-8xl block drop-shadow-2xl mb-4 animate-in zoom-in duration-500">
-                {getAnimalEmoji(nextPrediction.topPick.code)}
-              </span>
-              <div className="font-mono font-black text-7xl text-primary leading-none tracking-tighter">
-                {nextPrediction.topPick.code.padStart(2, '0')}
-              </div>
-              <h3 className="text-4xl font-black uppercase mt-2 tracking-tighter">{nextPrediction.topPick.name}</h3>
+            <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden">
               
-              <div className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-destructive text-white rounded-2xl font-black text-2xl shadow-lg border-b-4 border-black/20">
-                <Zap className="w-6 h-6 fill-current text-yellow-300" /> 
-                {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
+              {/* CONTENEDOR DE IMAGEN VIP 3D */}
+              <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
+                <img 
+                  key={nextPrediction.topPick.code}
+                  src={getAnimalImage(nextPrediction.topPick.code)} 
+                  className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
+                  alt="Animal Maestro"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    // Si la imagen falla, muestra el emoji de fondo como respaldo
+                    e.currentTarget.style.opacity = '0';
+                  }}
+                />
+                {/* Número de fondo para diseño premium */}
+                <span className="absolute inset-0 flex items-center justify-center text-[120px] lg:text-[160px] font-black text-emerald-500/5 select-none">
+                  {nextPrediction.topPick.code.padStart(2, '0')}
+                </span>
+                {/* Emoji de respaldo (solo visible si la imagen no carga) */}
+                <span className="absolute text-7xl opacity-10">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
               </div>
 
-              <div className="mt-8 pt-4 border-t-2 border-dashed border-primary/20">
-                <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                  MUESTRA: {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X APARICIONES EN EL BÚNKER
+              <div className="font-mono font-black text-6xl text-slate-900 leading-none tracking-tighter mt-4">
+                {nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' 
+                  ? nextPrediction.topPick.code 
+                  : nextPrediction.topPick.code.padStart(2, '0')}
+              </div>
+              <h3 className="text-4xl font-black uppercase mt-2 tracking-tighter text-slate-800">{nextPrediction.topPick.name}</h3>
+              
+              <div className="mt-6 inline-flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl">
+                <Zap className="w-6 h-6 fill-current text-yellow-300" /> 
+                {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
+              </div>
+
+              <div className="mt-8 pt-4 border-t-2 border-dashed border-slate-100">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  MUESTRA TÉCNICA: {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X APARICIONES
                 </p>
               </div>
             </div>
           ) : (
             <div className="py-20 flex flex-col items-center opacity-30 grayscale">
-               <Loader2 className="w-12 h-12 animate-spin mb-4" />
-               <p className="font-black uppercase tracking-widest text-sm">Escaneando Malicia...</p>
+               <Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" />
+               <p className="font-black uppercase tracking-widest text-sm">Escaneando Patrones...</p>
             </div>
           )}
         </div>
@@ -143,3 +166,14 @@ export function HourlyPredictionView() {
     </Card>
   );
 }
+
+// Helper local para que los nombres de las loterías coincidan con las constantes
+const LoteriasFix = [
+  { id: 'lotto_activo', name: 'Lotto Activo' },
+  { id: 'granjita', name: 'La Granjita' },
+  { id: 'guacharo', name: 'Guácharo Activo' },
+  { id: 'guacharito', name: 'Guacharito' },
+  { id: 'lotto_rey', name: 'Lotto Rey' },
+  { id: 'selva_plus', name: 'Selva Plus' },
+];
+const LOTERIAS_LIST_FIX = LOTERIAS.length > 0 ? LOTERIAS : LoteriasFix;
