@@ -18,18 +18,19 @@ export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, 
   const config = sizeConfig[size as keyof typeof sizeConfig] || sizeConfig.md;
 
   return (
-    <div className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95", config.card, className)} onClick={onClick}>
+    <div className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100", config.card, className)} onClick={onClick}>
       {rank && <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black z-20 shadow-lg">#{rank}</div>}
 
       <div className={cn(config.img, "relative flex items-center justify-center mb-2")}>
         {!imgError ? (
           <img 
             src={imageUrl} 
-            alt={animal?.name} 
+            alt={animal?.name || "animal"} 
             className="w-full h-full object-contain z-10 drop-shadow-xl"
-            crossOrigin="anonymous"
+            // QUITAMOS crossOrigin para que Supabase no bloquee la App
             onError={() => {
-               setImgError(true); 
+              console.log("Error en ruta:", imageUrl);
+              setImgError(true);
             }}
           />
         ) : (
