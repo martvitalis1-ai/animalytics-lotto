@@ -31,28 +31,25 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
- // Reemplace el bloque useEffect que carga el contador por este código blindado:
-
-  useEffect(() => {
-    const loadCount = async () => {
-      try {
-        const response = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        
-        // EL BLINDAJE: Verificamos que 'response' no sea nulo antes de tocarlo
-        if (response && response.count !== null && response.count !== undefined) {
-          setTotalResults(response.count);
-        } else {
-          setTotalResults(0);
-        }
-      } catch (e) {
-        console.warn("Falla controlada en contador de sorteos.");
-        setTotalResults(0);
+ // Busca el useEffect que hace el fetch de lottery_results
+useEffect(() => {
+  const loadCount = async () => {
+    try {
+      const response = await supabase
+        .from('lottery_results')
+        .select('*', { count: 'exact', head: true });
+      
+      // EL BLINDAJE: Usamos el operador ?. y ?? para que si es null, sea 0 y no explote
+      if (response && response.count !== null) {
+        setTotalResults(response.count);
       }
-    };
-    loadCount();
-  }, []);
+    } catch (e) {
+      console.warn("Falla controlada en contador de sorteos.");
+      setTotalResults(0); 
+    }
+  };
+  loadCount();
+}, []);
 
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
