@@ -1,56 +1,51 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Zap, Clock, RefreshCw } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Zap, Clock } from "lucide-react";
 import { generateDayForecast } from '@/lib/advancedProbability';
-import { getAnimalImageUrl, getAnimalEmoji, getAnimalName } from '@/lib/animalData';
 
 export function HourlyPredictionView() {
-  const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', selectedLottery).order('created_at', { ascending: false }).limit(500);
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from('lottery_results').select('*').order('created_at', { ascending: false }).limit(500);
       if (data) setHistory(data);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }, [selectedLottery]);
-
-  useEffect(() => { loadData(); }, [loadData]);
+    };
+    load();
+  }, []);
 
   const pred = useMemo(() => {
     if (history.length === 0) return null;
-    return generateDayForecast(selectedLottery, ["11:00 AM"], history, new Date().toISOString().split('T')[0])[0] || null;
-  }, [history, selectedLottery]);
+    return generateDayForecast('lotto_activo', ["10:00 AM"], history, new Date().toISOString().split('T')[0])[0] || null;
+  }, [history]);
+
+  // LA RUTA DIRECTA A SU BUCKET
+  const get3D = (c: string) => `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${c === '0' || c === '00' ? c : c.padStart(2, '0')}.png`;
 
   return (
-    <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden p-6 text-center bg-white rounded-[3rem]">
-      <div className="flex justify-between items-center mb-6 px-4">
-        <div className="px-6 py-2 bg-primary text-white rounded-full font-black flex items-center gap-2">
-          <Clock size={20} /> 11:00 AM - PRÓXIMO
-        </div>
-        <Button onClick={loadData} variant="ghost" size="icon"><RefreshCw className={loading ? "animate-spin" : ""} /></Button>
+    <Card className="border-4 border-primary/10 shadow-2xl p-8 text-center bg-white rounded-[3rem]">
+      <div className="inline-flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-full font-black text-xl mb-8">
+        <Clock size={24} /> PRÓXIMO SORTEO
       </div>
 
       {pred?.topPick && (
         <div className="flex flex-col items-center">
-          <div className="relative w-48 h-48 lg:w-64 lg:h-64 mb-4 flex items-center justify-center">
+          <div className="relative w-56 h-56 lg:w-72 lg:h-72 mb-4 flex items-center justify-center">
+            {/* CARGA FORZADA DE PNG */}
             <img 
-              src={getAnimalImageUrl(pred.topPick.code)} 
+              src={get3D(pred.topPick.code)} 
               className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in duration-500" 
               crossOrigin="anonymous"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://www.google.com/s2/favicons?domain=lovable.dev'; }}
             />
-            <span className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-emerald-500/5 select-none">
+            <span className="absolute inset-0 flex items-center justify-center text-[150px] font-black text-emerald-500/5 select-none">
               {pred.topPick.code.padStart(2, '0')}
             </span>
           </div>
-          <h2 className="text-4xl font-black uppercase text-slate-800 tracking-tighter">{pred.topPick.name}</h2>
-          <div className="mt-6 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-[2rem] font-black text-2xl shadow-xl border-b-4 border-emerald-800">
-            <Zap size={28} fill="yellow" className="text-yellow-300" /> {Math.floor(pred.topPick.probability)}% ÉXITO
+          <h2 className="text-5xl font-black uppercase text-slate-800 tracking-tighter">{pred.topPick.name}</h2>
+          <div className="mt-8 inline-flex items-center gap-2 px-12 py-5 bg-emerald-600 text-white rounded-[2rem] font-black text-3xl shadow-xl border-b-8 border-emerald-900">
+            <Zap size={32} fill="yellow" className="text-yellow-300" /> {Math.floor(pred.topPick.probability)}% ÉXITO
           </div>
         </div>
       )}
