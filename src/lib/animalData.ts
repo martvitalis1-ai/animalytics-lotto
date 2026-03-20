@@ -10,7 +10,7 @@ export interface AnimalInfo {
 }
 
 // RUTA DIRECTA A SU BUCKET "ANIMALITOS" EN SUPABASE
-const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+const BUCKET_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const strCode = String(code).trim();
