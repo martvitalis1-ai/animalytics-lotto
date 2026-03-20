@@ -1,18 +1,8 @@
-// src/lib/animalData.ts
-
-export interface AnimalInfo {
-  id: number;
-  code: string;  
-  name: string;
-  category: string;
-}
-
-// RUTA MAESTRA DE TU BUCKET EN SUPABASE
 export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const strCode = String(code).trim();
-  // Blindaje absoluto: 0 y 00 son llaves diferentes de texto
+  // No usamos parseInt para que el '00' no se vuelva '0'
   const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
   
   const names: Record<string, string> = {
@@ -31,25 +21,19 @@ export const getAnimalName = (code: string | number): string => {
     '59': 'PANTERA', '60': 'CAMALEÓN', '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO',
     '64': 'GAVILÁN', '65': 'ARAÑA', '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR',
     '69': 'CONEJO', '70': 'BISONTE', '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO',
-    '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE',
-    '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO',
-    '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR',
-    '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA',
-    '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO',
+    '74': 'TURPIAL', '75': 'GUÁCHARO', '76': 'RINOCERONTE', '77': 'PINGÜINO',
+    '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO',
+    '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY',
+    '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN',
+    '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ',
+    '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO',
     '99': 'GUACHARITO'
   };
-  return names[normalized] || "ANIMAL";
+  return names[normalized] || `Animal ${normalized}`;
 };
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const strCode = String(code).trim();
   const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
   return `${SUPA_IMG_URL}${normalized}.png`;
-};
-
-export const getAnimalEmoji = (code: string | number): string => "🎲";
-
-export const getAnimalByCode = (code: string | number) => {
-  const name = getAnimalName(code);
-  return { id: 0, code: String(code), name, category: "general" };
 };
