@@ -1,88 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Brain, Grid3X3, LogOut, FileText, Flame, Dices, Trophy, PlayCircle, Send, ShoppingCart, ShieldAlert } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { TodayResults } from "./TodayResults";
-import { ResultsInsert } from "./ResultsInsert";
-import { ResultsPanel } from "./ResultsPanel";
-import { HistoryManager } from "./HistoryManager";
-import { AdminUserManagement } from "./AdminUserManagement";
-import { HourlyMatrix } from "./HourlyMatrix";
+import { Brain, Flame, Dices, FileText, ShoppingCart, LogOut, Settings, ThemeToggle } from "lucide-react";
+import { HourlyPredictionView } from "./HourlyPredictionView";
 import { AIPredictive } from "./AIPredictive";
-import { TrendAnalysis } from "./TrendAnalysis";
-import { QuickPrediction } from "./QuickPrediction";
-import { ExplosiveData } from "./ExplosiveData";
+import { DatoRicardoSection } from "./DatoRicardoSection";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
-import { ThemeToggle } from "./ThemeToggle";
-import { DatoRicardoSection } from "./DatoRicardoSection";
-import { AdminImageUpload } from "./AdminImageUpload";
 import { DataMapDisplay } from "./DataMapDisplay";
-import { HourlyPredictionView } from "./HourlyPredictionView";
-import { SequenceMatrixView } from "./SequenceMatrixView";
-import { AdminManualOverrides } from "./AdminManualOverrides";
-import { GuiaUso } from "./GuiaUso";
-import { AdminAgencias } from "./AdminAgencias";
+import { ResultsPanel } from "./ResultsPanel";
 import { ModuloJugadas } from "./ModuloJugadas";
-import { AdminCodeModal } from "./AdminCodeModal";
+import { AdminAgencias } from "./AdminAgencias";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
-  const [totalResults, setTotalResults] = useState<number>(0);
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [showInsertModal, setShowInsertModal] = useState(false);
-  const [pendingTab, setPendingTab] = useState<string | null>(null);
-
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-// Reemplace el useEffect del contador por este bloque exacto:
-useEffect(() => {
-  let isMounted = true;
-  const loadCount = async () => {
-    try {
-      // Pedimos los datos sin desestructurar para que no explote si falla
-      const response = await supabase
-        .from('lottery_results')
-        .select('*', { count: 'exact', head: true });
-      
-      // BLINDAJE DE SEGURIDAD: Solo si la respuesta es válida y la app sigue cargada
-      if (isMounted && response && typeof response === 'object' && response.count !== null) {
-        setTotalResults(Number(response.count));
-      }
-    } catch (e) {
-      console.warn("Búnker protegiendo conexión...");
-      if (isMounted) setTotalResults(0);
-    }
-  };
-  loadCount();
-  return () => { isMounted = false; }; // ESTO FRENA EL BUCLE INFINITO
-}, []); // El array vacío es OBLIGATORIO aquí
-
-  const handleTabChange = (tab: string) => {
-    if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
-    if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
-      setPendingTab(tab);
-      if (tab === 'admin') setShowAdminModal(true);
-      else setShowInsertModal(true);
-      return;
-    }
-    setActiveTab(tab);
-  };
-
   return (
-    // Reemplaza el bloque de la imagen por este:
-<div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
-  <img 
-    key={nextPrediction.topPick.code}
-    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
-    className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
-    crossOrigin="anonymous"
-    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-  />
-  <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
-    {nextPrediction.topPick.code.padStart(2, '0')}
-  </span>
-</div>
+    <div className="min-h-screen bg-background text-slate-900">
+      <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src={logoAnimalytics} alt="Logo" className="h-10" />
+          <h1 className="font-black text-lg uppercase italic">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
+            {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
+          </span>
+          <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
+        </div>
+      </header>
+
+      <main className="container mx-auto p-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center rounded-2xl">
+            <TabsTrigger value="ia">IA</TabsTrigger>
+            <TabsTrigger value="explosivo">EXPLOSIVO</TabsTrigger>
+            <TabsTrigger value="ruleta">RULETA</TabsTrigger>
+            <TabsTrigger value="resultados">RESULTADOS</TabsTrigger>
+            <TabsTrigger value="jugadas">AGENCIAS</TabsTrigger>
+            {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><AIPredictive /></TabsContent>
+          <TabsContent value="explosivo" className="space-y-6"><DatoRicardoSection agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
+          <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
+          <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
+          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
+          <TabsContent value="admin" className="space-y-4">
+            {isMasterAdmin ? <AdminAgencias /> : <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />}
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+}
