@@ -19,6 +19,7 @@ export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, 
   return (
     <div className={cn("relative flex flex-col items-center rounded-[3rem] border-2 transition-all duration-300 bg-white shadow-2xl hover:scale-105 active:scale-95 border-slate-100", config.card, className)} onClick={onClick}>
       {rank && rank <= 3 && <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black z-20 shadow-lg">#{rank}</div>}
+
       <div className={cn(config.img, "relative flex items-center justify-center mb-2")}>
         {!imgError ? (
           <img src={imageUrl} alt={animal?.name} className="w-full h-full object-contain z-10 drop-shadow-xl" crossOrigin="anonymous" onError={() => setImgError(true)} />
@@ -26,12 +27,15 @@ export function RichAnimalCard({ code, probability, rank, size = 'md', onClick, 
           <span className="text-4xl">🎲</span>
         )}
       </div>
+
       <Badge variant="secondary" className={cn("font-mono font-black mb-1", config.num)}>
         {code === '0' || code === '00' ? code : String(code).padStart(2, '0')}
       </Badge>
+      
       <span className="font-black uppercase tracking-tighter text-slate-800 text-center text-[10px] lg:text-xs">
         {animal?.name || 'N/A'}
       </span>
+
       {probability && (
         <div className="mt-2 px-3 py-1 bg-emerald-500 text-white rounded-full flex items-center gap-1 shadow-md">
           <Zap className="w-3 h-3 fill-white" />
