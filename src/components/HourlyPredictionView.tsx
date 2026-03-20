@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, RefreshCw, Loader2, ChevronRight, Zap } from "lucide-react";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
-import { getAnimalEmoji, getAnimalName, getAnimalImageUrl } from '@/lib/animalData';
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
 import { generateDayForecast, HourlyForecast } from '@/lib/advancedProbability';
 
 export function HourlyPredictionView() {
@@ -53,49 +53,100 @@ export function HourlyPredictionView() {
     return forecasts[0] || null;
   }, [history, selectedLottery, nextDrawTime, today]);
 
+  // --- MOTOR VISUAL BLINDADO PARA IMÁGENES 3D ---
+  const get3DImage = (code: string) => {
+    const strCode = String(code).trim();
+    // 0 y 00 se quedan igual, 1-9 pasan a 01-09
+    const finalCode = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+    return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
+  };
+
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
       <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter">
+          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter italic">
             <Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
               <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg"><SelectValue /></SelectTrigger>
-              <SelectContent>{LOTTERIES.map(l => (<SelectItem key={l.id} value={l.id} className="font-bold"><div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div></SelectItem>))}</SelectContent>
+              <SelectContent>
+                {LOTTERIES.map(l => (
+                  <SelectItem key={l.id} value={l.id} className="font-bold">
+                    <div className="flex items-center gap-2">
+                      <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Button onClick={loadData} variant="ghost" size="icon" className="text-primary"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
           </div>
         </div>
       </CardHeader>
+      
       <CardContent className="pt-6">
         <div className="text-center space-y-6">
           <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
             {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
+
           {nextPrediction?.topPick ? (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden">
+              
+              {/* CONTENEDOR DE ARTE VIP 3D */}
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
                 <img 
                   key={nextPrediction.topPick.code}
-                  src={getAnimalImageUrl(nextPrediction.topPick.code)} 
-                  className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
+                  src={get3DImage(nextPrediction.topPick.code)} 
+                  className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
+                  alt="Dato VIP"
                   crossOrigin="anonymous"
-                  onError={(e) => { e.currentTarget.style.opacity = '0'; }}
+                  onError={(e) => {
+                    // Si falla la imagen 3D, mostramos el emoji con opacidad para que no se vea vacío
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextSibling as HTMLElement;
+                    if (fallback) fallback.style.opacity = '1';
+                  }}
                 />
-                <span className="absolute inset-0 flex items-center justify-center text-[120px] font-black text-emerald-500/5 select-none">{nextPrediction.topPick.code.padStart(2, '0')}</span>
-                <span className="absolute text-7xl opacity-10">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
+                {/* Emoji de respaldo (solo visible si la imagen 3D no carga) */}
+                <span className="absolute inset-0 flex items-center justify-center text-[100px] opacity-0 transition-opacity duration-300">
+                   {getAnimalEmoji(nextPrediction.topPick.code)}
+                </span>
+
+                {/* Número de fondo estilizado */}
+                <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
+                  {nextPrediction.topPick.code.padStart(2, '0')}
+                </span>
               </div>
-              <div className="font-mono font-black text-6xl text-slate-900 mt-4 tracking-tighter">
-                {nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}
+
+              <div className="font-mono font-black text-6xl text-slate-900 leading-none tracking-tighter mt-4">
+                {nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' 
+                  ? nextPrediction.topPick.code 
+                  : nextPrediction.topPick.code.padStart(2, '0')}
               </div>
-              <h3 className="text-4xl font-black uppercase mt-2 tracking-tighter text-slate-800">{nextPrediction.topPick.name}</h3>
-              <div className="mt-6 inline-flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl">
-                <Zap className="w-6 h-6 fill-current text-yellow-300" /> {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
+              <h3 className="text-4xl font-black uppercase mt-4 tracking-tighter text-slate-800">
+                {nextPrediction.topPick.name}
+              </h3>
+              
+              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-emerald-800 active:translate-y-1 transition-all">
+                <Zap className="w-7 h-7 fill-yellow-300 text-yellow-300" /> 
+                {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
+              </div>
+
+              <div className="mt-8 pt-4 border-t-2 border-dashed border-slate-100">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                  ANÁLISIS TÉCNICO COMPLETO - ANIMALYTICS PRO
+                </p>
               </div>
             </div>
-          ) : <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm">Escaneando Patrones...</p></div>}
+          ) : (
+            <div className="py-20 flex flex-col items-center opacity-30 grayscale">
+               <Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" />
+               <p className="font-black uppercase tracking-widest text-sm">Escaneando Pronósticos...</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
