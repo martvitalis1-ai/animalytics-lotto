@@ -52,24 +52,24 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
- // --- REPARACIÓN ATÓMICA DE ERROR 'COUNT' ---
-  useEffect(() => {
-    const loadCount = async () => {
-      try {
-        const response = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        
-        // El blindaje: Usamos el operador ?? para que si es null, sea 0
-        const total = response?.count ?? 0;
-        setTotalResults(Number(total));
-      } catch (e) {
-        setTotalResults(0); 
-      }
-    };
-    loadCount();
-  }, []);
-
+ // Dentro de Dashboard.tsx, busque el useEffect del contador y reemplácelo completo:
+useEffect(() => {
+  const loadCount = async () => {
+    try {
+      const response = await supabase
+        .from('lottery_results')
+        .select('*', { count: 'exact', head: true });
+      
+      // EL BLINDAJE: Usamos el operador ?? para que si 'response' es null, el valor sea 0
+      const total = response?.count ?? 0;
+      setTotalResults(Number(total));
+    } catch (e) {
+      console.warn("Falla controlada en búnker:", e);
+      setTotalResults(0); 
+    }
+  };
+  loadCount();
+}, []);
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
     if ((tab === 'admin' || tab === 'insertar') && !isMasterAdmin) {
