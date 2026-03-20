@@ -68,52 +68,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b p-4 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-3">
-          <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <div>
-            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
-            {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
-          </span>
-          <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto p-4">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto bg-slate-200/50 p-1 justify-center rounded-2xl">
-            <TabsTrigger value="ia">IA</TabsTrigger>
-            <TabsTrigger value="explosivo">EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="ruleta">RULETA</TabsTrigger>
-            <TabsTrigger value="resultados">RESULTADOS</TabsTrigger>
-            <TabsTrigger value="jugadas">AGENCIAS</TabsTrigger>
-            {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
-          </TabsList>
-
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
-          <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
-          <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
-          <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
-          <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
-          <TabsContent value="admin" className="space-y-4">
-            {isMasterAdmin ? (
-              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /></>
-            ) : (
-              <AdminAgencias selfManagedId={localStorage.getItem('agency_owner_id')} />
-            )}
-          </TabsContent>
-        </Tabs>
-      </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Maestro" />
-      <RicardoBot />
-    </div>
-  );
-}
+    // Reemplaza el bloque de la imagen por este:
+<div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
+  <img 
+    key={nextPrediction.topPick.code}
+    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
+    className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
+    crossOrigin="anonymous"
+    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+  />
+  <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
+    {nextPrediction.topPick.code.padStart(2, '0')}
+  </span>
+</div>
