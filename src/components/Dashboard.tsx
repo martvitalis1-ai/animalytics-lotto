@@ -14,16 +14,18 @@ import { DatoRicardo } from "./DatoRicardo";
 import { RicardoBot } from "./RicardoBot";
 import { TrendAnalysis } from "./TrendAnalysis";
 import { NotificationCenter } from "./NotificationCenter";
+import { ExportTools } from "./ExportTools";
 import { QuickPrediction } from "./QuickPrediction";
 import { ExplosiveData } from "./ExplosiveData";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { UniversalRoulette } from "./UniversalRoulette";
 import { ThemeToggle } from "./ThemeToggle";
 import { DatoRicardoSection } from "./DatoRicardoSection";
+import { AdminImageUpload } from "./AdminImageUpload";
 import { DataMapDisplay } from "./DataMapDisplay";
 import { HourlyPredictionView } from "./HourlyPredictionView";
-import { SportsAnalytics } from "./SportsAnalytics";
 import { SequenceMatrixView } from "./SequenceMatrixView";
+import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
@@ -39,18 +41,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
-  const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN BLINDADA: ELIMINA EL ERROR 'COUNT' DE RAÍZ ---
+  // --- REPARACIÓN BLINDADA: ELIMINA EL ERROR 'COUNT' ---
   useEffect(() => {
     let isMounted = true;
     const loadStats = async () => {
       try {
         const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        
-        // EL SECRETO: Verificamos si response existe antes de leer .count
-        if (isMounted && response && response.count !== null && response.count !== undefined) {
-          setTotalResults(Number(response.count));
+        // Verificación de seguridad extrema para no leer de un null
+        if (isMounted && response && typeof response.count === 'number') {
+          setTotalResults(response.count);
         }
       } catch (e) {
         if (isMounted) setTotalResults(0);
@@ -71,23 +71,14 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
     setActiveTab(tab);
   };
 
-  const handleAdminVerified = () => {
-    setShowAdminModal(false);
-    setShowInsertModal(false);
-    if (pendingTab) {
-      setActiveTab(pendingTab);
-      setPendingTab(null);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background text-slate-900">
-      <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <div className="text-left">
-            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS REGISTRADOS</p>
+          <div>
+            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
+            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -101,12 +92,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
       <main className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center rounded-2xl">
-            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" /> IA</TabsTrigger>
-            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" /> EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" /> RULETA</TabsTrigger>
-            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" /> RESULTADOS</TabsTrigger>
-            <TabsTrigger value="jugadas"><ShoppingCart className="w-4 h-4 mr-1.5" /> AGENCIAS</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto bg-slate-200/50 p-1 justify-center rounded-2xl">
+            <TabsTrigger value="ia">IA</TabsTrigger>
+            <TabsTrigger value="explosivo">EXPLOSIVO</TabsTrigger>
+            <TabsTrigger value="ruleta">RULETA</TabsTrigger>
+            <TabsTrigger value="resultados">RESULTADOS</TabsTrigger>
+            <TabsTrigger value="jugadas">AGENCIAS</TabsTrigger>
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
@@ -124,8 +115,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
       <RicardoBot />
     </div>
   );
