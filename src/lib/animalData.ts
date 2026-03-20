@@ -1,8 +1,8 @@
+// src/lib/animalData.ts
 export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
-  // El blindaje: si es '0' o '00' se queda igual, si es del 1 al 9 le ponemos el 0 (01, 02...)
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
