@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom"; 
 import { LoginScreen } from "@/components/LoginScreen";
 import { Dashboard } from "@/components/Dashboard";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +12,9 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [tenantAgency, setTenantAgency] = useState<any>(null);
 
-  // 🛠️ FUNCIÓN MAESTRA: GENERAR HUELLA DEL DISPOSITIVO
   const getDeviceId = () => {
     let id = localStorage.getItem('animalytics_device_fingerprint');
     if (!id) {
-      // Creamos una huella única para este teléfono/PC
       id = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
       localStorage.setItem('animalytics_device_fingerprint', id);
     }
@@ -32,77 +30,72 @@ const Index = () => {
           setTenantAgency(data);
           localStorage.setItem('tenant_agency_id', data.id);
         }
+      } else {
+        const savedId = localStorage.getItem('tenant_agency_id');
+        if (savedId) {
+          const { data } = await supabase.from('agencias').select('*').eq('id', savedId).maybeSingle();
+          if (data) setTenantAgency(data);
+        }
       }
     };
     checkTenant();
   }, [searchParams]);
 
   const handleLogin = async (role: string, accessCode: string) => {
-    const deviceId = getDeviceId(); // Obtenemos la huella antes de entrar
+    const deviceId = getDeviceId();
     const ADMIN_CODE = "GANADOR2026";
     const cleanCode = accessCode.toUpperCase().trim();
     
-    // 1. ADMIN MAESTRO
     if (cleanCode === ADMIN_CODE) {
       localStorage.setItem('session_access_code', cleanCode);
-      // Registramos el ping del admin para que usted también aparezca en el radar
-      await supabase.from('access_codes').update({ 
-        current_device_id: deviceId, 
-        last_ping: new Date().toISOString() 
-      }).eq('code', cleanCode);
-
+      await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: new Date().toISOString() }).eq('code', cleanCode);
       setUserRole("admin");
       setIsLoggedIn(true);
+      toast.success("¡BIENVENIDO JEFE MAESTRO!");
       return;
     }
 
-    // 2. DUEÑOS DE AGENCIA
-    const { data: agency } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
-    if (agency) {
+    const { data: agencyOwner } = await supabase.from('agencias').select('*').eq('llave_agencia', cleanCode).maybeSingle();
+    if (agencyOwner) {
       localStorage.setItem('session_access_code', cleanCode);
-      localStorage.setItem('agency_owner_id', agency.id);
+      localStorage.setItem('agency_owner_id', agencyOwner.id);
       setUserRole("agency_manager");
       setIsLoggedIn(true);
+      toast.success(`BIENVENIDO DUEÑO DE ${agencyOwner.nombre.toUpperCase()}`);
       return;
     }
 
-    // 3. USUARIOS NORMALES (BLINDAJE DE DISPOSITIVO)
     try {
-      const { data: codeData, error } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
-      
+      const { data: codeData } = await supabase.from('access_codes').select('*').eq('code', cleanCode).maybeSingle();
       if (codeData) {
-        // ACTUALIZAMOS EL RADAR EN SUPABASE AL ENTRAR
-        await supabase.from('access_codes').update({ 
-          current_device_id: deviceId,
-          last_ping: new Date().toISOString()
-        }).eq('code', cleanCode);
-
+        await supabase.from('access_codes').update({ current_device_id: deviceId, last_ping: new Date().toISOString() }).eq('code', cleanCode);
         localStorage.setItem('session_access_code', cleanCode);
-        setUserRole("user");
+        setUserRole(role);
         setIsLoggedIn(true);
-        toast.success("ACCESO CONCEDIDO");
-      } else { 
-        toast.error("CÓDIGO NO VÁLIDO"); 
-      }
-    } catch (err) { toast.error("ERROR DE CONEXIÓN CON EL BÚNKER"); }
+        toast.success("ACCESO CONCEDIDO.");
+      } else { toast.error("CÓDIGO NO ENCONTRADO"); }
+    } catch (err) { toast.error("ERROR DE CONEXIÓN"); }
+  };
+
+  const handleLogout = async () => {
+    const code = localStorage.getItem('session_access_code');
+    if (code && code !== "GANADOR2026") {
+      await supabase.from('access_codes').update({ current_device_id: null, last_ping: null }).eq('code', code);
+    }
+    localStorage.removeItem('session_access_code');
+    localStorage.removeItem('agency_owner_id');
+    setIsLoggedIn(false);
   };
 
   useEffect(() => {
     const checkSession = async () => {
       const saved = localStorage.getItem('session_access_code');
       if (saved) {
-        if (saved === "GANADOR2026") {
-          setUserRole("admin");
-          setIsLoggedIn(true);
-        } else {
+        setIsLoggedIn(true);
+        if (saved === "GANADOR2026") setUserRole("admin");
+        else {
           const { data } = await supabase.from('agencias').select('id').eq('llave_agencia', saved).maybeSingle();
-          if (data) {
-            setUserRole("agency_manager");
-            setIsLoggedIn(true);
-          } else {
-            setUserRole("user");
-            setIsLoggedIn(true);
-          }
+          setUserRole(data ? "agency_manager" : "user");
         }
       }
       setLoading(false);
@@ -113,7 +106,7 @@ const Index = () => {
   if (loading) return null;
 
   return isLoggedIn ? (
-    <Dashboard userRole={userRole} onLogout={() => { localStorage.clear(); window.location.href="/"; }} tenantAgency={tenantAgency} />
+    <Dashboard userRole={userRole} onLogout={handleLogout} tenantAgency={tenantAgency} />
   ) : (
     <LoginScreen onLogin={handleLogin} />
   );
