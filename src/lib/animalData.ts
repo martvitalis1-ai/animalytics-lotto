@@ -36,7 +36,6 @@ export const getAnimalImageUrl = (code: string | number): string => {
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎲";
-
 export const getAnimalByCode = (code: string | number) => {
   const name = getAnimalName(code);
   return { id: 0, code: String(code), name, category: "general" };
