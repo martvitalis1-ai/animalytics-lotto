@@ -1,12 +1,8 @@
-// src/lib/animalData.ts
-
 export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
   const str = String(code).trim();
-  // REGLA DE ORO: Si es 0 o 00, no se toca. Si es 1-9, se le pone el 0.
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
     '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -30,7 +26,6 @@ export const getAnimalName = (code: string | number): string => {
     '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO',
     '99': 'GUACHARITO'
   };
-
   return names[normalized] || "ANIMAL";
 };
 
@@ -40,9 +35,9 @@ export const getAnimalImageUrl = (code: string | number): string => {
   return `${SUPA_IMG_URL}${normalized}.png`;
 };
 
+export const getAnimalEmoji = (code: string | number): string => "🎲";
+
 export const getAnimalByCode = (code: string | number) => {
   const name = getAnimalName(code);
-  return { id: 0, code: String(code), name, category: "general" };
+  return { id: parseInt(String(code)), code: String(code), name, category: "general" };
 };
-
-export const getAnimalEmoji = (code: string | number): string => "🎲";
