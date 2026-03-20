@@ -52,21 +52,18 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) 
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN BLINDADA PARA EL ERROR 'COUNT' ---
+ // --- REPARACIÓN ATÓMICA DE ERROR 'COUNT' ---
   useEffect(() => {
     const loadCount = async () => {
       try {
-        // Consultamos el objeto completo, no lo desestructuramos de golpe
         const response = await supabase
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        // Verificamos que la respuesta exista y tenga la propiedad count
-        if (response && response.count !== null && response.count !== undefined) {
-          setTotalResults(response.count);
-        }
-      } catch (e) { 
-        console.warn("Conexión con Supabase lenta o bloqueada (429).");
+        // El blindaje: Usamos el operador ?? para que si es null, sea 0
+        const total = response?.count ?? 0;
+        setTotalResults(Number(total));
+      } catch (e) {
         setTotalResults(0); 
       }
     };
