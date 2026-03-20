@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, RefreshCw, Loader2, ChevronRight, Zap } from "lucide-react";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
-import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { getAnimalName, getAnimalImageUrl } from '@/lib/animalData';
 import { generateDayForecast, HourlyForecast } from '@/lib/advancedProbability';
 
 export function HourlyPredictionView() {
@@ -14,8 +14,6 @@ export function HourlyPredictionView() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const today = new Date().toISOString().split('T')[0];
-
-  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -28,7 +26,7 @@ export function HourlyPredictionView() {
 
   useEffect(() => {
     loadData();
-    const channel = supabase.channel('hourly-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData()).subscribe();
+    const channel = supabase.channel('h-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData()).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadData]);
 
@@ -43,9 +41,9 @@ export function HourlyPredictionView() {
       if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
       return h * 60 + parseInt(match[2]);
     };
-    for (const time of drawTimes) { if (toMin(time) >= currentMinutes - 5) return time; }
-    return drawTimes[0];
-  }, [drawTimes]);
+    for (const time of getDrawTimesForLottery(selectedLottery)) { if (toMin(time) >= currentMinutes - 5) return time; }
+    return getDrawTimesForLottery(selectedLottery)[0];
+  }, [selectedLottery]);
 
   const nextPrediction = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
@@ -55,11 +53,9 @@ export function HourlyPredictionView() {
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
-      <CardHeader className="pb-2 bg-muted/10 border-b text-slate-900">
+      <CardHeader className="pb-2 bg-muted/10 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter">
-            <Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter"><Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO</CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedLottery} onValueChange={setSelectedLottery}>
               <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg text-slate-900"><SelectValue /></SelectTrigger>
@@ -77,24 +73,15 @@ export function HourlyPredictionView() {
           {nextPrediction?.topPick ? (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden">
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
-                {/* LA IMAGEN 3D DESDE SUPABASE */}
-                <img 
-                  key={nextPrediction.topPick.code}
-                  src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code.padStart(2, '0')}.png`} 
-                  className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
-                  crossOrigin="anonymous"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
+                <img key={nextPrediction.topPick.code} src={getAnimalImageUrl(nextPrediction.topPick.code)} className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" crossOrigin="anonymous" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 <span className="absolute inset-0 flex items-center justify-center text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">{nextPrediction.topPick.code.padStart(2, '0')}</span>
               </div>
               <h3 className="text-4xl font-black uppercase mt-4 tracking-tighter text-slate-800">{nextPrediction.topPick.name}</h3>
-              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl">
+              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl border-b-4 border-emerald-800">
                 <Zap className="w-7 h-7 fill-yellow-300 text-yellow-300" /> {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
               </div>
             </div>
-          ) : (
-            <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm">Cargando Búnker...</p></div>
-          )}
+          ) : <div className="py-20 flex flex-col items-center opacity-30 grayscale"><Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" /><p className="font-black uppercase tracking-widest text-sm text-center">Cargando Inteligencia...</p></div>}
         </div>
       </CardContent>
     </Card>
