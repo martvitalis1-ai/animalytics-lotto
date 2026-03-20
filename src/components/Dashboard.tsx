@@ -26,7 +26,9 @@ import { AdminManualOverrides } from "./AdminManualOverrides";
 import { GuiaUso } from "./GuiaUso";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
+import { DatoRicardo } from "./DatoRicardo";
 import { AdminCodeModal } from "./AdminCodeModal";
+import { RicardoBot } from "./RicardoBot";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
@@ -38,13 +40,19 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
+  const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
+  // --- REPARACIÓN ATÓMICA DEL ERROR 'COUNT' ---
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const res = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        if (res && res.count !== null) setTotalResults(res.count);
-      } catch (e) { setTotalResults(0); }
+        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        // Usamos encadenamiento opcional (?.) para que si 'response' es null, no explote
+        const countValue = response?.count || 0;
+        setTotalResults(countValue);
+      } catch (e) {
+        setTotalResults(0);
+      }
     };
     loadCount();
   }, []);
@@ -60,13 +68,29 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
     setActiveTab(tab);
   };
 
+  const handleAdminVerified = () => {
+    setShowAdminModal(false);
+    setShowInsertModal(false);
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setPendingTab(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-left text-slate-900">
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoAnimalytics} alt="Logo" className="h-10" />
-            <h1 className="font-black text-lg uppercase italic">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
+            <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
+            <div className="hidden sm:block">
+              <h1 className="font-black text-lg leading-none uppercase italic">
+                {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
+              </h1>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                {totalResults.toLocaleString()}+ sorteos
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isAgencyManager && (
@@ -74,8 +98,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 <Settings className="w-4 h-4" /> <span>MI BANCA</span>
               </Button>
             )}
+            <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="hidden md:flex h-9 bg-[#24A1DE] text-white font-black text-[10px] uppercase italic gap-2 shadow-lg rounded-full px-4 border-none">
+              <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
+            </Button>
             <ThemeToggle />
-            <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
+            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
               {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
             </span>
             <Button variant="ghost" size="sm" onClick={onLogout}><LogOut className="w-4 h-4" /></Button>
@@ -109,7 +136,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="insertar" className="space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
-              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /></>
+              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
             ) : (
               <div className="space-y-6">
                 <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none"><h3 className="font-black uppercase italic mb-4 flex items-center gap-2"><Plus className="text-emerald-600" /> Publicar Mi Dato</h3><DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} /></Card>
@@ -119,8 +146,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
         </Tabs>
       </main>
-      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Admin" />
-      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={() => setActiveTab(pendingTab || "ia")} title="Acceso Insertar" />
+      <AdminCodeModal open={showAdminModal} onClose={() => setShowAdminModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
+      <AdminCodeModal open={showInsertModal} onClose={() => setShowInsertModal(false)} onSuccess={handleAdminVerified} title="Acceso Maestro" />
+      <RicardoBot />
     </div>
   );
 }
