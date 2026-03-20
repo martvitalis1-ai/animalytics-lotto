@@ -72,10 +72,9 @@ export function HourlyPredictionView() {
     return forecasts[0] || null;
   }, [history, selectedLottery, nextDrawTime, today]);
 
-  // --- FUNCIÓN DE IMAGEN BLINDADA PARA EL BÚNKER ---
+  // HELPER DE IMAGEN 3D
   const getAnimalImage = (code: string) => {
     const strCode = String(code).trim();
-    // Forzamos: 0 y 00 quedan igual, del 1 al 9 les pone el 0 adelante (01, 02...)
     const finalCode = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
     return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
   };
@@ -93,7 +92,7 @@ export function HourlyPredictionView() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LOTERIAS_LIST_FIX.map(l => (
+                {LOTTERIES.map(l => (
                   <SelectItem key={l.id} value={l.id} className="font-bold">
                     <div className="flex items-center gap-2">
                        <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
@@ -115,25 +114,18 @@ export function HourlyPredictionView() {
 
           {nextPrediction?.topPick ? (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden">
-              
-              {/* CONTENEDOR DE IMAGEN VIP 3D */}
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
                 <img 
                   key={nextPrediction.topPick.code}
                   src={getAnimalImage(nextPrediction.topPick.code)} 
                   className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
-                  alt="Animal Maestro"
+                  alt="Animal VIP"
                   crossOrigin="anonymous"
-                  onError={(e) => {
-                    // Si la imagen falla, muestra el emoji de fondo como respaldo
-                    e.currentTarget.style.opacity = '0';
-                  }}
+                  onError={(e) => { e.currentTarget.style.opacity = '0'; }}
                 />
-                {/* Número de fondo para diseño premium */}
                 <span className="absolute inset-0 flex items-center justify-center text-[120px] lg:text-[160px] font-black text-emerald-500/5 select-none">
                   {nextPrediction.topPick.code.padStart(2, '0')}
                 </span>
-                {/* Emoji de respaldo (solo visible si la imagen no carga) */}
                 <span className="absolute text-7xl opacity-10">{getAnimalEmoji(nextPrediction.topPick.code)}</span>
               </div>
 
@@ -148,15 +140,9 @@ export function HourlyPredictionView() {
                 <Zap className="w-6 h-6 fill-current text-yellow-300" /> 
                 {Math.floor(nextPrediction.topPick.probability)}% ÉXITO
               </div>
-
-              <div className="mt-8 pt-4 border-t-2 border-dashed border-slate-100">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  MUESTRA TÉCNICA: {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X APARICIONES
-                </p>
-              </div>
             </div>
           ) : (
-            <div className="py-20 flex flex-col items-center opacity-30 grayscale">
+            <div className="py-20 flex flex-col items-center opacity-30 grayscale text-center">
                <Loader2 className="w-12 h-12 animate-spin mb-4 text-emerald-600" />
                <p className="font-black uppercase tracking-widest text-sm">Escaneando Patrones...</p>
             </div>
@@ -166,14 +152,3 @@ export function HourlyPredictionView() {
     </Card>
   );
 }
-
-// Helper local para que los nombres de las loterías coincidan con las constantes
-const LoteriasFix = [
-  { id: 'lotto_activo', name: 'Lotto Activo' },
-  { id: 'granjita', name: 'La Granjita' },
-  { id: 'guacharo', name: 'Guácharo Activo' },
-  { id: 'guacharito', name: 'Guacharito' },
-  { id: 'lotto_rey', name: 'Lotto Rey' },
-  { id: 'selva_plus', name: 'Selva Plus' },
-];
-const LOTERIAS_LIST_FIX = LOTERIAS.length > 0 ? LOTERIAS : LoteriasFix;
