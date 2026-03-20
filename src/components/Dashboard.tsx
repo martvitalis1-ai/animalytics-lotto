@@ -17,15 +17,35 @@ import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
+  const [totalResults, setTotalResults] = useState<number>(0);
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
+
+  // --- REPARACIÓN ATÓMICA: EVITA EL ERROR 'COUNT' ---
+  useEffect(() => {
+    const loadCount = async () => {
+      try {
+        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        // BLINDAJE: Verificamos si response existe antes de leer .count
+        if (response && response.count !== null) {
+          setTotalResults(Number(response.count));
+        }
+      } catch (e) {
+        setTotalResults(0); // Si falla, la App sigue viva
+      }
+    };
+    loadCount();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-slate-900">
       <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <h1 className="font-black text-lg uppercase italic">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+          <div className="flex flex-col text-left">
+            <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
