@@ -25,19 +25,21 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN ATÓMICA: CARGA ÚNICA PARA EVITAR EL ERROR 429 ---
+  // --- REPARACIÓN BLINDADA: EVITA EL BUCLE INFINITO Y EL ERROR 'COUNT' ---
   useEffect(() => {
     let isMounted = true;
     const loadCount = async () => {
       try {
-        const { count, error } = await supabase
+        const response = await supabase
           .from('lottery_results')
           .select('*', { count: 'exact', head: true });
         
-        if (error) throw error;
-        if (isMounted && count !== null) setTotalResults(count);
+        // Verificamos que response exista antes de leer count para evitar el error rojo
+        if (isMounted && response && response.count !== null && response.count !== undefined) {
+          setTotalResults(response.count);
+        }
       } catch (e) {
-        console.warn("Esperando reconexión de Supabase...");
+        console.warn("Supabase está saturado, reintentando en breve...");
       }
     };
     loadCount();
@@ -48,8 +50,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
     <div className="min-h-screen bg-background text-slate-900">
       <header className="sticky top-0 z-50 bg-white border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
-          <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <h1 className="font-black text-lg uppercase italic">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+          <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
+          <div className="hidden sm:block">
+            <h1 className="font-black text-lg uppercase italic">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos registrados</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -63,11 +68,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       <main className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center">
-            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1" /> IA</TabsTrigger>
-            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1" /> EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1" /> RULETA</TabsTrigger>
-            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1" /> RESULTADOS</TabsTrigger>
-            <TabsTrigger value="jugadas"><ShoppingCart className="w-4 h-4 mr-1" /> AGENCIAS</TabsTrigger>
+            <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-1.5" /> IA</TabsTrigger>
+            <TabsTrigger value="explosivo"><Flame className="w-4 h-4 mr-1.5" /> EXPLOSIVO</TabsTrigger>
+            <TabsTrigger value="ruleta"><Dices className="w-4 h-4 mr-1.5" /> RULETA</TabsTrigger>
+            <TabsTrigger value="resultados"><FileText className="w-4 h-4 mr-1.5" /> RESULTADOS</TabsTrigger>
+            <TabsTrigger value="jugadas"><ShoppingCart className="w-4 h-4 mr-1.5" /> AGENCIAS</TabsTrigger>
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings className="w-4 h-4" /></TabsTrigger>}
           </TabsList>
 
