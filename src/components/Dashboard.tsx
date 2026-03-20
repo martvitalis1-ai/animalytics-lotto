@@ -35,28 +35,39 @@ import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
-export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
+interface DashboardProps {
+  userRole: string;
+  onLogout: () => void;
+  tenantAgency?: any;
+}
+
+export function Dashboard({ userRole, onLogout, tenantAgency }: DashboardProps) {
   const [activeTab, setActiveTab] = useState("ia");
-  const [totalResults, setTotalResults] = useState<number>(0);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [totalResults, setTotalResults] = useState<number>(0);
 
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN ATÓMICA: SIN DESESTRUCTURACIÓN PARA EVITAR CRASH ---
+  // --- REPARACIÓN BLINDADA PARA EL ERROR 'COUNT' ---
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        // Verificamos existencia paso a paso para que no de el error 'reading count'
-        if (response && typeof response === 'object' && response.count !== null) {
-          setTotalResults(Number(response.count));
+        // Consultamos el objeto completo, no lo desestructuramos de golpe
+        const response = await supabase
+          .from('lottery_results')
+          .select('*', { count: 'exact', head: true });
+        
+        // Verificamos que la respuesta exista y tenga la propiedad count
+        if (response && response.count !== null && response.count !== undefined) {
+          setTotalResults(response.count);
         }
-      } catch (e) {
-        setTotalResults(0); // Si falla, la App sigue viva
+      } catch (e) { 
+        console.warn("Conexión con Supabase lenta o bloqueada (429).");
+        setTotalResults(0); 
       }
     };
     loadCount();
@@ -89,13 +100,17 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <div className="flex items-center gap-3">
             <img src={logoAnimalytics} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:block">
-              <h1 className="font-black text-lg leading-none uppercase italic">{tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}</h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">{totalResults.toLocaleString()}+ sorteos</p>
+              <h1 className="font-black text-lg leading-none uppercase italic">
+                {tenantAgency ? tenantAgency.nombre : "ANIMALYTICS PRO"}
+              </h1>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                {isAgencyManager ? "Panel de Gestión de Banca" : `${totalResults.toLocaleString()}+ sorteos`}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {isAgencyManager && (
-              <Button variant="outline" size="sm" onClick={() => setActiveTab("admin")} className="font-black text-[10px] uppercase gap-2 border-emerald-500/20">
+              <Button variant="outline" size="sm" onClick={() => setActiveTab("admin")} className="font-black text-[10px] uppercase gap-2">
                 <Settings className="w-4 h-4" /> <span>MI BANCA</span>
               </Button>
             )}
@@ -103,7 +118,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
             </Button>
             <ThemeToggle />
-            <NotificationCenter />
             <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isMasterAdmin ? 'bg-primary text-primary-foreground' : 'bg-emerald-500 text-white'}`}>
               {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
             </span>
@@ -127,7 +141,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin" className="bg-foreground text-background"><Settings className="w-4 h-4" /></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
+          <TabsContent value="ia" className="space-y-6">
+            <HourlyPredictionView />
+            <QuickPrediction />
+            <TrendAnalysis />
+            <AIPredictive />
+          </TabsContent>
           <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection customName={tenantAgency?.nombre_dato_personalizado} agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
@@ -136,10 +155,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="guia"><GuiaUso /></TabsContent>
           <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
           <TabsContent value="insertar" className="space-y-4"><ResultsInsert onInserted={() => {}} /><TodayResults /></TabsContent>
-
           <TabsContent value="admin" className="space-y-4">
             {isMasterAdmin ? (
-              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
+              <><AdminAgencias /><div className="grid gap-4 lg:grid-cols-2"><AdminUserManagement /><AdminImageUpload /></div><AdminManualOverrides /><DatoRicardo /><HistoryManager /><HypothesisAudit /></>
             ) : (
               <div className="space-y-6">
                 <Card className="p-6 bg-white rounded-[2rem] shadow-xl border-none"><h3 className="font-black uppercase italic mb-4 flex items-center gap-2"><Plus className="text-emerald-600" /> Publicar Mi Dato</h3><DatoRicardo agencyContextId={localStorage.getItem('agency_owner_id')} /></Card>
