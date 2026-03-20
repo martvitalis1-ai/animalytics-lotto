@@ -53,7 +53,7 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
     return `https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${finalCode}.png`;
   };
 
-  if (loading) return null;
+  if (loading) return <div className="py-10 text-center font-black uppercase text-xs tracking-widest text-muted-foreground">Cargando análisis de hoy...</div>;
 
   return (
     <Card className="glass-card border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden rounded-[3rem] shadow-2xl">
