@@ -38,23 +38,23 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-  // --- REPARACIÓN BLINDADA: ELIMINA EL ERROR 'COUNT' ---
-  useEffect(() => {
-    let isMounted = true;
-    const loadStats = async () => {
-      try {
-        const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
-        // Verificación de seguridad extrema para no leer de un null
-        if (isMounted && response && typeof response.count === 'number') {
-          setTotalResults(response.count);
-        }
-      } catch (e) {
-        if (isMounted) setTotalResults(0);
-      }
-    };
-    loadStats();
-    return () => { isMounted = false; };
-  }, []);
+// Busca el useEffect que carga el contador y reemplázalo:
+useEffect(() => {
+  const loadCount = async () => {
+    try {
+      const response = await supabase
+        .from('lottery_results')
+        .select('*', { count: 'exact', head: true });
+      
+      // EL BLINDAJE: Si response es null, totalResults será 0 pero NO habrá error rojo.
+      const total = response?.count ?? 0;
+      setTotalResults(Number(total));
+    } catch (e) {
+      setTotalResults(0);
+    }
+  };
+  loadCount();
+}, []);
 
   const handleTabChange = (tab: string) => {
     if (isAgencyManager && tab === 'admin') { setActiveTab(tab); return; }
