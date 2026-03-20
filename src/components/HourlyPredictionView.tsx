@@ -1,4 +1,3 @@
-// Reemplace su HourlyPredictionView.tsx con este código:
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -7,14 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, RefreshCw, Loader2, ChevronRight, Zap } from "lucide-react";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
-import { getAnimalName, getAnimalImageUrl, getAnimalEmoji } from '@/lib/animalData';
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
 import { generateDayForecast, HourlyForecast } from '@/lib/advancedProbability';
 
 export function HourlyPredictionView() {
   const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -27,66 +25,38 @@ export function HourlyPredictionView() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const nextDrawTime = useMemo(() => {
-    const times = getDrawTimesForLottery(selectedLottery);
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const toMin = (t: string) => {
-      const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (!match) return 0;
-      let h = parseInt(match[1]);
-      if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
-      if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-      return h * 60 + parseInt(match[2]);
-    };
-    for (const time of times) { if (toMin(time) >= currentMinutes - 5) return time; }
-    return times[0];
-  }, [selectedLottery]);
-
-  const nextPrediction = useMemo((): HourlyForecast | null => {
+  const pred = useMemo((): HourlyForecast | null => {
     if (history.length === 0) return null;
-    return generateDayForecast(selectedLottery, [nextDrawTime], history, today)[0] || null;
-  }, [history, selectedLottery, nextDrawTime, today]);
+    return generateDayForecast(selectedLottery, ["10:00 AM"], history, new Date().toISOString().split('T')[0])[0] || null;
+  }, [history, selectedLottery]);
 
   return (
     <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden text-slate-900">
-      <CardHeader className="pb-2 bg-muted/10 border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter"><Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-              <SelectTrigger className="w-[180px] h-9 font-black text-xs border-primary/30 shadow-lg text-slate-900"><SelectValue /></SelectTrigger>
-              <SelectContent>{LOTTERIES.map(l => (<SelectItem key={l.id} value={l.id} className="font-bold text-slate-900"><div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div></SelectItem>))}</SelectContent>
-            </Select>
-            <Button onClick={loadData} variant="ghost" size="icon" className="text-primary"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
-          </div>
-        </div>
-      </CardHeader>
       <CardContent className="pt-6">
         <div className="text-center space-y-6">
-          <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
-            {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
+          <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-white rounded-full font-black text-2xl shadow-xl">
+            PRÓXIMO SORTEO
           </div>
-          {nextPrediction?.topPick ? (
+          {pred?.topPick && (
             <div className="p-8 rounded-[3.5rem] bg-white border-4 border-slate-100 relative shadow-2xl overflow-hidden flex flex-col items-center">
               <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center">
-                {/* CARGA DIRECTA 3D VIP */}
                 <img 
-                   src={getAnimalImageUrl(nextPrediction.topPick.code)} 
-                   className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
-                   crossOrigin="anonymous" 
-                   onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                  key={pred.topPick.code}
+                  src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${pred.topPick.code.padStart(2, '0').replace('00', '00').replace(/^0(\d)$/, '0$1')}.png`} 
+                  className="w-full h-full object-contain drop-shadow-2xl z-10 animate-in zoom-in-95 duration-500" 
+                  crossOrigin="anonymous"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
-             // Busca el bloque donde sale la imagen del animal y cámbialo por este:
-<div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-4 flex items-center justify-center bg-white rounded-[3.5rem] shadow-2xl border-4 border-slate-50 overflow-hidden">
-  <img 
-    key={nextPrediction.topPick.code}
-    src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${nextPrediction.topPick.code === '0' || nextPrediction.topPick.code === '00' ? nextPrediction.topPick.code : nextPrediction.topPick.code.padStart(2, '0')}.png`} 
-    className="w-full h-full object-contain z-10 drop-shadow-2xl animate-in zoom-in-95 duration-500" 
-    crossOrigin="anonymous"
-    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-  />
-  <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">
-    {nextPrediction.topPick.code.padStart(2, '0')}
-  </span>
-</div>
+                <span className="absolute bottom-0 text-[120px] lg:text-[180px] font-black text-emerald-500/5 leading-none select-none">{pred.topPick.code.padStart(2, '0')}</span>
+              </div>
+              <h3 className="text-4xl font-black uppercase mt-4 tracking-tighter text-slate-800">{pred.topPick.name}</h3>
+              <div className="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white rounded-3xl font-black text-2xl shadow-xl">
+                <Zap className="w-7 h-7 fill-yellow-300 text-yellow-300" /> {Math.floor(pred.topPick.probability)}% ÉXITO
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
