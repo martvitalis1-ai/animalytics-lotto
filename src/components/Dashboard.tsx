@@ -12,6 +12,7 @@ import { DataMapDisplay } from "./DataMapDisplay";
 import { ResultsPanel } from "./ResultsPanel";
 import { ModuloJugadas } from "./ModuloJugadas";
 import { AdminAgencias } from "./AdminAgencias";
+import { TodayResults } from "./TodayResults";
 import logoAnimalytics from "@/assets/logo-animalytics.png";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
@@ -20,34 +21,35 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMasterAdmin = userRole === 'admin';
   const isAgencyManager = userRole === 'agency_manager';
 
-// Dentro de Dashboard.tsx, busque el bloque useEffect y reemplácelo:
-useEffect(() => {
-  const loadCount = async () => {
-    try {
-      const response = await supabase
-        .from('lottery_results')
-        .select('*', { count: 'exact', head: true });
-      
-      // BLINDAJE: Si response es null, no explota, usa 0 por defecto.
-      if (response && response.count !== null) {
-        setTotalResults(Number(response.count));
+  // --- REPARACIÓN ATÓMICA: EVITA EL ERROR 429 Y EL CRASH DE 'COUNT' ---
+  useEffect(() => {
+    let isMounted = true;
+    const loadCount = async () => {
+      try {
+        const response = await supabase
+          .from('lottery_results')
+          .select('*', { count: 'exact', head: true });
+        
+        // Blindaje: Solo si la respuesta es exitosa y no es null
+        if (isMounted && response && response.count !== null && response.count !== undefined) {
+          setTotalResults(response.count);
+        }
+      } catch (e) {
+        console.warn("Búnker protegiendo conexión por exceso de peticiones.");
       }
-    } catch (e) {
-      console.warn("Falla controlada en carga de sorteos.");
-      setTotalResults(0);
-    }
-  };
-  loadCount();
-}, []);
+    };
+    loadCount();
+    return () => { isMounted = false; };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background text-slate-900">
+    <div className="min-h-screen bg-background text-slate-900 text-left">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b p-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
-          <div className="flex flex-col text-left">
+          <div className="flex flex-col">
             <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -70,7 +72,7 @@ useEffect(() => {
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><AIPredictive /></TabsContent>
+          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><AIPredictive /><TodayResults /></TabsContent>
           <TabsContent value="explosivo" className="space-y-6"><DatoRicardoSection agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
