@@ -1,8 +1,11 @@
+// src/lib/animalData.ts
 export const SUPA_IMG_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalName = (code: string | number): string => {
-  const str = String(code).trim();
-  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  const strCode = String(code).trim();
+  // Blindaje absoluto: '0' y '00' son llaves distintas de texto
+  const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+  
   const names: Record<string, string> = {
     '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
     '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -30,8 +33,8 @@ export const getAnimalName = (code: string | number): string => {
 };
 
 export const getAnimalImageUrl = (code: string | number): string => {
-  const str = String(code).trim();
-  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  const strCode = String(code).trim();
+  const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
   return `${SUPA_IMG_URL}${normalized}.png`;
 };
 
