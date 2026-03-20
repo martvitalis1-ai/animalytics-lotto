@@ -41,14 +41,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isAgencyManager = userRole === 'agency_manager';
   const TELEGRAM_LINK = "https://t.me/+1NfML7kPFeliNDE5";
 
-  // --- REPARACIÓN BLINDADA PARA EVITAR EL CRASH DE 'COUNT' ---
+  // --- REPARACIÓN BLINDADA: ELIMINA EL ERROR 'COUNT' DE RAÍZ ---
   useEffect(() => {
     let isMounted = true;
     const loadStats = async () => {
       try {
         const response = await supabase.from('lottery_results').select('*', { count: 'exact', head: true });
+        
+        // EL SECRETO: Verificamos si response existe antes de leer .count
         if (isMounted && response && response.count !== null && response.count !== undefined) {
-          setTotalResults(response.count);
+          setTotalResults(Number(response.count));
         }
       } catch (e) {
         if (isMounted) setTotalResults(0);
@@ -85,13 +87,10 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <img src={logoAnimalytics} alt="Logo" className="h-10" />
           <div className="text-left">
             <h1 className="font-black text-lg uppercase italic leading-none">{tenantAgency?.nombre || "ANIMALYTICS PRO"}</h1>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ sorteos registrados</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{totalResults.toLocaleString()}+ SORTEOS REGISTRADOS</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => window.open(TELEGRAM_LINK, '_blank')} className="hidden md:flex h-9 bg-[#24A1DE] text-white font-black text-[10px] uppercase italic gap-2 rounded-full px-4 border-none shadow-md">
-            <Send className="w-3.5 h-3.5 fill-white" /> Canal Oficial
-          </Button>
           <ThemeToggle />
           <span className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary text-white">
             {isMasterAdmin ? '👑 MASTER' : isAgencyManager ? '🏦 BANCA' : 'USUARIO'}
@@ -111,8 +110,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             {(isMasterAdmin || isAgencyManager) && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><QuickPrediction /><TrendAnalysis /><AIPredictive /></TabsContent>
-          <TabsContent value="explosivo" className="space-y-6"><ExplosiveData /><DatoRicardoSection agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
+          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><AIPredictive /></TabsContent>
+          <TabsContent value="explosivo" className="space-y-6"><DatoRicardoSection agencyId={tenantAgency?.id} /><FrequencyHeatmap /></TabsContent>
           <TabsContent value="ruleta" className="space-y-6"><UniversalRoulette /><DataMapDisplay customMap={tenantAgency?.imagen_ruleta_url} /></TabsContent>
           <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="jugadas"><ModuloJugadas forcedAgency={tenantAgency} /></TabsContent>
