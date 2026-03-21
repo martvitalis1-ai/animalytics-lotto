@@ -29,7 +29,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
       setLoading(true);
       
       // CARGA DE AGENCIAS FILTRADA
-      let query = supabase.from('agencias').select('*');
+      let query = (supabase.from as any)('agencias').select('*');
       
       // Si es dueño de agencia, solo traemos SU fila
       if (isAgencyOwner) {
