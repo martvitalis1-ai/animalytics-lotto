@@ -214,7 +214,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
                           <p className="font-black text-emerald-600 text-sm">{c.codigo}</p>
                           <p className="text-[8px] font-bold text-slate-400 uppercase">Vence: {c.expira_el ? new Date(c.expira_el).toLocaleDateString() : 'N/A'}</p>
                         </div>
-                        <button onClick={async () => { await supabase.from('codigos_vip').delete().eq('id', c.id); fetchTodo(); }} className="text-red-300 hover:text-red-600 transition-all"><Trash2 size={16}/></button>
+                        <button onClick={async () => { await (supabase.from as any)('codigos_vip').delete().eq('id', c.id); fetchTodo(); }} className="text-red-300 hover:text-red-600 transition-all"><Trash2 size={16}/></button>
                      </div>
                    ))}
                 </div>

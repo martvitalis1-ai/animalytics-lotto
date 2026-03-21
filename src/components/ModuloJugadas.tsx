@@ -85,7 +85,7 @@ export function ModuloJugadas({ forcedAgency }: any) {
   const validarVip = async () => {
     if (!passVip) return toast.error("Ingresa código");
     try {
-      const { data } = await supabase.from('codigos_vip').select('*').eq('codigo', passVip.toUpperCase().trim()).eq('activo', true).single();
+      const { data } = await (supabase.from as any)('codigos_vip').select('*').eq('codigo', passVip.toUpperCase().trim()).eq('activo', true).single();
       if (data) {
         setIsVip(true);
         localStorage.setItem('vip_active', 'true');

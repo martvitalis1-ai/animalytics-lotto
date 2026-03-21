@@ -22,8 +22,8 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
       .order('prediction_date', { ascending: false })
       .order('draw_time', { ascending: true });
 
-    if (agencyId) query = query.eq('agencia_id', agencyId);
-    else query = query.is('agencia_id', null);
+    if (agencyId) query = (query as any).eq('agencia_id', agencyId);
+    else query = (query as any).is('agencia_id', null);
 
     const { data } = await query.limit(12);
     if (data) setPredictions(data);
