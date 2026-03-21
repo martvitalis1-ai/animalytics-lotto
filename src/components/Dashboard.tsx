@@ -1,52 +1,39 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Flame, Grid3X3, Zap, ShieldCheck, Clock, Calendar, Settings } from "lucide-react";
-import { HourlyPredictionView } from "./HourlyPredictionView"; // Su componente actual mejorado
-import { ExplosiveData } from "./ExplosiveData"; // Nuevo componente
-import { SequenceMatrixView } from "./SequenceMatrixView"; // Nuevo componente
+import { Brain, Flame, Grid3X3, Settings, LayoutDashboard } from "lucide-react";
+import { HourlyPredictionView } from "./HourlyPredictionView"; 
+import { SequenceMatrixView } from "./SequenceMatrixView"; 
 
 export function Dashboard({ userRole, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
-  const [selectedLottery, setSelectedLottery] = useState("lotto_activo");
+  const [globalLottery, setGlobalLottery] = useState("lotto_activo");
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-slate-900">
       <main className="p-4 max-w-7xl mx-auto space-y-6">
         
-        {/* RECOMENDACIÓN MAESTRA DE LA IA (BANNER DE ALTO IMPACTO) */}
-        <div className="bg-emerald-600 p-6 rounded-[3rem] text-white shadow-2xl flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
-           <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-40 opacity-10 rotate-12" />
-           <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md">
-              <Zap size={40} className="fill-yellow-300 text-yellow-300 animate-pulse" />
-           </div>
-           <div className="text-center md:text-left flex-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Recomendación del Sistema</p>
-              <h2 className="text-2xl lg:text-3xl font-black italic uppercase leading-none">Frecuencia de Ciclo Activada</h2>
-              <p className="text-sm font-medium mt-1">La matriz detecta alta probabilidad en el grupo de aves para la lotería seleccionada.</p>
-           </div>
-        </div>
-
-        {/* NAVEGACIÓN PRINCIPAL */}
+        {/* NAVEGACIÓN TIPO SOFTWARE PROFESIONAL */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 h-auto bg-slate-100 p-1.5 rounded-[2rem]">
-            <TabsTrigger value="ia" className="rounded-2xl font-black text-xs">IA</TabsTrigger>
-            <TabsTrigger value="explosivo" className="rounded-2xl font-black text-xs">EXPLOSIVO</TabsTrigger>
-            <TabsTrigger value="matriz" className="rounded-2xl font-black text-xs">MATRIZ</TabsTrigger>
-            <TabsTrigger value="resultados" className="rounded-2xl font-black text-xs">BÓVEDA</TabsTrigger>
-            <TabsTrigger value="admin" className="rounded-2xl font-black text-xs"><Settings size={18}/></TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center">
+            <TabsList className="bg-slate-100 p-1 rounded-full h-12 shadow-sm border border-slate-200">
+              <TabsTrigger value="ia" className="rounded-full px-6 font-black text-xs uppercase tracking-tighter">Analítica</TabsTrigger>
+              <TabsTrigger value="explosivo" className="rounded-full px-6 font-black text-xs uppercase tracking-tighter">Explosivos</TabsTrigger>
+              <TabsTrigger value="matriz" className="rounded-full px-6 font-black text-xs uppercase tracking-tighter">Matriz</TabsTrigger>
+              <TabsTrigger value="resultados" className="rounded-full px-6 font-black text-xs uppercase tracking-tighter">Bóveda</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="ia" className="space-y-8">
-            {/* OPCIÓN 3: PANEL DE ANÁLISIS POR LOTERÍA (CALIENTES, FRÍOS, ENJAULADOS) */}
-            <HourlyPredictionView /> 
-          </TabsContent>
-
-          <TabsContent value="explosivo">
-            <ExplosiveData />
+          {/* CONTENIDO DE ANALÍTICA (OPCIÓN 3) */}
+          <TabsContent value="ia" className="space-y-6">
+            <HourlyPredictionView lotteryId={globalLottery} onLotteryChange={setGlobalLottery} />
           </TabsContent>
 
           <TabsContent value="matriz">
-            <SequenceMatrixView />
+            <SequenceMatrixView lotteryId={globalLottery} />
+          </TabsContent>
+          
+          <TabsContent value="explosivo">
+            <div className="p-20 text-center font-black uppercase text-slate-300">Sección Explosivos en Sincronización...</div>
           </TabsContent>
         </Tabs>
       </main>
