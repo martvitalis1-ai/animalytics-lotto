@@ -53,7 +53,7 @@ export function ModuloJugadas({ forcedAgency }: any) {
       try {
         if (forcedAgency) setSelectedAgencia(forcedAgency);
         else {
-          const { data } = await supabase.from('agencias').select('*').eq('activa', true);
+          const { data } = await (supabase.from as any)('agencias').select('*').eq('activa', true);
           if (data) setAgencias(data);
         }
         setUserPM(localStorage.getItem('u_pm_tlf') || "");
