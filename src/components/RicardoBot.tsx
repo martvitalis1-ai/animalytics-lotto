@@ -24,7 +24,7 @@ export function RicardoBot() {
     const msg = userMsg.toLowerCase();
     setIsLoading(true);
     try {
-      const { data: pronosticos } = await supabase.from('super_pronostico_final').select('*');
+      const { data: pronosticos } = await (supabase.from as any)('super_pronostico_final').select('*');
       let target = '';
       if (msg.includes('guacharito')) target = 'guacharito';
       else if (msg.includes('guacharo')) target = 'guacharo';
