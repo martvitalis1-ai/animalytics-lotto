@@ -1,71 +1,77 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Settings, LogOut, Zap, Trophy, Database } from "lucide-react";
+import { LogOut, LayoutGrid, Flame, TrendingUp, History, Settings, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { HourlyPredictionView } from "./HourlyPredictionView";
 import { AIPredictive } from "./AIPredictive";
 import { ResultsPanel } from "./ResultsPanel";
 import { ResultsInsert } from "./ResultsInsert";
-import { SportsAnalytics } from "./SportsAnalytics";
-import { AdminAgencias } from "./AdminAgencias";
+import { ExplosiveData } from "./ExplosiveData";
+import { SequenceMatrixView } from "./SequenceMatrixView";
 import { UniversalRoulette } from "./UniversalRoulette";
 
-export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
+const LOTTERIES = [
+  { id: 'lotto_activo', name: 'Lotto Activo' },
+  { id: 'la_granjita', name: 'La Granjita' },
+  { id: 'guacharo_activo', name: 'Guácharo Activo' },
+  { id: 'guacharito', name: 'Guacharito' }
+];
+
+export function Dashboard({ userRole, onLogout }: any) {
   const [activeTab, setActiveTab] = useState("ia");
-  const [totalResults, setTotalResults] = useState<number>(0);
+  const [selectedLottery, setSelectedLottery] = useState("lotto_activo");
   const isMasterAdmin = userRole === 'admin';
 
-  useEffect(() => {
-    const loadCount = async () => {
-      try {
-        const { count, error } = await supabase
-          .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
-        
-        if (error) throw error;
-        // Si el conteo es nulo, ponemos 0 para que no explote la App
-        setTotalResults(count ?? 0);
-      } catch (e) {
-        console.error("Error cargando estadísticas:", e);
-        setTotalResults(0);
-      }
-    };
-    loadCount();
-  }, []);
-
   return (
-    <div className="min-h-screen bg-background text-slate-900">
-      <header className="p-4 border-b flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex flex-col">
-          <h1 className="font-black text-xl italic uppercase">ANIMALYTICS PRO</h1>
-          <span className="text-[10px] font-bold text-muted-foreground">{totalResults.toLocaleString()} SORTEOS REGISTRADOS</span>
+    <div className="min-h-screen bg-white text-slate-900">
+      {/* HEADER PROFESIONAL */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b p-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <h1 className="font-black text-xl italic uppercase tracking-tighter">ANIMALYTICS PRO</h1>
+          <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+            <SelectTrigger className="w-[180px] h-8 font-bold border-2 border-primary/20 rounded-full bg-slate-50">
+              <SelectValue placeholder="Lotería" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOTTERIES.map(l => <SelectItem key={l.id} value={l.id} className="font-bold">{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black bg-primary text-white px-2 py-1 rounded">
-            {isMasterAdmin ? '👑 ADMIN MAESTRO' : 'USUARIO'}
-          </span>
-          <Button variant="ghost" size="sm" onClick={onLogout}><LogOut size={18} /></Button>
-        </div>
+        <Button variant="ghost" size="sm" onClick={onLogout} className="rounded-full hover:bg-red-50 hover:text-red-600">
+          <LogOut size={20} />
+        </Button>
       </header>
 
-      <main className="p-4 container mx-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="flex flex-wrap h-auto bg-muted/50 p-1 justify-center rounded-2xl">
-            <TabsTrigger value="ia">IA</TabsTrigger>
-            <TabsTrigger value="deportes">DEPORTES</TabsTrigger>
-            <TabsTrigger value="ruleta">RULETA</TabsTrigger>
-            <TabsTrigger value="resultados">RESULTADOS</TabsTrigger>
-            {isMasterAdmin && <TabsTrigger value="insertar" className="bg-primary text-white">+</TabsTrigger>}
-            {isMasterAdmin && <TabsTrigger value="admin"><Settings size={16}/></TabsTrigger>}
+      <main className="p-4 container mx-auto max-w-5xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="flex flex-wrap h-auto bg-slate-100/50 p-1 justify-center rounded-3xl border border-slate-200">
+            <TabsTrigger value="ia" className="rounded-2xl font-bold"><TrendingUp size={16} className="mr-1"/> IA</TabsTrigger>
+            <TabsTrigger value="matriz" className="rounded-2xl font-bold"><LayoutGrid size={16} className="mr-1"/> MATRIZ</TabsTrigger>
+            <TabsTrigger value="explosivo" className="rounded-2xl font-bold"><Flame size={16} className="mr-1"/> EXPLOSIVOS</TabsTrigger>
+            <TabsTrigger value="ruleta" className="rounded-2xl font-bold"><PlayCircle size={16} className="mr-1"/> RULETA</TabsTrigger>
+            <TabsTrigger value="resultados" className="rounded-2xl font-bold"><History size={16} className="mr-1"/> RESULTADOS</TabsTrigger>
+            {isMasterAdmin && <TabsTrigger value="insertar" className="bg-primary text-white rounded-2xl">+</TabsTrigger>}
+            {isMasterAdmin && <TabsTrigger value="admin" className="rounded-2xl"><Settings size={16}/></TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="ia" className="space-y-6"><HourlyPredictionView /><AIPredictive /></TabsContent>
-          <TabsContent value="deportes"><SportsAnalytics /></TabsContent>
+          <TabsContent value="ia" className="space-y-8">
+            <HourlyPredictionView lotteryId={selectedLottery} />
+            <AIPredictive lotteryId={selectedLottery} />
+          </TabsContent>
+
+          <TabsContent value="matriz">
+            <SequenceMatrixView lotteryId={selectedLottery} />
+          </TabsContent>
+
+          <TabsContent value="explosivo">
+            <ExplosiveData lotteryId={selectedLottery} />
+          </TabsContent>
+
           <TabsContent value="ruleta"><UniversalRoulette /></TabsContent>
-          <TabsContent value="resultados"><ResultsPanel isAdmin={isMasterAdmin} /></TabsContent>
+          <TabsContent value="resultados"><ResultsPanel lotteryId={selectedLottery} isAdmin={isMasterAdmin} /></TabsContent>
           <TabsContent value="insertar"><ResultsInsert onInserted={() => {}} /></TabsContent>
-          <TabsContent value="admin"><AdminAgencias /></TabsContent>
         </Tabs>
       </main>
     </div>
