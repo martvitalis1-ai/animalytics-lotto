@@ -45,8 +45,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
 
       const rows = results || [];
       if (rows.length === 0) {
-        setHotAnimals([]); setColdAnimals([]); setCagedAnimals([]);
-        setBestHours([]); setBestDays([]); setRecommendation('Sin datos suficientes.');
+        setRecommendation('Datos insuficientes para este sorteo.');
         setLoading(false);
         return;
       }
@@ -61,6 +60,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
         const num = r.result_number?.toString().trim();
         if (!num) return;
         const normalized = (num === '00' || num === '0') ? num : num.padStart(2, '0');
+        
         freq[normalized] = (freq[normalized] || 0) + 1;
         if (!lastSeen[normalized]) lastSeen[normalized] = r.draw_date;
 
@@ -89,7 +89,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
       setBestDays(Object.entries(dayFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([day, count]) => ({ day, count })));
 
       const topA = sorted[0];
-      setRecommendation(`SISTEMA DETECTA TENDENCIA ALTA EN ${topA.name} (#${topA.code}). LA MATRIZ SUGIERE ATACAR EL DÍA ${Object.entries(dayFreq).sort((a,b)=>b[1]-a[1])[0][0].toUpperCase()} EN EL HORARIO DE LAS ${Object.entries(hourFreq).sort((a,b)=>b[1]-a[1])[0][0]}.`);
+      setRecommendation(`SISTEMA DETECTA CICLO FAVORABLE PARA ${topA.name}. MÁXIMA PROBABILIDAD EL DÍA ${Object.entries(dayFreq).sort((a,b)=>b[1]-a[1])[0][0].toUpperCase()} EN EL HORARIO DE LAS ${Object.entries(hourFreq).sort((a,b)=>b[1]-a[1])[0][0]}.`);
       
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -97,30 +97,37 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
 
   useEffect(() => { analyzeData(); }, [selectedLottery]);
 
-  // COMPONENTE DE TARJETA MINIMALISTA (SIN REPETICIONES)
-  const AnimalStatusCard = ({ a, status }: { a: AnimalStatus, status: 'hot' | 'cold' | 'caged' }) => (
-    <div className="flex flex-col items-center bg-white p-2 rounded-3xl transition-transform hover:scale-105">
-      <div className="relative w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center">
+  const StatusCard = ({ a, status }: { a: AnimalStatus, status: 'hot' | 'cold' | 'caged' }) => (
+    <div className="flex flex-col items-center bg-white p-2 rounded-3xl transition-all hover:scale-110 active:scale-95">
+      <div className="relative w-24 h-24 flex items-center justify-center">
+        {/* IMAGEN PURA SIN CUADROS NI SOMBRAS PARA PERDERSE CON EL FONDO */}
         <img src={getAnimalImageUrl(a.code)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
-        {status === 'hot' && <Flame className="absolute top-0 right-0 text-orange-500 fill-orange-500 size-5" />}
-        {status === 'cold' && <Snowflake className="absolute top-0 right-0 text-blue-400 size-5" />}
-        {status === 'caged' && <Lock className="absolute top-0 right-0 text-slate-800 size-5" />}
+        
+        {/* ICONO DE ESTADO MINIMALISTA */}
+        <div className="absolute top-0 right-0 p-1">
+          {status === 'hot' && <Flame className="text-orange-500 fill-orange-500 size-5 drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]" />}
+          {status === 'cold' && <Snowflake className="text-blue-400 size-5 drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]" />}
+          {status === 'caged' && <Lock className="text-slate-800 size-5" />}
+        </div>
       </div>
-      <span className="text-[10px] font-black text-slate-400 mt-1 uppercase">
-        {status === 'caged' ? `${a.daysSinceLast} DÍAS` : `${a.count} VECES`}
+      
+      {/* INFO TÉCNICA (NOMBRE Y NÚMERO YA ESTÁN EN LA FOTO) */}
+      <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-tighter">
+        {status === 'caged' ? `${a.daysSinceLast} DÍAS` : `${a.count} HITS`}
       </span>
     </div>
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
-      {/* HEADER CON SELECTOR SIEMPRE PRESENTE */}
+    <div className="space-y-8 animate-in fade-in duration-700">
+      
+      {/* 1. SELECTOR DE LOTERÍA PROFESIONAL */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div>
           <h2 className="font-black text-2xl uppercase italic tracking-tighter text-slate-900 flex items-center gap-2">
             <TrendingUp className="text-emerald-500" /> BÚNKER ANALÍTICO
           </h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monitoreo de flujo de datos 72h</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Análisis de flujo 72h - Deep Data</p>
         </div>
         
         <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
@@ -151,68 +158,73 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
           <p className="text-xs font-black mt-4 text-slate-300 uppercase tracking-[0.3em]">Procesando Algoritmos...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* COLUMNA IZQUIERDA: ESTADOS TÉRMICOS */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             
-            {/* RECOMENDACIÓN MAESTRA */}
+            {/* 2. RECOMENDACIÓN DE ALTO IMPACTO */}
             <div className="bg-emerald-600 p-8 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden">
-               <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-40 opacity-10 rotate-12" />
+               <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12" />
                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap size={16} className="fill-yellow-300 text-yellow-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sugerencia de Inteligencia</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-yellow-400 p-1 rounded-lg">
+                      <Zap size={18} className="fill-slate-900 text-slate-900" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sugerencia de Inteligencia Maestro</span>
                   </div>
-                  <p className="text-lg lg:text-xl font-black italic uppercase leading-tight max-w-[80%]">
+                  <p className="text-xl lg:text-2xl font-black italic uppercase leading-tight max-w-[90%]">
                     {recommendation}
                   </p>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
-                <p className="text-[10px] font-black uppercase text-orange-600 mb-4 flex items-center gap-1">
+            {/* 3. ESTADOS TÉRMICOS (CALIENTE, FRÍO, ENJAULADO) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-orange-600 mb-6 flex items-center justify-center gap-1 bg-orange-50 py-2 rounded-full">
                   <Flame size={14} /> Calientes
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {hotAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="hot" />)}
+                <div className="grid grid-cols-2 gap-4">
+                  {hotAnimals.map(a => <StatusCard key={a.code} a={a} status="hot" />)}
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
-                <p className="text-[10px] font-black uppercase text-blue-600 mb-4 flex items-center gap-1">
+              <div className="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-blue-600 mb-6 flex items-center justify-center gap-1 bg-blue-50 py-2 rounded-full">
                   <Snowflake size={14} /> Fríos
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {coldAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="cold" />)}
+                <div className="grid grid-cols-2 gap-4">
+                  {coldAnimals.map(a => <StatusCard key={a.code} a={a} status="cold" />)}
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
-                <p className="text-[10px] font-black uppercase text-slate-700 mb-4 flex items-center gap-1">
+              <div className="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-slate-700 mb-6 flex items-center justify-center gap-1 bg-slate-100 py-2 rounded-full">
                   <Lock size={14} /> Enjaulados
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {cagedAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="caged" />)}
+                <div className="grid grid-cols-2 gap-4">
+                  {cagedAnimals.map(a => <StatusCard key={a.code} a={a} status="caged" />)}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* COLUMNA DERECHA: TIEMPO Y PROBABILIDAD */}
-          <div className="space-y-6">
-            <div className="bg-slate-900 p-6 rounded-[3rem] text-white shadow-xl h-full">
-              <div className="space-y-8">
+          {/* 4. COLUMNA DE DATOS DE TIEMPO (HORAS Y DÍAS) */}
+          <div className="space-y-8">
+            <div className="bg-slate-900 p-8 rounded-[3.5rem] text-white shadow-2xl h-full border-b-8 border-emerald-500">
+              <div className="space-y-10">
                 <div>
-                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-4 italic flex items-center gap-2">
-                    <Clock size={16} /> Horarios Clave
+                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-6 italic flex items-center gap-2 tracking-widest">
+                    <Clock size={16} /> Horarios de Acierto
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {bestHours.map((h, i) => (
-                      <div key={h.time} className="flex items-center justify-between border-b border-white/5 pb-2">
-                        <span className="font-mono text-sm font-bold">{h.time}</span>
-                        <span className="text-[10px] font-black bg-white/10 px-2 py-1 rounded-lg text-emerald-400">
+                      <div key={h.time} className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div className="flex items-center gap-2">
+                           {i === 0 && <Star className="size-3 text-yellow-400 fill-yellow-400" />}
+                           <span className="font-mono text-lg font-black">{h.time}</span>
+                        </div>
+                        <span className="text-[10px] font-black bg-emerald-500 text-slate-900 px-3 py-1 rounded-full uppercase">
                           {h.count} hits
                         </span>
                       </div>
@@ -221,16 +233,17 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
                 </div>
 
                 <div>
-                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-4 italic flex items-center gap-2">
-                    <Calendar size={16} /> Días de Poder
+                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-6 italic flex items-center gap-2 tracking-widest">
+                    <Calendar size={16} /> Días de Fuerza
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {bestDays.map((d, i) => (
-                      <div key={d.day} className="flex items-center justify-between border-b border-white/5 pb-2">
-                        <span className="text-sm font-bold uppercase">{d.day}</span>
-                        <span className="text-[10px] font-black bg-emerald-500 text-white px-2 py-1 rounded-lg">
-                          Top {i+1}
-                        </span>
+                      <div key={d.day} className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <span className="text-sm font-black uppercase italic tracking-tighter">{d.day}</span>
+                        <div className="flex items-center gap-1">
+                           <div className={`h-2 w-12 rounded-full ${i === 0 ? 'bg-emerald-500' : 'bg-white/10'}`}></div>
+                           <span className="text-[10px] font-black text-white/40">TOP {i+1}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
