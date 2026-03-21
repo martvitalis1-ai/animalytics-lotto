@@ -21,12 +21,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   useEffect(() => {
     const loadCount = async () => {
       try {
-        const response = await supabase
+        const response = (await supabase
           .from('lottery_results')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })) || { count: 0 };
 
-        const total = response?.count ?? 0;
-        setTotalResults(Number(total));
+        setTotalResults(Number(response?.count ?? 0));
       } catch (error) {
         console.error('Dashboard count load failed:', error);
         setTotalResults(0);
