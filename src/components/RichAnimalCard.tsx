@@ -1,73 +1,39 @@
-import { useMemo, useState } from 'react';
-import { getAnimalByCode, getAnimalImageUrl } from '@/lib/animalData';
-import { cn } from "@/lib/utils";
+import { useMemo } from 'react';
+import { getAnimalImageUrl } from '@/lib/animalData';
 
-export function RichAnimalCard({ code, probability, status, rank, size = 'md', onClick, className = '', showProbability = false }: any) {
-  const animal = useMemo(() => getAnimalByCode(code), [code]);
+export function RichAnimalCard({ code, status, probability, size = 'md', onClick }: any) {
   const imageUrl = useMemo(() => getAnimalImageUrl(code), [code]);
-  const [imgError, setImgError] = useState(false);
 
-  const sizeConfig = {
-    sm: { card: 'p-2 min-w-[80px]', img: 'w-14 h-14', label: 'text-[9px]' },
-    md: { card: 'p-3 min-w-[100px]', img: 'w-20 h-20', label: 'text-[10px]' },
-    lg: { card: 'p-4 min-w-[140px]', img: 'w-32 h-32', label: 'text-xs' }
-  };
-  const config = sizeConfig[size as keyof typeof sizeConfig] || sizeConfig.md;
-
-  const statusLabel = () => {
-    if (status === 'HOT') return { text: '🔥 CALIENTE', color: 'bg-orange-500 text-white' };
-    if (status === 'COLD') return { text: '❄️ FRÍO', color: 'bg-blue-500 text-white' };
-    if (status === 'OVERDUE') return { text: '🔒 ENJAULADO', color: 'bg-slate-700 text-white' };
-    return null;
+  // Definimos el estilo según el estado
+  const statusConfig: any = {
+    'HOT': { label: '🔥 CALIENTE', color: 'text-red-600 bg-red-50' },
+    'COLD': { label: '❄️ FRÍO', color: 'text-blue-600 bg-blue-50' },
+    'OVERDUE': { label: '⛓️ ENJAULADO', color: 'text-amber-600 bg-amber-50' },
+    'NEUTRAL': { label: '⚖️ POSIBLE', color: 'text-slate-500 bg-slate-50' }
   };
 
-  const sl = statusLabel();
+  const config = statusConfig[status] || statusConfig.NEUTRAL;
 
   return (
-    <div
-      className={cn(
-        "relative flex flex-col items-center rounded-2xl bg-white border border-slate-50 transition-all",
-        config.card,
-        className
-      )}
+    <div 
+      className="relative flex flex-col items-center p-2 cursor-pointer transition-transform hover:scale-105"
       onClick={onClick}
     >
-      {rank && rank <= 3 && (
-        <div className="absolute -top-1.5 -left-1.5 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[9px] font-black z-20">
-          #{rank}
-        </div>
-      )}
-
-      <div className={cn(config.img, "relative flex items-center justify-center")}>
-        {!imgError ? (
-          <img
-            src={imageUrl}
-            alt={animal?.name}
-            className="w-full h-full object-contain"
-            crossOrigin="anonymous"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <span className="text-3xl">🎲</span>
-        )}
+      {/* IMAGEN SIN SOMBRAS PARA MEZCLARSE CON EL FONDO */}
+      <div className={`${size === 'sm' ? 'w-20 h-20' : 'w-32 h-32'} flex items-center justify-center bg-white`}>
+        <img src={imageUrl} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
       </div>
 
-      {/* Status badge instead of repeating name/number */}
-      {sl && (
-        <div className={cn("mt-1 px-2 py-0.5 rounded-full font-black", config.label, sl.color)}>
-          {sl.text}
-        </div>
-      )}
+      {/* ESTADO EN LUGAR DE NOMBRE/NÚMERO */}
+      <div className={`mt-2 px-3 py-1 rounded-full font-black text-[10px] uppercase tracking-tighter ${config.color}`}>
+        {config.label}
+      </div>
 
-      {showProbability && probability && (
-        <span className={cn("mt-1 font-black text-emerald-600", config.label)}>
-          {Math.floor(probability)}%
+      {probability && (
+        <span className="mt-1 text-[9px] font-bold text-emerald-600 italic">
+          {Math.floor(probability)}% ÉXITO
         </span>
       )}
     </div>
   );
-}
-
-export function RichAnimalCardCompact({ code, probability, status, className = '' }: any) {
-  return <RichAnimalCard code={code} probability={probability} status={status} size="sm" className={className} />;
 }
