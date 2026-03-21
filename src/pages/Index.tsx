@@ -28,8 +28,7 @@ const Index = () => {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('agencias')
+        const { data, error } = await (supabase.from as any)('agencias')
           .select('id,nombre,llave_agencia')
           .eq('llave_agencia', saved)
           .maybeSingle();
@@ -77,8 +76,7 @@ const Index = () => {
     }
 
     try {
-      const { data: agency, error: agencyError } = await supabase
-        .from('agencias')
+      const { data: agency, error: agencyError } = await (supabase.from as any)('agencias')
         .select('*')
         .eq('llave_agencia', cleanCode)
         .maybeSingle();

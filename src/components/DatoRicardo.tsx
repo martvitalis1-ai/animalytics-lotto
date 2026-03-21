@@ -35,7 +35,7 @@ export function DatoRicardo({ agencyContextId }: DatoRicardoProps) {
 
     // FILTRO CRÍTICO: Si es agencia, solo ve sus datos. Si es Admin, ve lo que no tiene agencia (Dato Maestro)
     if (agencyContextId) {
-      query = query.eq('agencia_id', agencyContextId);
+      query = (query as any).eq('agencia_id', agencyContextId);
     } else {
       query = query.is('agencia_id', null);
     }
