@@ -70,9 +70,9 @@ export function ModuloJugadas({ forcedAgency }: any) {
     if (!selectedLot) return;
     setIaLoading(true);
     try {
-      const { data } = await supabase.rpc('obtener_dato_vip_blindado', { lot_name: selectedLot });
-      if (data && data.length > 0) {
-        const info = data[0];
+      const { data } = await (supabase.rpc as any)('obtener_dato_vip_blindado', { lot_name: selectedLot });
+      if (data && (data as any[]).length > 0) {
+        const info = (data as any[])[0];
         let idReal = info.animal_id.toString(); 
         if (idReal !== "0" && idReal !== "00" && idReal.length === 1) idReal = "0" + idReal;
         setDatoVip({ ...info, animal_id: idReal, animal_nombre: ANIMALS_MASTER[idReal] || "SINCRONIZANDO" });
