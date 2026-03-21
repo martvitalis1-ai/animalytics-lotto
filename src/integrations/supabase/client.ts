@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types';
 
-// METEMOS LOS DATOS A LA FUERZA PARA SALTARNOS EL ERROR
-const supabaseUrl = "https://qfdrmyuuswiubsppyjrt.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZHJteXV1c3dpdWJzcHB5anJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MDU1NDEsImV4cCI6MjA4NjQ4MTU0MX0.u3afSc4T--SnAniJOcjiUdVodP1p1aFof3FjqtZNlqY";
+// Esto lee las variables que pusimos en el paso anterior
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
-});
+// Si por alguna razón las variables fallan, este IF evita que la App se quede en blanco eterno
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("⚠️ ERROR CRÍTICO: Faltan las llaves de Supabase en Environment Variables");
+}
+
+export const supabase = createClient<Database>(supabaseUrl || "", supabaseAnonKey || "");
