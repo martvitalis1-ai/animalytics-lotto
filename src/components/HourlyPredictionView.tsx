@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, Star } from "lucide-react";
-import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
+import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, Star, ShieldCheck, Zap } from "lucide-react";
+import { LOTTERIES } from '@/lib/constants';
 import { getAnimalImageUrl, getAnimalName } from '@/lib/animalData';
 import { getLotteryLogo } from './LotterySelector';
 
@@ -32,7 +32,6 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
   const analyzeData = async () => {
     setLoading(true);
     try {
-      // Fetch last 30 days of results
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -42,8 +41,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
         .select('*')
         .eq('lottery_type', selectedLottery)
         .gte('draw_date', dateStr)
-        .order('draw_date', { ascending: false })
-        .order('draw_time', { ascending: false });
+        .order('draw_date', { ascending: false });
 
       const rows = results || [];
       if (rows.length === 0) {
@@ -53,33 +51,28 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
         return;
       }
 
-      // Count frequency per animal
       const freq: Record<string, number> = {};
       const lastSeen: Record<string, string> = {};
       const hourFreq: Record<string, number> = {};
       const dayFreq: Record<string, number> = {};
-
       const today = new Date().toISOString().split('T')[0];
 
       rows.forEach((r: any) => {
         const num = r.result_number?.toString().trim();
         if (!num) return;
-        const normalized = num === '00' ? '00' : num === '0' ? '0' : num.padStart(2, '0');
+        const normalized = (num === '00' || num === '0') ? num : num.padStart(2, '0');
         freq[normalized] = (freq[normalized] || 0) + 1;
         if (!lastSeen[normalized]) lastSeen[normalized] = r.draw_date;
 
-        // Hour analysis
         const time = r.draw_time || '';
         hourFreq[time] = (hourFreq[time] || 0) + 1;
 
-        // Day analysis
         const dayOfWeek = new Date(r.draw_date + 'T12:00:00').getDay();
         const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const dayName = dayNames[dayOfWeek] || 'Desconocido';
+        const dayName = dayNames[dayOfWeek];
         dayFreq[dayName] = (dayFreq[dayName] || 0) + 1;
       });
 
-      // Sort by frequency
       const sorted = Object.entries(freq)
         .map(([code, count]) => {
           const last = lastSeen[code] || today;
@@ -88,89 +81,56 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
         })
         .sort((a, b) => b.count - a.count);
 
-      // Hot = top 5 most frequent
-      const hot: AnimalStatus[] = sorted.slice(0, 5).map(a => ({ ...a, status: 'hot' as const }));
-      // Cold = bottom 5
-      const cold: AnimalStatus[] = sorted.slice(-5).reverse().map(a => ({ ...a, status: 'cold' as const }));
-      // Caged = not seen in 7+ days
-      const caged: AnimalStatus[] = sorted
-        .filter(a => a.daysSinceLast >= 7)
-        .slice(0, 5)
-        .map(a => ({ ...a, status: 'caged' as const }));
+      setHotAnimals(sorted.slice(0, 4).map(a => ({ ...a, status: 'hot' })));
+      setColdAnimals(sorted.slice(-4).reverse().map(a => ({ ...a, status: 'cold' })));
+      setCagedAnimals(sorted.filter(a => a.daysSinceLast >= 5).slice(0, 4).map(a => ({ ...a, status: 'caged' })));
 
-      setHotAnimals(hot);
-      setColdAnimals(cold);
-      setCagedAnimals(caged);
+      setBestHours(Object.entries(hourFreq).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([time, count]) => ({ time, count })));
+      setBestDays(Object.entries(dayFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([day, count]) => ({ day, count })));
 
-      // Best hours
-      const topHours = Object.entries(hourFreq)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([time, count]) => ({ time, count }));
-      setBestHours(topHours);
-
-      // Best days
-      const topDays = Object.entries(dayFreq)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([day, count]) => ({ day, count }));
-      setBestDays(topDays);
-
-      // Recommendation
-      const topAnimal = hot[0];
-      const topHour = topHours[0];
-      const topDay = topDays[0];
-      if (topAnimal && topHour && topDay) {
-        setRecommendation(
-          `El animal más caliente es ${topAnimal.name} (${topAnimal.code}) con ${topAnimal.count} apariciones. ` +
-          `La mejor hora es ${topHour.time} y el mejor día es ${topDay.day}. ` +
-          (caged.length > 0 ? `Ojo con ${caged[0].name} que lleva ${caged[0].daysSinceLast} días sin salir.` : '')
-        );
-      } else {
-        setRecommendation('Datos insuficientes para generar recomendación.');
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const topA = sorted[0];
+      setRecommendation(`SISTEMA DETECTA TENDENCIA ALTA EN ${topA.name} (#${topA.code}). LA MATRIZ SUGIERE ATACAR EL DÍA ${Object.entries(dayFreq).sort((a,b)=>b[1]-a[1])[0][0].toUpperCase()} EN EL HORARIO DE LAS ${Object.entries(hourFreq).sort((a,b)=>b[1]-a[1])[0][0]}.`);
+      
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
   useEffect(() => { analyzeData(); }, [selectedLottery]);
 
-  const StatusSection = ({ title, icon, animals, color }: { title: string; icon: React.ReactNode; animals: AnimalStatus[]; color: string }) => (
-    <div className="bg-white rounded-2xl p-4 border border-slate-100">
-      <div className={`flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full ${color} w-fit`}>
-        {icon}
-        <span className="text-white text-xs font-black uppercase">{title}</span>
+  // COMPONENTE DE TARJETA MINIMALISTA (SIN REPETICIONES)
+  const AnimalStatusCard = ({ a, status }: { a: AnimalStatus, status: 'hot' | 'cold' | 'caged' }) => (
+    <div className="flex flex-col items-center bg-white p-2 rounded-3xl transition-transform hover:scale-105">
+      <div className="relative w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center">
+        <img src={getAnimalImageUrl(a.code)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
+        {status === 'hot' && <Flame className="absolute top-0 right-0 text-orange-500 fill-orange-500 size-5" />}
+        {status === 'cold' && <Snowflake className="absolute top-0 right-0 text-blue-400 size-5" />}
+        {status === 'caged' && <Lock className="absolute top-0 right-0 text-slate-800 size-5" />}
       </div>
-      <div className="flex flex-wrap gap-3 justify-center">
-        {animals.length > 0 ? animals.map(a => (
-          <div key={a.code} className="flex flex-col items-center w-16">
-            <img src={getAnimalImageUrl(a.code)} className="w-14 h-14 object-contain" alt={a.name} />
-            <span className="text-[9px] font-bold text-slate-500 mt-1">{a.count}x</span>
-          </div>
-        )) : (
-          <p className="text-xs text-slate-400 py-4">Sin datos</p>
-        )}
-      </div>
+      <span className="text-[10px] font-black text-slate-400 mt-1 uppercase">
+        {status === 'caged' ? `${a.daysSinceLast} DÍAS` : `${a.count} VECES`}
+      </span>
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Lottery Selector */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="font-black text-xl uppercase italic text-primary flex items-center gap-2">
-          <TrendingUp className="w-6 h-6" /> Panel de Análisis
-        </h2>
-        <div className="flex items-center gap-2">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      {/* HEADER CON SELECTOR SIEMPRE PRESENTE */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div>
+          <h2 className="font-black text-2xl uppercase italic tracking-tighter text-slate-900 flex items-center gap-2">
+            <TrendingUp className="text-emerald-500" /> BÚNKER ANALÍTICO
+          </h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monitoreo de flujo de datos 72h</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
           <Select value={selectedLottery} onValueChange={setSelectedLottery}>
-            <SelectTrigger className="w-[200px] h-9 font-bold text-xs border-primary/20">
+            <SelectTrigger className="w-[200px] border-none bg-transparent font-black uppercase text-xs shadow-none focus:ring-0">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-2xl border-slate-100">
               {LOTTERIES.map(l => (
-                <SelectItem key={l.id} value={l.id}>
+                <SelectItem key={l.id} value={l.id} className="font-bold text-xs">
                   <div className="flex items-center gap-2">
                     <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" alt="" />
                     {l.name}
@@ -179,71 +139,107 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId }: { lottery
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={analyzeData} variant="outline" size="icon" className="h-9 w-9">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          <Button onClick={analyzeData} variant="ghost" size="icon" className="rounded-xl hover:bg-white transition-all">
+            {loading ? <Loader2 className="animate-spin text-primary" /> : <RefreshCw size={18} className="text-primary" />}
           </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center">
-          <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary" />
-          <p className="text-xs font-bold mt-3 text-slate-400 uppercase">Analizando historial...</p>
+        <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-emerald-500 opacity-20" />
+          <p className="text-xs font-black mt-4 text-slate-300 uppercase tracking-[0.3em]">Procesando Algoritmos...</p>
         </div>
       ) : (
-        <>
-          {/* Hot / Cold / Caged */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatusSection title="Calientes" icon={<Flame className="w-4 h-4 text-white" />} animals={hotAnimals} color="bg-orange-500" />
-            <StatusSection title="Fríos" icon={<Snowflake className="w-4 h-4 text-white" />} animals={coldAnimals} color="bg-blue-500" />
-            <StatusSection title="Enjaulados" icon={<Lock className="w-4 h-4 text-white" />} animals={cagedAnimals} color="bg-slate-800" />
-          </div>
-
-          {/* Best Hours & Best Days */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-4 border border-slate-100">
-              <h4 className="font-black text-xs uppercase text-slate-500 mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" /> Mejores Horas
-              </h4>
-              <div className="space-y-2">
-                {bestHours.map((h, i) => (
-                  <div key={h.time} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      {i === 0 && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                      <span className="font-mono font-bold text-sm">{h.time}</span>
-                    </div>
-                    <span className="text-xs font-black text-primary">{h.count} sorteos</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* COLUMNA IZQUIERDA: ESTADOS TÉRMICOS */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* RECOMENDACIÓN MAESTRA */}
+            <div className="bg-emerald-600 p-8 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden">
+               <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-40 opacity-10 rotate-12" />
+               <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap size={16} className="fill-yellow-300 text-yellow-300" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sugerencia de Inteligencia</span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-lg lg:text-xl font-black italic uppercase leading-tight max-w-[80%]">
+                    {recommendation}
+                  </p>
+               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border border-slate-100">
-              <h4 className="font-black text-xs uppercase text-slate-500 mb-3 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" /> Mejores Días
-              </h4>
-              <div className="space-y-2">
-                {bestDays.map((d, i) => (
-                  <div key={d.day} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      {i === 0 && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                      <span className="font-bold text-sm">{d.day}</span>
-                    </div>
-                    <span className="text-xs font-black text-primary">{d.count} sorteos</span>
-                  </div>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
+                <p className="text-[10px] font-black uppercase text-orange-600 mb-4 flex items-center gap-1">
+                  <Flame size={14} /> Calientes
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {hotAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="hot" />)}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
+                <p className="text-[10px] font-black uppercase text-blue-600 mb-4 flex items-center gap-1">
+                  <Snowflake size={14} /> Fríos
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {coldAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="cold" />)}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100">
+                <p className="text-[10px] font-black uppercase text-slate-700 mb-4 flex items-center gap-1">
+                  <Lock size={14} /> Enjaulados
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {cagedAnimals.map(a => <AnimalStatusCard key={a.code} a={a} status="caged" />)}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* System Recommendation */}
-          <div className="bg-primary/5 rounded-2xl p-6 border-2 border-dashed border-primary/20">
-            <h4 className="font-black text-primary text-sm mb-2 flex items-center gap-2">
-              🎯 RECOMENDACIÓN DEL SISTEMA
-            </h4>
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">{recommendation}</p>
+          {/* COLUMNA DERECHA: TIEMPO Y PROBABILIDAD */}
+          <div className="space-y-6">
+            <div className="bg-slate-900 p-6 rounded-[3rem] text-white shadow-xl h-full">
+              <div className="space-y-8">
+                <div>
+                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-4 italic flex items-center gap-2">
+                    <Clock size={16} /> Horarios Clave
+                  </h4>
+                  <div className="space-y-3">
+                    {bestHours.map((h, i) => (
+                      <div key={h.time} className="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span className="font-mono text-sm font-bold">{h.time}</span>
+                        <span className="text-[10px] font-black bg-white/10 px-2 py-1 rounded-lg text-emerald-400">
+                          {h.count} hits
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-black text-xs uppercase text-emerald-400 mb-4 italic flex items-center gap-2">
+                    <Calendar size={16} /> Días de Poder
+                  </h4>
+                  <div className="space-y-3">
+                    {bestDays.map((d, i) => (
+                      <div key={d.day} className="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span className="text-sm font-bold uppercase">{d.day}</span>
+                        <span className="text-[10px] font-black bg-emerald-500 text-white px-2 py-1 rounded-lg">
+                          Top {i+1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </>
+
+        </div>
       )}
     </div>
   );
