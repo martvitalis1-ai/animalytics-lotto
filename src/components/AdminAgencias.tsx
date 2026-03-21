@@ -43,7 +43,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
 
       // SOLO EL JEFE MAESTRO VE LOS VIP
       if (!isAgencyOwner) {
-        const { data: vipData } = await supabase.from('codigos_vip').select('*').order('created_at', { ascending: false });
+        const { data: vipData } = await (supabase.from as any)('codigos_vip').select('*').order('created_at', { ascending: false });
         if (vipData) setCodigosVip(vipData);
       }
 
