@@ -67,7 +67,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
       if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('agencias').getPublicUrl(fileName);
-      const { error: dbErr } = await supabase.from('agencias').update({ [field]: publicUrl }).eq('id', agenciaId);
+      const { error: dbErr } = await (supabase.from as any)('agencias').update({ [field]: publicUrl }).eq('id', agenciaId);
       if (dbErr) throw dbErr;
 
       toast.success("Imagen actualizada correctamente");
