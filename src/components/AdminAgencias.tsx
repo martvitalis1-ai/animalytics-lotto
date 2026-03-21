@@ -101,7 +101,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
   const handleCrearVip = async () => {
     if (!nuevoVip) return;
     try {
-      const { error } = await supabase.from('codigos_vip').insert([{ 
+      const { error } = await (supabase.from as any)('codigos_vip').insert([{ 
         codigo: nuevoVip.toUpperCase().trim(),
         expira_el: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }]);
