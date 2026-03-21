@@ -81,7 +81,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
 
   const saveAgencia = async (ag: any) => {
     try {
-      const { error } = await supabase.from('agencias').update({
+      const { error } = await (supabase.from as any)('agencias').update({
         nombre: ag.nombre,
         whatsapp: ag.whatsapp,
         instagram_url: ag.instagram_url,
