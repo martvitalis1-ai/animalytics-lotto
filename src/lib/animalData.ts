@@ -1,3 +1,4 @@
+// src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_GUACHARITO: Record<string, string> = {
@@ -20,8 +21,8 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '79': 'CALAMAR', '80': 'MURCIÉLAGO', '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO',
   '84': 'CAMARÓN', '85': 'HÁMSTER', '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR',
   '89': 'ANGUILA', '90': 'HURÓN', '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA',
-  '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO',
-  '99': 'GUACHARITO'
+  '94': 'PAUJÍ', '95': 'ESCARABAJO', '96': 'CABALLITO DE MAR', '97': 'LORO',
+  '98': 'COCODRILO', '99': 'GUACHARITO'
 };
 
 export const getAnimalName = (code: string | number): string => {
@@ -33,7 +34,8 @@ export const getAnimalName = (code: string | number): string => {
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return `${SUPA_STORAGE_URL}${normalized}.png`;
+  // Cache buster ?v=2 agregado para forzar al navegador a descargar la nueva imagen
+  return `${SUPA_STORAGE_URL}${normalized}.png?v=2`;
 };
 
 export const getAnimalByCode = (code: string | number) => ({
