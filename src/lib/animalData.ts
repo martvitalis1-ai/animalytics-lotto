@@ -1,3 +1,4 @@
+// src/lib/animalData.ts
 export interface AnimalInfo {
   code: string;
   name: string;
@@ -37,6 +38,11 @@ export const getAnimalName = (code: string | number): string => {
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
+  // Blindaje absoluto: 0 y 00 se quedan igual. Del 1 al 9 se les pone el 0 (01, 02...)
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   return `${SUPA_URL}${normalized}.png`;
+};
+
+export const getAnimalByCode = (code: string | number): AnimalInfo => {
+  return { code: String(code), name: getAnimalName(code) };
 };
