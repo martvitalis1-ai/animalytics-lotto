@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { getAnimalImageUrl } from '../lib/animalData';
 
 interface RichAnimalCardProps {
   code: string;
   probability?: number;
-  status?: string;
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
 }
