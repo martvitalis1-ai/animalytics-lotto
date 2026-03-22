@@ -1,4 +1,3 @@
-// src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_GUACHARITO: Record<string, string> = {
@@ -37,10 +36,7 @@ export const getAnimalImageUrl = (code: string | number): string => {
   return `${SUPA_STORAGE_URL}${normalized}.png`;
 };
 
-export const getAnimalByCode = (code: string | number) => {
-  const str = String(code).trim();
-  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return { id: 0, code: normalized, name: getAnimalName(normalized) };
-};
-
-export const getAnimalEmoji = (code: string | number): string => "🎲";
+export const getAnimalByCode = (code: string | number) => ({
+  code: String(code),
+  name: getAnimalName(code)
+});
