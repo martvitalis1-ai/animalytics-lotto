@@ -18,8 +18,8 @@ export function RichAnimalCard({ code, status, probability, size = 'md', onClick
       className="relative flex flex-col items-center p-0 cursor-pointer transition-transform hover:scale-110 active:scale-95"
       onClick={onClick}
     >
-      {/* IMAGEN PURA SIN BORDES NI SOMBRAS PARA MEZCLARSE CON EL BLANCO */}
-      <div className={`${size === 'sm' ? 'w-24 h-24' : 'w-32 h-32'} flex items-center justify-center bg-white`}>
+      {/* IMAGE ONLY — no redundant name/number text, seamless white bg, no shadows/borders */}
+      <div className={`${size === 'sm' ? 'w-24 h-24' : 'w-32 h-32'} flex items-center justify-center`}>
         <img 
           src={imageUrl} 
           className="w-full h-full object-contain" 
@@ -29,7 +29,7 @@ export function RichAnimalCard({ code, status, probability, size = 'md', onClick
         />
       </div>
 
-      {/* Solo mostramos la etiqueta de estado minimalista */}
+      {/* Minimal status badge */}
       <div className={`mt-1 px-3 py-0.5 rounded-full font-black text-[9px] uppercase tracking-tighter ${config.color}`}>
         {config.label}
       </div>
