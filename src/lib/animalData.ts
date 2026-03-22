@@ -1,6 +1,6 @@
 // ============================================================
-// ANIMAL DATA - VERSIÓN SUPREMA v106.12 (BUILD FIX)
-// 🛡️ ESTADO: COMPILACIÓN GARANTIZADA PARA NETLIFY
+// ANIMAL DATA - VERSIÓN SUPREMA v106.13 (FULL EXPORTS)
+// 🛡️ ESTADO: COMPILACIÓN TOTAL PARA NETLIFY & GITHUB
 // ============================================================
 
 export interface AnimalInfo {
@@ -48,14 +48,39 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO',
 };
 
-// FUNCIONES MAESTRAS
+// --- 4. MAPEO DE EMOJIS (FALLBACK) ---
+export const ANIMAL_EMOJIS: Record<string, string> = {
+  "0": "🐬", "00": "🐋", "01": "🐏", "02": "🐂", "03": "🐛", "04": "🦂", "05": "🦁", "06": "🐸",
+  "07": "🦜", "08": "🐭", "09": "🦅", "10": "🐯", "11": "🐱", "12": "🐴", "13": "🐵", "14": "🕊️",
+  "15": "🦊", "16": "🐻", "17": "🦃", "18": "🫏", "19": "🐐", "20": "🐷", "21": "🐓", "22": "🐪",
+  "23": "🦓", "24": "🦎", "25": "🐔", "26": "🐄", "27": "🐕", "28": "🦅", "29": "🐘", "30": "🐊",
+  "31": "🦫", "32": "🐿️", "33": "🐟", "34": "🦌", "35": "🦒", "36": "🐍", "37": "🐢", "38": "🦬",
+  "39": "🦉", "40": "🐝", "41": "🦘", "42": "🦜", "43": "🦋", "44": "🦫", "45": "🦩", "46": "🐆",
+  "47": "🦚", "48": "🦔", "49": "🦥", "50": "🐤", "51": "🦅", "52": "🐙", "53": "🐌", "54": "🦗",
+  "55": "🐜", "56": "🦈", "57": "🦆", "58": "🐜", "59": "🐆", "60": "🦎", "61": "🐼", "62": "🦔",
+  "63": "🦀", "64": "🦅", "65": "🕷️", "66": "🐺", "67": "🦃", "68": "🐆", "69": "🐰", "70": "🦬",
+  "71": "🦜", "72": "🦍", "73": "🦛", "74": "🐦", "75": "🦅", "76": "🦏", "77": "🐧", "78": "🦌",
+  "79": "🦑", "80": "🦇", "81": "🐦‍⬛", "82": "🪳", "83": "🦉", "84": "🦐", "85": "🐹", "86": "🐂",
+  "87": "🐐", "88": "🐚", "89": "🐍", "90": "🦦", "91": "🐢", "92": "🦢", "93": "🐦", "94": "🦃",
+  "95": "🐞", "96": "🐠", "97": "🦜", "98": "🐊", "99": "🐣"
+};
+
+// --- 5. POSICIONES DE SPRITE (REQUERIDO POR COMPONENTES VIEJOS PARA EL BUILD) ---
+export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = (() => {
+  const positions: Record<string, { row: number; col: number }> = {};
+  const codes = ['0', '00', ...Array.from({ length: 98 }, (_, i) => (i + 1).toString().padStart(2, '0'))];
+  codes.forEach((code, index) => {
+    positions[code] = { row: Math.floor(index / 5), col: index % 5 };
+  });
+  return positions;
+})();
+
+// --- 6. FUNCIONES CORE ---
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
   const str = String(code).trim();
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
                   lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
-  
   return mapping[normalized] || "ANIMAL";
 };
 
@@ -66,11 +91,21 @@ export const getAnimalImageUrl = (code: string | number): string => {
 };
 
 export const getAnimalByCode = (code: string | number) => {
-  const name = getAnimalName(code);
-  return { id: 0, code: String(code), name, category: "general" };
+  const str = String(code).trim();
+  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  return { 
+    id: parseInt(normalized) || 0, 
+    code: normalized, 
+    name: getAnimalName(normalized), 
+    category: "general" 
+  };
 };
 
-export const getAnimalEmoji = (code: string | number): string => "🎲";
+export const getAnimalEmoji = (code: string | number): string => {
+  const str = String(code).trim();
+  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  return ANIMAL_EMOJIS[normalized] || "🎲";
+};
 
 export const getCodesForLottery = (lotteryId: string): string[] => {
   const max = lotteryId === 'guacharito' ? 99 : lotteryId === 'guacharo' ? 75 : 36;
