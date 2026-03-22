@@ -95,13 +95,10 @@ export function DatoRicardoSection({ customName, agencyId }: DatoRicardoSectionP
                           const name = getAnimalName(idL);
                           const emoji = getAnimalEmoji(idL);
                           return (
-                            <div key={idx} className="flex flex-col items-center gap-1 p-4 bg-slate-50 rounded-[2rem] border border-slate-100 min-w-[90px]">
-                              <div className="relative w-16 h-16 mb-1">
-                                <img src={img} className="w-full h-full object-contain z-10 relative" alt="" crossOrigin="anonymous" onError={(e) => (e.currentTarget.style.opacity = '0')} />
-                                <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-10">{emoji}</span>
+                            <div key={idx} className="flex flex-col items-center p-4 bg-slate-50 rounded-[2rem] border border-slate-100 min-w-[90px]">
+                              <div className="w-16 h-16">
+                                <img src={img} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" onError={(e) => (e.currentTarget.style.opacity = '0')} />
                               </div>
-                              <span className="text-sm font-black">{idL === '0' || idL === '00' ? idL : idL.padStart(2, '0')}</span>
-                              <span className="text-[9px] font-bold uppercase opacity-50">{name}</span>
                             </div>
                           );
                         })}
