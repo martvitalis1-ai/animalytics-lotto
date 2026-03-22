@@ -164,7 +164,6 @@ export function HistoryManager() {
                              crossOrigin="anonymous"
                              onError={(e) => (e.currentTarget.style.opacity = '0')}
                            />
-                           <span className="absolute text-[8px] font-black opacity-10 uppercase">{r.animal_name}</span>
                         </div>
 
                         {editingId === r.id ? (
@@ -174,12 +173,7 @@ export function HistoryManager() {
                             className="w-20 h-10 text-center font-mono font-black text-xl border-primary"
                             autoFocus
                           />
-                        ) : (
-                          <div className="flex flex-col">
-                            <span className="font-mono font-black text-2xl leading-none text-primary">{r.result_number}</span>
-                            <span className="text-[10px] font-black uppercase text-slate-400">{r.animal_name}</span>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                       
                       <div className="flex gap-2">
