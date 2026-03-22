@@ -29,7 +29,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
       setLoading(true);
       
       // CARGA DE AGENCIAS FILTRADA
-      let query = (supabase.from as any)('agencias').select('*');
+      let query = supabase.from('agencias').select('*');
       
       // Si es dueño de agencia, solo traemos SU fila
       if (isAgencyOwner) {
@@ -43,7 +43,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
 
       // SOLO EL JEFE MAESTRO VE LOS VIP
       if (!isAgencyOwner) {
-        const { data: vipData } = await (supabase.from as any)('codigos_vip').select('*').order('created_at', { ascending: false });
+        const { data: vipData } = await supabase.from('codigos_vip').select('*').order('created_at', { ascending: false });
         if (vipData) setCodigosVip(vipData);
       }
 
@@ -67,7 +67,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
       if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('agencias').getPublicUrl(fileName);
-      const { error: dbErr } = await (supabase.from as any)('agencias').update({ [field]: publicUrl }).eq('id', agenciaId);
+      const { error: dbErr } = await supabase.from('agencias').update({ [field]: publicUrl }).eq('id', agenciaId);
       if (dbErr) throw dbErr;
 
       toast.success("Imagen actualizada correctamente");
@@ -81,7 +81,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
 
   const saveAgencia = async (ag: any) => {
     try {
-      const { error } = await (supabase.from as any)('agencias').update({
+      const { error } = await supabase.from('agencias').update({
         nombre: ag.nombre,
         whatsapp: ag.whatsapp,
         instagram_url: ag.instagram_url,
@@ -101,7 +101,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
   const handleCrearVip = async () => {
     if (!nuevoVip) return;
     try {
-      const { error } = await (supabase.from as any)('codigos_vip').insert([{ 
+      const { error } = await supabase.from('codigos_vip').insert([{ 
         codigo: nuevoVip.toUpperCase().trim(),
         expira_el: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }]);
@@ -214,7 +214,7 @@ export function AdminAgencias({ selfManagedId }: AdminAgenciasProps) {
                           <p className="font-black text-emerald-600 text-sm">{c.codigo}</p>
                           <p className="text-[8px] font-bold text-slate-400 uppercase">Vence: {c.expira_el ? new Date(c.expira_el).toLocaleDateString() : 'N/A'}</p>
                         </div>
-                        <button onClick={async () => { await (supabase.from as any)('codigos_vip').delete().eq('id', c.id); fetchTodo(); }} className="text-red-300 hover:text-red-600 transition-all"><Trash2 size={16}/></button>
+                        <button onClick={async () => { await supabase.from('codigos_vip').delete().eq('id', c.id); fetchTodo(); }} className="text-red-300 hover:text-red-600 transition-all"><Trash2 size={16}/></button>
                      </div>
                    ))}
                 </div>

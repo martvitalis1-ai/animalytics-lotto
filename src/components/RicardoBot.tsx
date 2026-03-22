@@ -24,7 +24,7 @@ export function RicardoBot() {
     const msg = userMsg.toLowerCase();
     setIsLoading(true);
     try {
-      const { data: pronosticos } = await (supabase.from as any)('super_pronostico_final').select('*');
+      const { data: pronosticos } = await supabase.from('super_pronostico_final').select('*');
       let target = '';
       if (msg.includes('guacharito')) target = 'guacharito';
       else if (msg.includes('guacharo')) target = 'guacharo';
@@ -34,9 +34,9 @@ export function RicardoBot() {
       let saludo = "¡Epa jefe! Ricardo IA en el búnker... 💰🏁\n\n";
 
       if (target && pronosticos) {
-        const d = pronosticos.find((p: any) => p.lottery_type === target);
+        const d = pronosticos.find(p => p.lottery_type === target);
         if (d) {
-          return `${saludo}📊 *REPORTE ${(d as any).lottery_type.toUpperCase()}*:\n🎯 Traspaso: ${formatAnimal((d as any).v_traspaso)}\n🚀 Digital: ${formatAnimal((d as any).v_digital)}\n🌓 Espejo: ${formatAnimal((d as any).v_espejo)}\n\n¡Cobra seguro! 💰`;
+          return `${saludo}📊 *REPORTE ${d.lottery_type.toUpperCase()}*:\n🎯 Traspaso: ${formatAnimal(d.v_traspaso)}\n🚀 Digital: ${formatAnimal(d.v_digital)}\n🌓 Espejo: ${formatAnimal(d.v_espejo)}\n\n¡Cobra seguro! 💰`;
         }
       }
 

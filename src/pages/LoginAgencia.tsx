@@ -18,7 +18,8 @@ const LoginAgencia = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await (supabase.from as any)('agencias')
+      const { data, error } = await supabase
+        .from('agencias')
         .select('*')
         .eq('llave_agencia', code.toUpperCase().trim())
         .maybeSingle();

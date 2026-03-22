@@ -10,7 +10,7 @@ export function GuiaUso() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { data: res } = await (supabase.from as any)('manual_guia').select('*').maybeSingle();
+        const { data: res } = await supabase.from('manual_guia').select('*').maybeSingle();
         if (res) setData(res);
       } catch (e) { console.error("Error en Guia:", e); }
       finally { setLoading(false); }

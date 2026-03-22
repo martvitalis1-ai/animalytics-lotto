@@ -135,6 +135,11 @@ export function QuickPrediction() {
                   className="text-center font-mono font-black text-xl h-14 bg-primary/5 border-primary/20"
                   maxLength={2}
                 />
+                {result && lottery?.type === 'animals' && (
+                  <span className="text-[9px] font-black text-primary text-center block truncate uppercase">
+                    {ANIMAL_MAPPING[result] || ANIMAL_MAPPING[parseInt(result).toString()] || ''}
+                  </span>
+                )}
               </div>
             ))}
           </div>

@@ -1,172 +1,145 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, ShieldCheck, Zap, ChevronRight } from "lucide-react";
-import { LOTTERIES } from '@/lib/constants';
-import { getAnimalImageUrl, getAnimalName } from '@/lib/animalData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, RefreshCw, Loader2, ChevronRight, Zap } from "lucide-react";
+import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
-import { RichAnimalCard } from './RichAnimalCard';
+import { getAnimalEmoji, getAnimalName } from '@/lib/animalData';
+import { generateDayForecast, HourlyForecast } from '@/lib/advancedProbability';
 
-export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryChange }: any) {
-  const [selectedLottery, setSelectedLottery] = useState(externalLotteryId || 'lotto_activo');
+export function HourlyPredictionView() {
+  const [selectedLottery, setSelectedLottery] = useState<string>('lotto_activo');
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState<any>({ hot: [], cold: [], caged: [], bestHours: [], bestDays: [], rec: '' });
+  const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    if (externalLotteryId) setSelectedLottery(externalLotteryId);
-  }, [externalLotteryId]);
+  const drawTimes = useMemo(() => getDrawTimesForLottery(selectedLottery), [selectedLottery]);
 
-  const analyzeData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: results } = await supabase
+      const { data } = await supabase
         .from('lottery_results')
         .select('*')
         .eq('lottery_type', selectedLottery)
         .order('draw_date', { ascending: false })
-        .limit(300);
-
-      if (!results || results.length === 0) return;
-
-      const freq: Record<string, number> = {};
-      const lastSeen: Record<string, string> = {};
-      const hourFreq: Record<string, number> = {};
-      const dayFreq: Record<string, number> = {};
-      const today = new Date().toISOString().split('T')[0];
-
-      results.forEach((r: any) => {
-        const num = r.result_number?.toString().trim();
-        const normalized = (num === '00' || num === '0') ? num : num.padStart(2, '0');
-        freq[normalized] = (freq[normalized] || 0) + 1;
-        if (!lastSeen[normalized]) lastSeen[normalized] = r.draw_date;
-        hourFreq[r.draw_time] = (hourFreq[r.draw_time] || 0) + 1;
-        const dName = new Date(r.draw_date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' });
-        dayFreq[dName] = (dayFreq[dName] || 0) + 1;
-      });
-
-      const sorted = Object.entries(freq).map(([code, count]) => {
-        const diff = Math.floor((new Date(today).getTime() - new Date(lastSeen[code]).getTime()) / (86400000));
-        return { code, count, daysSinceLast: diff };
-      }).sort((a, b) => b.count - a.count);
-
-      setStats({
-        hot: sorted.slice(0, 4),
-        cold: [...sorted].reverse().slice(0, 4),
-        caged: sorted.filter(a => a.daysSinceLast >= 5).slice(0, 4),
-        bestHours: Object.entries(hourFreq).sort((a,b)=>b[1]-a[1]).slice(0, 4).map(h => h[0]),
-        bestDays: Object.entries(dayFreq).sort((a,b)=>b[1]-a[1]).slice(0, 3).map(d => d[0]),
-        rec: `IA detecta ciclo de repetición favorable para ${getAnimalName(sorted[0].code)}.`
-      });
-    } catch (e) { console.error(e); }
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (data) setHistory(data);
+    } catch (error) {
+      console.error('Error búnker:', error);
+    }
     setLoading(false);
-  };
+  }, [selectedLottery]);
 
-  useEffect(() => { analyzeData(); }, [selectedLottery]);
+  useEffect(() => {
+    loadData();
+    const channel = supabase.channel('hourly-atomic-v2')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lottery_results' }, () => loadData())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadData]);
+
+  // LÓGICA DE RELOJ EN TIEMPO REAL (MANDA LA HORA DEL CELULAR)
+  const nextDrawTime = useMemo(() => {
+    const now = new Date();
+    // Ajuste de hora local (Venezuela es UTC-4, pero el sistema usa la del dispositivo)
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const toMin = (t: string) => {
+      const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!match) return 0;
+      let hours = parseInt(match[1]);
+      const mins = parseInt(match[2]);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && hours !== 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + mins;
+    };
+
+    // Buscamos el próximo sorteo que va a ocurrir (o que está ocurriendo justo ahora)
+    // Damos un margen de 10 minutos después de la hora del sorteo
+    for (const time of drawTimes) {
+      const drawMin = toMin(time);
+      if (drawMin >= currentMinutes - 5) { // Si faltan minutos o pasaron menos de 5 min
+        return time;
+      }
+    }
+
+    return drawTimes[0]; // Si ya pasó el último del día, mostrar el primero de mañana
+  }, [drawTimes]);
+
+  const nextPrediction = useMemo((): HourlyForecast | null => {
+    if (history.length === 0) return null;
+    const forecasts = generateDayForecast(selectedLottery, [nextDrawTime], history, today);
+    return forecasts[0] || null;
+  }, [history, selectedLottery, nextDrawTime, today]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <Card className="glass-card border-2 border-primary/30 shadow-2xl overflow-hidden">
+      <CardHeader className="pb-2 bg-muted/10 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter italic">
+            <Clock className="w-6 h-6 text-primary" /> PRÓXIMO SORTEO
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Select value={selectedLottery} onValueChange={setSelectedLottery}>
+              <SelectTrigger className="w-[180px] h-9 bg-background font-black text-xs border-primary/30 shadow-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LOTTERIES.map(l => (
+                  <SelectItem key={l.id} value={l.id} className="font-bold">
+                    <div className="flex items-center gap-2">
+                       <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={loadData} variant="ghost" size="icon" className="text-primary"><RefreshCw className={loading ? 'animate-spin' : ''}/></Button>
+          </div>
+        </div>
+      </CardHeader>
       
-      {/* CABECERA Y SELECTOR PROFESIONAL */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-emerald-600 p-2 rounded-2xl shadow-lg shadow-emerald-200">
-            <TrendingUp className="text-white" size={24} />
+      <CardContent className="pt-6">
+        <div className="text-center space-y-6">
+          {/* CARTEL DE LA HORA ACTUALIZADA */}
+          <div className="inline-flex items-center gap-3 px-8 py-3 bg-primary text-primary-foreground rounded-full font-black text-2xl shadow-xl animate-pulse">
+            {nextDrawTime} <ChevronRight className="w-6 h-6" /> PRÓXIMO
           </div>
-          <div>
-            <h2 className="font-black text-2xl uppercase italic tracking-tighter text-slate-900">Análisis Búnker</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{selectedLottery.replace('_',' ')}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Select value={selectedLottery} onValueChange={(v) => { setSelectedLottery(v); onLotteryChange?.(v); }}>
-            <SelectTrigger className="w-[220px] h-12 rounded-2xl border-none bg-white font-black uppercase text-xs shadow-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl">
-              {LOTTERIES.map(l => (
-                <SelectItem key={l.id} value={l.id} className="font-bold">
-                  <div className="flex items-center gap-2">
-                    <img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={analyzeData} variant="white" size="icon" className="h-12 w-12 rounded-2xl bg-white shadow-sm border-none">
-            <RefreshCw className={loading ? 'animate-spin' : ''} size={20} />
-          </Button>
-        </div>
-      </div>
 
-      {loading ? (
-        <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-emerald-500" size={48} /></div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            
-            {/* RECOMENDACIÓN MAESTRA */}
-            <div className="bg-emerald-600 p-8 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden">
-               <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12" />
-               <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Zap size={18} className="fill-yellow-300 text-yellow-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Recomendación de Inteligencia</span>
-                  </div>
-                  <p className="text-xl lg:text-2xl font-black italic uppercase leading-tight">{stats.rec}</p>
-               </div>
-            </div>
+          {nextPrediction?.topPick ? (
+            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-primary/10 via-background to-accent/10 border-4 border-primary/20 relative shadow-2xl">
+              <span className="text-8xl block drop-shadow-2xl mb-4 animate-in zoom-in duration-500">
+                {getAnimalEmoji(nextPrediction.topPick.code)}
+              </span>
+              <div className="font-mono font-black text-7xl text-primary leading-none tracking-tighter">
+                {nextPrediction.topPick.code.padStart(2, '0')}
+              </div>
+              <h3 className="text-4xl font-black uppercase mt-2 tracking-tighter">{nextPrediction.topPick.name}</h3>
+              
+              <div className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-destructive text-white rounded-2xl font-black text-2xl shadow-lg border-b-4 border-black/20">
+                <Zap className="w-6 h-6 fill-current text-yellow-300" /> 
+                {Math.floor(nextPrediction.topPick.probability)}% PROBABILIDAD
+              </div>
 
-            {/* ESTADOS TÉRMICOS SIN SOMBRAS DE CUADRO */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 text-center">
-                <p className="text-[10px] font-black uppercase text-orange-600 mb-6 bg-orange-50 py-2 rounded-full">🔥 Calientes</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {stats.hot.map((a: any) => <RichAnimalCard key={a.code} code={a.code} status="HOT" />)}
-                </div>
-              </div>
-              <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 text-center">
-                <p className="text-[10px] font-black uppercase text-blue-600 mb-6 bg-blue-50 py-2 rounded-full">❄️ Fríos</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {stats.cold.map((a: any) => <RichAnimalCard key={a.code} code={a.code} status="COLD" />)}
-                </div>
-              </div>
-              <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 text-center">
-                <p className="text-[10px] font-black uppercase text-slate-700 mb-6 bg-slate-100 py-2 rounded-full">⛓️ Enjaulados</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {stats.caged.map((a: any) => <RichAnimalCard key={a.code} code={a.code} status="OVERDUE" />)}
-                </div>
+              <div className="mt-8 pt-4 border-t-2 border-dashed border-primary/20">
+                <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                  MUESTRA: {history.filter(h => h.result_number === nextPrediction.topPick?.code).length}X APARICIONES EN EL BÚNKER
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* WIDGETS DE PODER (HORAS Y DÍAS) */}
-          <div className="space-y-6">
-            <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl border-b-8 border-emerald-500">
-              <h4 className="font-black text-xs uppercase text-emerald-400 mb-8 italic flex items-center gap-2"><Clock size={16} /> Horarios de Poder</h4>
-              <div className="space-y-4">
-                {stats.bestHours.map((h: string) => (
-                  <div key={h} className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="font-mono text-xl font-black">{h}</span>
-                    <span className="text-emerald-400 font-black text-[10px] uppercase">Alta Frecuencia</span>
-                  </div>
-                ))}
-              </div>
-
-              <h4 className="font-black text-xs uppercase text-emerald-400 mt-12 mb-8 italic flex items-center gap-2"><Calendar size={16} /> Días de Acierto</h4>
-              <div className="space-y-4">
-                {stats.bestDays.map((d: string) => (
-                  <div key={d} className="flex justify-between items-center border-b border-white/5 pb-2">
-                    <span className="text-sm font-black uppercase italic">{d}</span>
-                    <div className="h-1.5 w-16 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                  </div>
-                ))}
-              </div>
+          ) : (
+            <div className="py-20 flex flex-col items-center opacity-30 grayscale">
+               <Loader2 className="w-12 h-12 animate-spin mb-4" />
+               <p className="font-black uppercase tracking-widest text-sm">Escaneando Malicia...</p>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
