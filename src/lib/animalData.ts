@@ -1,10 +1,9 @@
-// src/lib/animalData.ts
 export interface AnimalInfo {
   code: string;
   name: string;
 }
 
-const SUPA_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
@@ -38,11 +37,13 @@ export const getAnimalName = (code: string | number): string => {
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
-  // Blindaje absoluto: 0 y 00 se quedan igual. Del 1 al 9 se les pone el 0 (01, 02...)
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return `${SUPA_URL}${normalized}.png`;
+  return `${SUPA_STORAGE_URL}${normalized}.png`;
 };
 
-export const getAnimalByCode = (code: string | number): AnimalInfo => {
-  return { code: String(code), name: getAnimalName(code) };
+export const getAnimalByCode = (code: string | number) => {
+  const name = getAnimalName(code);
+  return { code: String(code), name, category: "general" };
 };
+
+export const getAnimalEmoji = (code: string | number): string => "🎲";
