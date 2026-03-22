@@ -1,45 +1,26 @@
 import { useMemo } from 'react';
-import { getAnimalImageUrl } from '../lib/animalData';
+import { getAnimalImageUrl } from '@/lib/animalData';
 
-interface RichAnimalCardProps {
-  code: string;
-  probability?: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  onClick?: () => void;
-}
-
-export function RichAnimalCard({ code, probability, size = 'xl', onClick }: RichAnimalCardProps) {
+export function RichAnimalCard({ code, status, probability, size = 'md', onClick }: any) {
   const imageUrl = useMemo(() => getAnimalImageUrl(code), [code]);
 
-  // Aumentamos los tamaños para móvil
-  const sizeMap = {
-    sm: 'w-20 h-20',
-    md: 'w-32 h-32',
-    lg: 'w-44 h-44',
-    xl: 'w-52 h-52 lg:w-60 lg:h-60' // Tamaño masivo para impacto visual
+  const statusConfig: any = {
+    'HOT': { label: '🔥 CALIENTE', color: 'text-red-600 bg-red-50' },
+    'COLD': { label: '❄️ FRÍO', color: 'text-blue-600 bg-blue-50' },
+    'OVERDUE': { label: '⛓️ ENJAULADO', color: 'text-slate-800 bg-slate-100' },
+    'NEUTRAL': { label: '⚖️ POSIBLE', color: 'text-slate-500 bg-slate-50' }
   };
 
+  const config = statusConfig[status] || statusConfig.NEUTRAL;
+
   return (
-    <div 
-      className="flex flex-col items-center justify-center p-0 bg-transparent border-none shadow-none cursor-pointer transition-transform hover:scale-105 active:scale-95"
-      onClick={onClick}
-    >
-      <div className={`relative flex items-center justify-center ${sizeMap[size]}`}>
-        <img 
-          src={imageUrl} 
-          alt="" 
-          className="w-full h-full object-contain drop-shadow-md"
-          crossOrigin="anonymous"
-          onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
-        />
+    <div className="relative flex flex-col items-center p-0 cursor-pointer transition-transform hover:scale-110 active:scale-95" onClick={onClick}>
+      <div className={`${size === 'sm' ? 'w-24 h-24' : 'w-36 h-36'} flex items-center justify-center bg-white`}>
+        <img src={imageUrl} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" onError={(e) => (e.currentTarget.style.opacity = '0')} />
       </div>
-      
-      {/* Solo mostramos la probabilidad de forma elegante si existe */}
-      {probability && (
-        <div className="mt-[-10px] z-20 px-4 py-1 bg-emerald-600 text-white rounded-full text-[12px] font-black shadow-lg animate-pulse">
-          ⚡ {Math.floor(probability)}%
-        </div>
-      )}
+      <div className={`mt-1 px-3 py-0.5 rounded-full font-black text-[9px] uppercase tracking-tighter ${config.color}`}>
+        {config.label}
+      </div>
     </div>
   );
 }
