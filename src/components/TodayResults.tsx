@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { getLotteryLogo } from "./LotterySelector";
+import { getAnimalImageUrl } from '@/lib/animalData';
 import { TrendingUp } from "lucide-react";
 
 export function TodayResults() {
   const [results, setResults] = useState<any[]>([]);
 
   const fetchLatest = async () => {
-    const { data } = await supabase.from('lottery_results').select('*').order('created_at', { ascending: false }).limit(20);
-    if (data) {
-      const latest = data.reduce((acc: any, r: any) => {
-        if (!acc[r.lottery_type]) acc[r.lottery_type] = r;
-        return acc;
-      }, {});
-      setResults(Object.values(latest));
-    }
+    try {
+      const { data } = await supabase.from('lottery_results').select('*').order('created_at', { ascending: false }).limit(20);
+      if (data) {
+        const latest = data.reduce((acc: any, r: any) => {
+          if (!acc[r.lottery_type]) acc[r.lottery_type] = r;
+          return acc;
+        }, {});
+        setResults(Object.values(latest));
+      }
+    } catch (e) { console.error(e); }
   };
 
   useEffect(() => {
@@ -24,21 +26,22 @@ export function TodayResults() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const normalizeCode = (num: string | null | undefined): string => {
+    if (!num) return '00';
+    const s = num.toString().trim();
+    if (s === '0' || s === '00') return s;
+    return s.padStart(2, '0');
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-2"><TrendingUp className="text-emerald-500" size={16} /><h3 className="font-black text-xs uppercase italic">Resultados 3D en Vivo</h3></div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {results.map((r) => (
-          <Card key={r.id} className="overflow-hidden border-l-4 border-l-primary shadow-md bg-white rounded-2xl">
-            <CardContent className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src={getLotteryLogo(r.lottery_type)} className="w-8 h-8 rounded-full" />
-                <div className="text-left"><p className="text-[10px] font-bold text-muted-foreground leading-none">{r.lottery_name}</p><p className="text-xs font-mono font-black">{r.draw_time}</p></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <img src={`https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/${r.result_number === '0' || r.result_number === '00' ? r.result_number : r.result_number.padStart(2, '0')}.png`} className="w-10 h-10 object-contain" />
-                <span className="text-2xl font-black font-mono text-primary">{r.result_number}</span>
-              </div>
+          <Card key={r.id} className="overflow-hidden border-none shadow-none bg-white rounded-2xl">
+            <CardContent className="p-3 flex items-center justify-center">
+              {/* IMAGE ONLY — no redundant text, image already contains name+number */}
+              <img src={getAnimalImageUrl(normalizeCode(r.result_number))} className="w-20 h-20 object-contain" alt="" />
             </CardContent>
           </Card>
         ))}
