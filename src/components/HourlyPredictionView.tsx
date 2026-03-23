@@ -19,18 +19,18 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     load();
   }, [lotteryId]);
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500">CARGANDO ANÁLISIS...</div>;
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500">CONECTANDO AL BÚNKER...</div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      {/* CABECERA TÉCNICA */}
+      {/* HEADER DE RECOMENDACIÓN */}
       <div className="bg-slate-900 text-white p-8 rounded-[4rem] border-b-8 border-emerald-500 shadow-2xl relative overflow-hidden">
         <ShieldCheck className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12 text-emerald-400" />
         <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
           <div className="bg-emerald-500 p-5 rounded-[2.5rem]"><Zap size={40} className="fill-white" /></div>
           <div>
             <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter">ANIMAL MAESTRO: {data?.maestro}</h2>
-            <p className="text-emerald-400 font-bold mt-2 uppercase text-[10px] tracking-widest italic tracking-widest">IA Análisis Maestro para {lotteryId}</p>
+            <p className="text-emerald-400 font-bold mt-2 uppercase text-xs tracking-widest italic tracking-widest">Analítica Maestra para {lotteryId}</p>
           </div>
         </div>
       </div>
@@ -44,7 +44,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* BLOQUES TÉRMICOS */}
+      {/* BLOQUES TÉRMICOS (Como el video del Siragon) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
          <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <h4 className="font-black uppercase text-xs text-orange-500 border-b-2 pb-2 italic mb-8">🔥 Frecuencia Caliente</h4>
