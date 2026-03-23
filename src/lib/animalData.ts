@@ -1,5 +1,5 @@
 // ============================================================
-// ANIMAL DATA - VERSIÓN SUPREMA v106.15 (BUILD FIX TOTAL)
+// ANIMAL DATA - VERSIÓN SUPREMA v106.12 (BUILD FIX TOTAL)
 // 🛡️ ESTADO: COMPILACIÓN GARANTIZADA PARA CLOUDFLARE/NETLIFY
 // ============================================================
 
@@ -48,17 +48,7 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO',
 };
 
-// --- 4. POSICIONES DE SPRITE (REQUERIDO PARA EVITAR ERRORES DE BUILD) ---
-export const SPRITE_POSITIONS: Record<string, { row: number; col: number }> = (() => {
-  const positions: Record<string, { row: number; col: number }> = {};
-  const codes = ['0', '00', ...Array.from({ length: 98 }, (_, i) => (i + 1).toString().padStart(2, '0'))];
-  codes.forEach((code, index) => {
-    positions[code] = { row: Math.floor(index / 5), col: index % 5 };
-  });
-  return positions;
-})();
-
-// --- 5. FUNCIONES CORE ---
+// --- FUNCIONES MAESTRAS ---
 
 export const getAnimalMappingForLottery = (lotteryId: string): Record<string, string> => {
   if (lotteryId === 'guacharito') return ANIMALS_GUACHARITO;
@@ -68,6 +58,7 @@ export const getAnimalMappingForLottery = (lotteryId: string): Record<string, st
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
   const str = String(code).trim();
+  // El 0 y 00 se respetan como texto. 1-9 se les pone el 0 (01, 02...).
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   const mapping = getAnimalMappingForLottery(lotteryId || 'lotto_activo');
   return mapping[normalized] || "ANIMAL";
