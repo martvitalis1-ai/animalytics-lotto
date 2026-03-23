@@ -2,7 +2,7 @@
 
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// 1. DICCIONARIO STANDARD (0-36)
+// 🛡️ DICCIONARIOS EXPORTADOS (REQUERIDOS POR EL BUILD)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -14,7 +14,6 @@ export const ANIMALS_STANDARD: Record<string, string> = {
   '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
 };
 
-// 2. DICCIONARIO GUACHARO (0-75)
 export const ANIMALS_GUACHARO: Record<string, string> = {
   ...ANIMALS_STANDARD,
   '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO',
@@ -27,7 +26,6 @@ export const ANIMALS_GUACHARO: Record<string, string> = {
   '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO'
 };
 
-// 3. DICCIONARIO GUACHARITO (0-99)
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   ...ANIMALS_GUACHARO,
   '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO',
@@ -35,6 +33,11 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN',
   '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO',
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
+};
+
+// 🛡️ ESTA ES LA FUNCIÓN QUE PIDE RicardoBot.tsx
+export const getAnimalEmoji = (code: string | number): string => {
+  return "🎯"; // Emoji por defecto para el análisis del Bot
 };
 
 export const getAnimalImageUrl = (code: string | number): string => {
