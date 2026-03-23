@@ -239,16 +239,15 @@ export function ModuloJugadas({ forcedAgency }: ModuloJugadasProps) {
           </Card>
 
           <Card className="p-6 lg:p-12 bg-white rounded-[3.5rem] shadow-2xl border-none text-slate-900 text-center text-center text-center">
-            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-6 text-center">
-              {filteredNumbers.map(n => (
-                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-4 rounded-[2.5rem] border-4 transition-all h-40 lg:h-52 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-2xl scale-110 z-10' : 'bg-[#F8FAFC] border-slate-100 text-slate-600 hover:border-slate-300'} text-center`}>
-                  {/* 🛡️ FOTO 7: ANIMALES 3D EN LA REJILLA DE SELECCIÓN */}
-                  <img src={getAnimalImageUrl(n)} className="w-24 h-24 lg:w-32 lg:h-32 object-contain drop-shadow-xl mb-2" alt={n} />
-                  <span className="text-[20px] lg:text-[24px] font-black leading-none text-slate-900">#{n}</span>
-                </button>
-              ))}
-            </div>
-          </Card>
+           // Dentro del mapeo de animales, use este tamaño para teléfono:
+<div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-6">
+  {filteredNumbers.map(n => (
+    <button key={n} className="flex flex-col items-center justify-center p-4 rounded-[2.5rem] border-4 border-slate-900 bg-white h-44 md:h-52 shadow-xl hover:scale-105 transition-all">
+       <img src={getAnimalImageUrl(n)} className="w-28 h-28 md:w-36 md:h-36 object-contain" />
+       <span className="font-black text-2xl mt-2 italic">#{n}</span>
+    </button>
+  ))}
+</div>
 
           <Card className="p-8 bg-white rounded-[3.5rem] shadow-2xl border-none text-center text-center">
             <div className="grid grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4 text-center">
@@ -326,5 +325,3 @@ export function ModuloJugadas({ forcedAgency }: ModuloJugadasProps) {
       )}
       
     </div>
-  );
-}
