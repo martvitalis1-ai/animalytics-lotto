@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from "../integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getAnimalName } from '../lib/animalData';
-import { Grid3X3, Loader2, ArrowRightCircle, Database } from "lucide-react";
+import { Grid3X3, Loader2, ArrowRightCircle } from "lucide-react";
 
 interface SuccessorData {
   trigger: string;
@@ -23,7 +23,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
           .eq('lottery_type', lotteryId)
           .order('draw_date', { ascending: false })
           .order('draw_time', { ascending: false })
-          .limit(800);
+          .limit(600);
         
         if (error) throw error;
         setHistory(data || []);
@@ -35,7 +35,6 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     fetchHistory();
   }, [lotteryId]);
 
-  // --- PROCESAMIENTO TÉCNICO FUERA DEL JSX ---
   const matrixData = useMemo(() => {
     const result: SuccessorData[] = [];
     if (history.length < 2) return result;
@@ -56,10 +55,10 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     const entries = Object.entries(counts);
     for (const [trigger, followers] of entries) {
       const sortedFollowers = Object.entries(followers)
-        .sort((a, b) => b[1] - a[1])
+        .sort((a: any, b: any) => b[1] - a[1])
         .slice(0, 3);
       
-      const total = Object.values(followers).reduce((a, b) => a + b, 0);
+      const total = Object.values(followers).reduce((a: number, b: number) => a + b, 0);
       
       result.push({ 
         trigger, 
@@ -75,7 +74,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     return (
       <div className="py-40 text-center flex flex-col items-center gap-6 bg-white rounded-[4rem] border-2 border-slate-900 shadow-2xl">
         <Loader2 className="animate-spin text-emerald-600" size={80} />
-        <p className="font-black uppercase text-lg tracking-[0.5em] text-slate-400">Analizando Tendencias...</p>
+        <p className="font-black uppercase text-lg tracking-[0.5em] text-slate-400">Escaneando Sucesores...</p>
       </div>
     );
   }
@@ -84,61 +83,49 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     <div className="space-y-10 animate-in fade-in duration-1000">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 text-white p-8 rounded-[3.5rem] border-b-8 border-emerald-500 shadow-2xl">
         <div className="flex items-center gap-5">
-          <div className="bg-emerald-500 p-4 rounded-3xl shadow-[0_0_25px_rgba(16,185,129,0.5)]">
+          <div className="bg-emerald-500 p-4 rounded-3xl shadow-lg">
             <Grid3X3 size={40} className="text-slate-900" />
           </div>
           <div>
             <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none tracking-tighter">Matriz de Secuencia</h2>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] mt-2 text-emerald-400 opacity-80">Sucesores Históricos Directos — Animalytics Engine</p>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] mt-2 text-emerald-400 opacity-80">Sucesores Históricos Directos</p>
           </div>
-        </div>
-        <div className="hidden lg:flex items-center gap-3 bg-white/5 px-6 py-2 rounded-full border border-white/10">
-           <Database size={16} className="text-emerald-400" />
-           <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Database Live Sync</span>
         </div>
       </div>
 
-      {matrixData.length === 0 ? (
-        <div className="p-20 text-center border-2 border-slate-900 bg-white rounded-[4rem] shadow-[12px_12px_0px_0px_rgba(15,23,42,1)]">
-          <p className="italic text-slate-300 font-black uppercase text-2xl">Esperando flujo de información...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-          {matrixData.map((item) => (
-            <div key={item.trigger} className="bg-white p-10 rounded-[5rem] border-2 border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,1)] flex flex-col items-center group hover:-translate-y-4 transition-all duration-500 relative">
-              <div className="w-full flex justify-between items-center mb-10 px-2">
-                <span className="text-[11px] font-black text-slate-400 uppercase italic">Si sale el:</span>
-                <span className="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black uppercase shadow-lg border border-slate-700">
-                  {item.totalOccurrences} Casos
-                </span>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+        {matrixData.map((item) => (
+          <div key={item.trigger} className="bg-white p-10 rounded-[5rem] border-2 border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,1)] flex flex-col items-center group hover:-translate-y-4 transition-all duration-500 relative">
+            <div className="w-full flex justify-between items-center mb-10 px-2">
+              <span className="text-[11px] font-black text-slate-400 uppercase italic">Referencia Actual</span>
+              <span className="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black uppercase shadow-lg border border-slate-700">{item.totalOccurrences} Casos</span>
+            </div>
 
-              <div className="relative w-64 h-64 mb-10 flex items-center justify-center">
-                 <img src={getAnimalImageUrl(item.trigger)} className="w-full h-full object-contain z-10 drop-shadow-2xl" alt="" crossOrigin="anonymous" />
-                 <span className="absolute inset-0 flex items-center justify-center text-[150px] font-black text-slate-50 select-none opacity-40">#{item.trigger}</span>
-              </div>
+            <div className="relative w-64 h-64 mb-10 flex items-center justify-center">
+               <img src={getAnimalImageUrl(item.trigger)} className="w-full h-full object-contain z-10 drop-shadow-2xl" alt="" crossOrigin="anonymous" />
+               <span className="absolute inset-0 flex items-center justify-center text-[150px] font-black text-slate-50 select-none opacity-40">#{item.trigger}</span>
+            </div>
 
-              <ArrowRightCircle className="text-emerald-500 mb-10 animate-pulse" size={50} />
+            <ArrowRightCircle className="text-emerald-500 mb-10 animate-pulse" size={50} />
 
-              <div className="w-full bg-slate-50 p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-inner">
-                <p className="text-[10px] font-black text-center text-slate-400 uppercase tracking-widest mb-8 italic border-b border-slate-200 pb-4">Atrae con mayor fuerza a:</p>
-                <div className="grid grid-cols-3 gap-6">
-                  {item.followers.map(([fCode, count]) => (
-                    <div key={fCode} className="flex flex-col items-center">
-                      <div className="w-20 h-20 bg-white rounded-[2rem] shadow-md border-2 border-slate-200 p-2 group-hover:border-emerald-400 transition-all">
-                        <img src={getAnimalImageUrl(fCode)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
-                      </div>
-                      <span className="mt-4 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[12px] font-black italic shadow-lg">
-                        {Math.round((count / item.totalOccurrences) * 100)}%
-                      </span>
+            <div className="w-full bg-slate-50 p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-inner">
+              <p className="text-[10px] font-black text-center text-slate-400 uppercase tracking-widest mb-8 italic border-b border-slate-200 pb-4">Atrae con mayor fuerza a:</p>
+              <div className="grid grid-cols-3 gap-6">
+                {item.followers.map(([fCode, count]) => (
+                  <div key={fCode} className="flex flex-col items-center">
+                    <div className="w-20 h-20 bg-white rounded-[2rem] shadow-md border-2 border-slate-200 p-2 group-hover:border-emerald-400 transition-all">
+                      <img src={getAnimalImageUrl(fCode)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
                     </div>
-                  ))}
-                </div>
+                    <span className="mt-4 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[12px] font-black italic shadow-lg">
+                      {Math.round((count / item.totalOccurrences) * 100)}%
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
