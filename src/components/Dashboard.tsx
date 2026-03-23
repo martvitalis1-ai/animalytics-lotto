@@ -14,6 +14,7 @@ import { ResultsInsert } from "./ResultsInsert";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas"; 
 import { Button } from "@/components/ui/button";
+import { SportsView } from "./SportsView";
 
 // 🛡️ EXPORTACIÓN EXPLÍCITA PARA EVITAR ERROR EN INDEX.TSX
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
