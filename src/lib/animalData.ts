@@ -33,31 +33,24 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
 };
 
-export const getCodesForLottery = (lotteryId: string): string[] => {
-  let max = 36; 
-  if (lotteryId.includes('guacharo') && !lotteryId.includes('ito')) max = 75;
-  if (lotteryId.includes('guacharito')) max = 99;
-
+export const getCodesForLottery = (id: string): string[] => {
+  let max = 36;
+  if (id === 'guacharo') max = 75;
+  if (id === 'guacharito') max = 99;
   const codes = ['0', '00'];
-  for (let i = 1; i <= max; i++) {
-    codes.push(i.toString().padStart(2, '0'));
-  }
+  for (let i = 1; i <= max; i++) codes.push(i.toString().padStart(2, '0'));
   return codes;
 };
 
-export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
-
 export const getAnimalImageUrl = (code: string | number): string => {
-  const str = String(code).trim();
-  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  return `${SUPA_STORAGE_URL}${normalized}.png`;
+  const str = String(code).trim().padStart(2, '0').replace('000', '00');
+  return `${SUPA_STORAGE_URL}${str}.png`;
 };
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
-  const normalized = String(code).trim().padStart(2, '0').replace('000', '00');
+  const str = String(code).trim().padStart(2, '0').replace('000', '00');
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
-  return mapping[normalized] || "ANIMAL";
+  return mapping[str] || "ANIMAL";
 };
 
-// 🛡️ ESTO ES LO QUE LE FALTA AL BOT PARA COMPILAR
 export const getAnimalEmoji = (code: string | number): string => "🎯";
