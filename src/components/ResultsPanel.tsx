@@ -31,22 +31,23 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-white text-slate-900 border-none rounded-xl px-4 py-2 font-black text-sm shadow-inner" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {allTimes.map((time) => {
-          const res = results.find(r => r.draw_time === time);
-          return (
-            <div key={time} className={`relative p-8 rounded-[4rem] border-2 border-slate-900 bg-white flex flex-col items-center justify-center min-h-[350px] transition-all shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] ${res ? 'opacity-100' : 'opacity-30'}`}>
-               <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-slate-900 text-white px-6 py-2 rounded-full font-mono font-black text-xl italic tracking-tighter">
-                  <Clock size={16} className="text-emerald-400" /> {time}
-               </div>
-               {res ? (
-                 <img src={getAnimalImageUrl(res.result_number)} className="w-64 h-64 object-contain mt-6" alt="" />
-               ) : (
-                 <div className="w-64 h-64 flex items-center justify-center border-4 border-dashed border-slate-100 rounded-full italic text-slate-200 font-black uppercase text-xs">Pendiente</div>
-               )}
-            </div>
-          );
-        })}
+     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+  {allTimes.map((time) => {
+    const res = results.find(r => r.draw_time === time);
+    return (
+      <div key={time} className={`relative p-6 rounded-[4rem] border-2 border-slate-900 bg-white flex flex-col items-center justify-center min-h-[300px] shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] ${res ? 'opacity-100' : 'opacity-30 grayscale'}`}>
+         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-1 rounded-full font-mono font-black text-[10px] italic tracking-tighter">
+            {time}
+         </div>
+         {res ? (
+           <img src={getAnimalImageUrl(res.result_number)} className="w-48 h-48 md:w-56 md:h-56 object-contain" alt="" />
+         ) : (
+           <div className="w-32 h-32 flex items-center justify-center border-4 border-dashed border-slate-100 rounded-full italic text-slate-200 font-black uppercase text-[8px]">En Sorteo</div>
+         )}
+      </div>
+    );
+  })}
+</div>
       </div>
     </div>
   );
