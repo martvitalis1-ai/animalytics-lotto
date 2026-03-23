@@ -1,3 +1,4 @@
+// src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_STANDARD: Record<string, string> = {
@@ -51,3 +52,6 @@ export const getAnimalName = (code: string | number, lotteryId?: string): string
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
   return mapping[normalized] || "ANIMAL";
 };
+
+// 🛡️ ESTO ES LO QUE LE FALTA AL BOT PARA COMPILAR
+export const getAnimalEmoji = (code: string | number): string => "🎯";
