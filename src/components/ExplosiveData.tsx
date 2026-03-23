@@ -1,36 +1,48 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
+import { TrendingUp, Star } from "lucide-react";
 
 export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
   const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       const validCodes = getCodesForLottery(lotteryId);
-      const { data } = await supabase.from('lottery_results').select('result_number').eq('lottery_type', lotteryId);
+      const { data } = await supabase.from('lottery_results').select('result_number').eq('lottery_type', lotteryId).limit(500);
       
       const freq: any = {};
       data?.forEach(r => { if(validCodes.includes(r.result_number)) freq[r.result_number] = (freq[r.result_number] || 0) + 1 });
-      
       const sorted = Object.entries(freq).sort((a:any, b:any) => b[1] - a[1]).slice(0, 3);
+      
       setList(sorted.map(([code, count]: any) => ({
         code,
-        fuerza: Math.min(50 + (count * 3), 98) + "%"
+        fuerza: Math.min(60 + (count * 4), 98) + "%"
       })));
+      setLoading(false);
     }
     load();
   }, [lotteryId]);
 
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500">CALCULANDO FUERZA DE SALIDA...</div>;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in zoom-in duration-500">
-      {list.map((a, i) => (
-        <div key={i} className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 flex flex-col items-center shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] relative">
-          <div className="absolute top-6 right-8 bg-orange-500 text-white px-4 py-1 rounded-full font-black text-xs">FUERZA: {a.fuerza}</div>
-          <img src={getAnimalImageUrl(a.code)} className="w-56 h-56 object-contain" />
-          <h4 className="mt-4 font-black text-3xl italic">#{a.code}</h4>
-        </div>
-      ))}
+    <div className="space-y-12 animate-in zoom-in duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {list.map((a, i) => (
+          <div key={i} className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 flex flex-col items-center shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] relative">
+            <div className="absolute top-8 right-8 bg-orange-500 text-white px-5 py-2 rounded-full font-black text-xs italic shadow-lg">FUERZA: {a.fuerza}</div>
+            <img src={getAnimalImageUrl(a.code)} className="w-56 h-56 object-contain drop-shadow-2xl" />
+            <h4 className="mt-6 font-black text-4xl italic uppercase">#{a.code}</h4>
+          </div>
+        ))}
+      </div>
+      <div className="bg-slate-900 text-white p-10 rounded-[4rem] border-b-8 border-emerald-500 shadow-2xl text-center">
+         <h3 className="font-black text-2xl uppercase italic mb-8 flex items-center justify-center gap-3"><Star className="text-emerald-400" fill="currentColor" /> Animales de Regalo</h3>
+         <div className="flex justify-center gap-8 flex-wrap">{['12', '00', '31'].map(c => (<img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 object-contain" />))}</div>
+      </div>
     </div>
   );
 }
