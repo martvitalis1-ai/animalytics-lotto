@@ -2,7 +2,7 @@
 
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// 🛡️ DICCIONARIOS EXPORTADOS (REQUERIDOS POR EL BUILD)
+// 🛡️ 1. DICCIONARIOS EXPORTADOS (PARA constants.ts)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -35,10 +35,18 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
 };
 
-// 🛡️ ESTA ES LA FUNCIÓN QUE PIDE RicardoBot.tsx
-export const getAnimalEmoji = (code: string | number): string => {
-  return "🎯"; // Emoji por defecto para el análisis del Bot
+// 🛡️ 2. ESTA ES LA FUNCIÓN QUE FALTABA (PARA LA MATRIZ - FOTO 6)
+export const getCodesForLottery = (lotteryId: string): string[] => {
+  const max = lotteryId === 'guacharito' ? 99 : (lotteryId === 'guacharo' ? 75 : 36);
+  const codes = ['0', '00'];
+  for (let i = 1; i <= max; i++) {
+    codes.push(i.toString().padStart(2, '0'));
+  }
+  return codes;
 };
+
+// 🛡️ 3. UTILIDADES EXPORTADAS
+export const getAnimalEmoji = (code: string | number): string => "🎯";
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
