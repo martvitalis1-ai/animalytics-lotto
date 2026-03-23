@@ -73,6 +73,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
           
           <TabsContent value="deportes" className="mt-0">
+   <SportsView />
+</TabsContent>
             <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-12 shadow-2xl flex flex-col items-center">
               <Trophy size={80} className="text-orange-500 mb-4 animate-bounce" />
               <h2 className="font-black text-4xl uppercase italic text-slate-900">Líneas de Las Vegas</h2>
