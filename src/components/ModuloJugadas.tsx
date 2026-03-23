@@ -107,17 +107,30 @@ export function ModuloJugadas({ forcedAgency }: { forcedAgency?: any }) {
             </div>
           </Card>
 
-          {/* SELECCIÓN ANIMALES GIGANTES (FOTO 5 Y 7) */}
-          <Card className="p-8 bg-white border-4 border-slate-900 rounded-[3rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-6">
-              {filteredNumbers.map(n => (
-                <button key={n} onClick={() => setSelectedNum(n)} className={`flex flex-col items-center justify-center p-4 rounded-[2.5rem] border-4 transition-all h-40 md:h-48 ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 shadow-2xl scale-110' : 'bg-slate-50 border-slate-100'}`}>
-                  <img src={getAnimalImageUrl(n)} className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-xl" alt={n} />
-                  <span className="font-black text-xl mt-2">#{n}</span>
-                </button>
-              ))}
-            </div>
-          </Card>
+          // Reemplace la sección de Card de animales en ModuloJugadas.tsx con esto:
+
+<Card className="p-4 md:p-10 bg-white border-4 border-slate-900 rounded-[4rem] shadow-2xl">
+  <div className="flex justify-between items-center mb-8 px-4">
+     <h3 className="font-black uppercase italic text-xl">Seleccione su Jugada</h3>
+     <span className="bg-emerald-100 text-emerald-600 px-4 py-1 rounded-full font-black text-[10px]">3D VIEWER ACTIVE</span>
+  </div>
+  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-8">
+    {filteredNumbers.map(n => (
+      <button 
+        key={n} 
+        onClick={() => setSelectedNum(n)} 
+        className={`flex flex-col items-center justify-center p-4 rounded-[3rem] border-4 transition-all aspect-square ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 scale-110 shadow-2xl z-20' : 'bg-slate-50 border-slate-100 hover:border-slate-300'}`}
+      >
+        <img 
+          src={getAnimalImageUrl(n)} 
+          className="w-full h-full object-contain drop-shadow-xl" 
+          alt={n} 
+        />
+        <span className="font-black text-2xl mt-2 italic text-slate-900">#{n}</span>
+      </button>
+    ))}
+  </div>
+</Card>
 
           {/* SELECTOR HORAS */}
           <Card className="p-6 bg-white border-4 border-slate-900 rounded-[3rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
