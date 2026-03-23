@@ -19,14 +19,14 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
       
       setList(sorted.map(([code, count]: any) => ({
         code,
-        fuerza: Math.min(60 + (count * 4), 98) + "%"
+        fuerza: Math.min(65 + (count * 4), 98) + "%"
       })));
       setLoading(false);
     }
     load();
   }, [lotteryId]);
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500">CALCULANDO FUERZA DE SALIDA...</div>;
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500">CALCULANDO FUERZA %...</div>;
 
   return (
     <div className="space-y-12 animate-in zoom-in duration-500">
