@@ -1,9 +1,8 @@
-// src/components/FrequencyHeatmap.tsx
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
 import { getDrawTimesForLottery } from '../lib/constants';
-import { Grid3X3 } from "lucide-react"; // IMPORTADO PARA EVITAR ERROR
+import { Grid3X3 } from "lucide-react";
 
 export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   const [data, setData] = useState<any[]>([]);
@@ -19,10 +18,17 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     load();
   }, [lotteryId]);
 
+  const getColor = (count: number) => {
+    if (count === 1) return 'bg-yellow-400 text-slate-900';
+    if (count === 2) return 'bg-blue-500 text-white';
+    if (count > 2) return 'bg-red-600 text-white';
+    return 'text-slate-300';
+  };
+
   return (
     <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 shadow-2xl overflow-hidden">
       <h3 className="font-black text-3xl uppercase italic mb-8 flex items-center gap-4">
-        <Grid3X3 className="text-emerald-500" /> Matriz de Frecuencia Atómica
+        <Grid3X3 className="text-emerald-500" /> MATRIZ DE FRECUENCIA ATÓMICA
       </h3>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
@@ -42,7 +48,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
                 {times.map(t => {
                   const hits = data.filter(r => r.draw_time === t && r.result_number === code).length;
                   return (
-                    <td key={t} className={`border border-slate-100 text-center font-black ${hits > 0 ? 'bg-emerald-500 text-white' : 'text-slate-300'}`}>
+                    <td key={t} className={`border border-slate-100 text-center font-black text-xs ${getColor(hits)}`}>
                       {hits || '-'}
                     </td>
                   );
