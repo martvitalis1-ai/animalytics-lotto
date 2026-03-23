@@ -1,6 +1,6 @@
 // src/lib/animalData.ts
 
-// 🛡️ EXPORTACIONES CRÍTICAS PARA EL BUILD
+// 1. DICCIONARIOS EXPORTADOS (NOMBRES EXACTOS PARA EL BUILD)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
