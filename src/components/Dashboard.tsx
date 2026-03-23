@@ -1,4 +1,3 @@
-// src/components/Dashboard.tsx
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,10 +7,13 @@ import { getLotteryLogo } from './LotterySelector';
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
 import { ResultsPanel } from "./ResultsPanel";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
+import { SequenceMatrixView } from "./SequenceMatrixView";
+import { ResultsInsert } from "./ResultsInsert";
+import { AdminAgencias } from "./AdminAgencias";
 import { GuiaUso } from "./GuiaUso";
 import { Button } from "./ui/button";
 
-export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
+export function Dashboard({ userRole, onLogout }: any) {
   const [activeTab, setActiveTab] = useState("ia");
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
@@ -25,16 +27,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         </div>
       </header>
 
-      {/* BARRA DE SELECTOR SÓLIDA - FIX VIDEO */}
-      <div className="bg-slate-100 border-b-2 border-slate-900 p-4 sticky top-[80px] z-40">
+      {/* SELECTOR CON FONDO SÓLIDO (FIX VIDEO) */}
+      <div className="bg-slate-100 border-b-2 border-slate-900 p-4 sticky top-[85px] z-40">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-black uppercase text-slate-500 italic">Lotería en Análisis:</span>
+            <span className="text-[10px] font-black uppercase text-slate-500 italic font-bold">Lotería:</span>
             <Select value={globalLottery} onValueChange={setGlobalLottery}>
               <SelectTrigger className="w-64 h-12 bg-white border-4 border-slate-900 font-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="border-2 border-slate-900 rounded-2xl">
+              <SelectContent className="bg-white border-2 border-slate-900 rounded-xl">
                 {LOTTERIES.map(l => (
                   <SelectItem key={l.id} value={l.id} className="font-bold">
                     <div className="flex items-center gap-2">
@@ -59,18 +61,27 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         </div>
       </div>
 
-      <main className="p-4 max-w-7xl mx-auto">
+      <main className="p-4 max-w-7xl mx-auto pb-20">
         <Tabs value={activeTab} className="space-y-8">
           <TabsContent value="ia"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados"><ResultsPanel lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="matriz"><FrequencyHeatmap lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="matriz" className="space-y-12">
+            <FrequencyHeatmap lotteryId={globalLottery} />
+            <SequenceMatrixView lotteryId={globalLottery} />
+          </TabsContent>
           <TabsContent value="guia"><GuiaUso /></TabsContent>
-          {/* Secciones de Deportes y Ruleta con su Banner de Sincronización */}
-          <TabsContent value="deportes">
-             <div className="p-20 text-center border-4 border-slate-900 bg-white rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center">
-                <Trophy size={60} className="text-slate-200 mb-4" />
-                <h3 className="font-black uppercase text-2xl italic tracking-tighter">Sincronizando Líneas de Las Vegas</h3>
-             </div>
+          {isMaster && (
+            <TabsContent value="admin" className="grid md:grid-cols-2 gap-8">
+              <ResultsInsert /><AdminAgencias />
+            </TabsContent>
+          )}
+          <TabsContent value="deportes" className="p-20 text-center border-4 border-slate-900 rounded-[3rem] bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <Trophy size={64} className="mx-auto text-slate-200" />
+            <h3 className="font-black uppercase italic text-2xl mt-4">Sincronizando Líneas de Las Vegas...</h3>
+          </TabsContent>
+          <TabsContent value="ruleta" className="p-20 text-center border-4 border-slate-900 rounded-[3rem] bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <Dices size={64} className="mx-auto text-slate-200" />
+            <h3 className="font-black uppercase italic text-2xl mt-4">Analítica de Ruleta Activa</h3>
           </TabsContent>
         </Tabs>
       </main>
