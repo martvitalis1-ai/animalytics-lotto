@@ -61,7 +61,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
       
- {/* --- SECCIÓN DE INTELIGENCIA DE ALTO IMPACTO (REEMPLAZO TOTAL) --- */}
+{/* --- SECCIÓN DE INTELIGENCIA DE ALTO IMPACTO (REEMPLAZO TOTAL) --- */}
 <div className="space-y-6">
   
   {/* 1. BANNER DE RECOMENDACIÓN DEL DÍA (Basado en Foto 1) */}
@@ -86,6 +86,32 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       </div>
     </div>
   </div>
+
+  {/* 2. EXPLICACIÓN TÉCNICA DEL ALGORITMO (Basado en Foto 3) */}
+  <div className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] relative overflow-hidden">
+    <div className="flex items-center gap-3 mb-3 border-b border-slate-100 pb-3">
+      <div className="bg-slate-900 p-1.5 rounded-lg">
+        <Brain size={18} className="text-emerald-400" />
+      </div>
+      <h4 className="font-black text-xs uppercase tracking-tighter text-slate-900">¿Por qué el sistema sugiere este animal?</h4>
+    </div>
+    
+    <div className="space-y-3">
+      <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+        La IA ha detectado una <span className="text-orange-600 font-black">PRESIÓN TÉRMICA</span> en el historial de {selectedLottery.replace('_',' ')}. 
+        El animal seleccionado presenta una coincidencia del <span className="text-emerald-600 font-black">94% en el patrón de arrastre</span> de las últimas 72 horas.
+      </p>
+      
+      <div className="flex gap-2">
+        <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[9px] font-black uppercase">Frecuencia: ALTA</span>
+        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">Estado: CALIENTE</span>
+        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">Confianza: 89%</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{/* --- FIN DE LA SECCIÓN --- */}
 
   {/* 2. EXPLICACIÓN TÉCNICA DEL ALGORITMO (Basado en Foto 3) */}
   <div className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] relative overflow-hidden">
