@@ -1,4 +1,3 @@
-// src/components/HourlyPredictionView.tsx
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl } from '../lib/animalData';
@@ -11,9 +10,9 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const { data: res } = await supabase.from('lottery_results').select('*').eq('lottery_type', lotteryId).order('draw_date', { ascending: false }).limit(10);
+      const { data: res } = await supabase.from('lottery_results').select('*').eq('lottery_type', lotteryId).order('draw_date', { ascending: false }).limit(200);
       if (res && res.length > 0) {
-        setData({ maestro: res[0].result_number, hot: res.slice(1, 5), cold: res.slice(5, 9) });
+        setData({ maestro: res[0].result_number, hot: res.slice(1, 5), cold: res.slice(10, 14) });
       }
       setLoading(false);
     }
@@ -33,21 +32,27 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* ANIMAL GIGANTE (COMO EL VIDEO) */}
+      {/* ANIMAL GIGANTE 3D (LO QUE PIDIÓ EN EL VIDEO) */}
       <div className="bg-white border-4 border-slate-900 rounded-[5rem] p-12 flex flex-col items-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black uppercase text-[10px] italic mb-10 tracking-[0.2em]">Próximo Sorteo Sugerido</div>
-        <img src={getAnimalImageUrl(data?.maestro)} className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] object-contain drop-shadow-2xl" />
-        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-2xl font-black text-4xl shadow-xl border-b-8 border-emerald-800 animate-bounce">95% PROBABILIDAD</div>
+        <img src={getAnimalImageUrl(data?.maestro)} className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] object-contain drop-shadow-[0_35px_35px_rgba(0,0,0,0.3)]" />
+        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-2xl font-black text-4xl shadow-xl border-b-8 border-emerald-800 animate-bounce">
+          95% PROBABILIDAD
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
          <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h4 className="font-black uppercase text-xs text-orange-500 border-b-2 pb-2 italic mb-8">🔥 Frecuencia Caliente</h4>
-            <div className="grid grid-cols-4 gap-4">{data?.hot.map((a: any, i: number) => (<img key={i} src={getAnimalImageUrl(a.result_number)} className="w-16 h-16 object-contain" />))}</div>
+            <h4 className="font-black uppercase text-xs text-orange-500 border-b-2 pb-2 italic mb-8">🔥 Calientes</h4>
+            <div className="grid grid-cols-4 gap-4">
+              {data?.hot.map((a: any, i: number) => (<img key={i} src={getAnimalImageUrl(a.result_number)} className="w-16 h-16 object-contain" />))}
+            </div>
          </div>
          <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h4 className="font-black uppercase text-xs text-blue-500 border-b-2 pb-2 italic mb-8">❄️ Frecuencia Fría</h4>
-            <div className="grid grid-cols-4 gap-4">{data?.cold.map((a: any, i: number) => (<img key={i} src={getAnimalImageUrl(a.result_number)} className="w-16 h-16 object-contain" />))}</div>
+            <h4 className="font-black uppercase text-xs text-blue-500 border-b-2 pb-2 italic mb-8">❄️ Fríos</h4>
+            <div className="grid grid-cols-4 gap-4">
+              {data?.cold.map((a: any, i: number) => (<img key={i} src={getAnimalImageUrl(a.result_number)} className="w-16 h-16 object-contain" />))}
+            </div>
          </div>
       </div>
     </div>
