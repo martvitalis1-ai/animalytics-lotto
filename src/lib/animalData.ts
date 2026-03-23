@@ -1,3 +1,4 @@
+// src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_STANDARD: Record<string, string> = {
@@ -9,6 +10,28 @@ export const ANIMALS_STANDARD: Record<string, string> = {
   '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO',
   '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO',
   '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
+};
+
+export const ANIMALS_GUACHARO: Record<string, string> = {
+  ...ANIMALS_STANDARD,
+  '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO',
+  '42': 'TUCÁN', '43': 'MARIPOSA', '44': 'CHIGÜIRE', '45': 'GARZA', '46': 'PUMA',
+  '47': 'PAVO REAL', '48': 'PUERCOESPÍN', '49': 'PEREZOSO', '50': 'CANARIO',
+  '51': 'PELÍCANO', '52': 'PULPO', '53': 'CARACOL', '54': 'GRILLO', '55': 'OSO HORMIGUERO',
+  '56': 'TIBURÓN', '57': 'PATO', '58': 'HORMIGA', '59': 'PANTERA', '60': 'CAMALEÓN',
+  '61': 'PANDA', '62': 'CACHICAMO', '63': 'CANGREJO', '64': 'GAVILÁN', '65': 'ARAÑA',
+  '66': 'LOBO', '67': 'AVESTRUZ', '68': 'JAGUAR', '69': 'CONEJO', '70': 'BISONTE',
+  '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO'
+};
+
+// 🛡️ ESTA ES LA EXPORTACIÓN QUE CLOUDFLARE PIDE (IDÉNTICO NOMBRE)
+export const ANIMALS_GUACHARITO: Record<string, string> = {
+  ...ANIMALS_GUACHARO,
+  '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO',
+  '81': 'CUERVO', '82': 'CUCARACHA', '83': 'BÚHO', '84': 'CAMARÓN', '85': 'HÁMSTER',
+  '86': 'BUEY', '87': 'CABRA', '88': 'ERIZO DE MAR', '89': 'ANGUILA', '90': 'HURÓN',
+  '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO',
+  '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
 };
 
 export const getCodesForLottery = (id: string): string[] => {
@@ -27,7 +50,8 @@ export const getAnimalImageUrl = (code: string | number): string => {
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
   const normalized = String(code).trim().padStart(2, '0').replace('000', '00');
-  return ANIMALS_STANDARD[normalized] || "ANIMAL";
+  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  return mapping[normalized] || "ANIMAL";
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎯";
