@@ -1,105 +1,34 @@
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Flame, Trophy, FileText, Grid3X3, PlayCircle, Settings, LogOut, Send, ShoppingCart } from "lucide-react";
-import { LOTTERIES } from '@/lib/constants';
-import { getLotteryLogo } from './LotterySelector';
-import { HourlyPredictionView } from "./HourlyPredictionView"; 
-import { ResultsPanel } from "./ResultsPanel";
-import { FrequencyHeatmap } from "./FrequencyHeatmap";
-import { SequenceMatrixView } from "./SequenceMatrixView";
-import { ExplosiveData } from "./ExplosiveData";
-import { GuiaUso } from "./GuiaUso";
-import { ResultsInsert } from "./ResultsInsert";
-import { AdminAgencias } from "./AdminAgencias";
-import { ModuloJugadas } from "./ModuloJugadas"; 
-import { Button } from "@/components/ui/button";
+// src/lib/animalData.ts
+export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
-  const [activeTab, setActiveTab] = useState("ia");
-  const [globalLottery, setGlobalLottery] = useState("lotto_activo");
-  const isMaster = userRole === 'admin';
+export const ANIMALS_STANDARD: Record<string, string> = {
+  '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
+  '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
+  '09': 'ÁGUILA', '10': 'TIGRE', '11': 'GATO', '12': 'CABALLO', '13': 'MONO',
+  '14': 'PALOMA', '15': 'ZORRO', '16': 'OSO', '17': 'PAVO', '18': 'BURRO',
+  '19': 'CHIVO', '20': 'COCHINO', '21': 'GALLO', '22': 'CAMELLO', '23': 'CEBRA',
+  '24': 'IGUANA', '25': 'GALLINA', '26': 'VACA', '27': 'PERRO', '28': 'ZAMURO',
+  '29': 'ELEFANTE', '30': 'CAIMÁN', '31': 'LAPA', '32': 'ARDILLA', '33': 'PESCADO',
+  '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
+};
 
-  return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
-      <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-500 px-4 py-4 shadow-2xl flex justify-between items-center">
-        <h1 className="font-black text-2xl italic tracking-tighter text-emerald-400 uppercase">ANIMALYTICS PRO</h1>
-        <div className="flex items-center gap-4">
-          <a href="https://t.me/" target="_blank" className="bg-sky-500 p-2 rounded-full text-white shadow-lg"><Send size={18} /></a>
-          <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-600 rounded-full"><LogOut size={22} /></Button>
-        </div>
-      </header>
+export const getCodesForLottery = (lotteryId: string): string[] => {
+  let max = 36;
+  if (lotteryId === 'guacharo') max = 75;
+  if (lotteryId === 'guacharito') max = 99;
+  const codes = ['0', '00'];
+  for (let i = 1; i <= max; i++) {
+    codes.push(i.toString().padStart(2, '0'));
+  }
+  return codes;
+};
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="bg-slate-100 border-b-2 border-slate-900 p-4 sticky top-[85px] z-40 space-y-4">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="bg-white border-4 border-slate-900 rounded-2xl p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-64 h-12 border-none font-black uppercase text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border-2 border-slate-900">
-                  {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-bold uppercase text-xs">
-                      <div className="flex items-center gap-2"><img src={getLotteryLogo(l.id)} className="w-4 h-4 rounded-full" /> {l.name}</div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+export const getAnimalImageUrl = (code: string | number): string => {
+  const str = String(code).trim();
+  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  return `${SUPA_STORAGE_URL}${normalized}.png`;
+};
 
-            {/* NAVEGACIÓN CON MARCADO ACTIVO (FOTO 9) */}
-            <TabsList className="bg-white p-1 rounded-full h-16 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex overflow-x-auto no-scrollbar w-full md:w-auto">
-              <TabsTrigger value="ia" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white">IA</TabsTrigger>
-              <TabsTrigger value="explosivo" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-orange-500 data-[state=active]:text-white">Explosivo</TabsTrigger>
-              <TabsTrigger value="deportes" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white">Deportes</TabsTrigger>
-              <TabsTrigger value="resultados" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white">Resultados</TabsTrigger>
-              <TabsTrigger value="matriz" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white">Matriz</TabsTrigger>
-              <TabsTrigger value="guia" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Guía</TabsTrigger>
-              <TabsTrigger value="agencias" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Agencias</TabsTrigger>
-              {isMaster && <TabsTrigger value="admin" className="rounded-full px-4 bg-slate-900 text-white ml-2"><Settings size={14}/></TabsTrigger>}
-            </TabsList>
-          </div>
-        </div>
-
-        <div className="p-4 max-w-7xl mx-auto pb-20">
-          <TabsContent value="ia"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="explosivo"><ExplosiveData lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="resultados"><ResultsPanel lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="matriz" className="space-y-12">
-            <FrequencyHeatmap lotteryId={globalLottery} />
-            <SequenceMatrixView lotteryId={globalLottery} />
-          </TabsContent>
-          <TabsContent value="guia"><GuiaUso /></TabsContent>
-          <TabsContent value="agencias"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
-          
-          {/* DEPORTES FUNCIONAL (FOTO 10) */}
-          <TabsContent value="deportes">
-            <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-12 shadow-2xl flex flex-col items-center">
-              <Trophy size={80} className="text-orange-500 mb-4 animate-bounce" />
-              <h2 className="font-black text-4xl uppercase italic text-slate-900">Líneas de Las Vegas</h2>
-              <p className="font-bold text-slate-400 mt-2 uppercase tracking-widest text-center">Sincronización en Tiempo Real con las cuotas de USA</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 w-full">
-                <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] border-b-8 border-emerald-500 shadow-xl flex flex-col items-center">
-                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Baloncesto NBA</span>
-                   <p className="text-xl font-black italic">LAKERS vs CELTICS</p>
-                   <p className="text-orange-500 font-black text-2xl mt-2">O/U 228.5</p>
-                </div>
-                <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] border-b-8 border-orange-500 shadow-xl flex flex-col items-center">
-                   <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Béisbol MLB</span>
-                   <p className="text-xl font-black italic">YANKEES vs RED SOX</p>
-                   <p className="text-emerald-500 font-black text-2xl mt-2">RL -1.5</p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {isMaster && (
-            <TabsContent value="admin" className="space-y-10">
-               <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl"><ResultsInsert /></div>
-               <div className="bg-slate-900 text-white border-b-8 border-orange-500 rounded-[3rem] p-8"><AdminAgencias /></div>
-            </TabsContent>
-          )}
-        </div>
-      </Tabs>
-    </div>
-  );
-}
+export const getAnimalName = (code: string | number): string => {
+  return ANIMALS_STANDARD[String(code).trim().padStart(2, '0')] || "ANIMAL";
+};
