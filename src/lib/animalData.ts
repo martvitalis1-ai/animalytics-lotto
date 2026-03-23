@@ -37,14 +37,24 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
 };
 
 export const getCodesForLottery = (lotteryId: string): string[] => {
-  let max = 36;
+  // Lotto Activo, Granjita, Selva, Rey = 0 a 36. Guacharo = 75. Guacharito = 99.
+  let max = 36; 
   if (lotteryId === 'guacharo') max = 75;
   if (lotteryId === 'guacharito') max = 99;
+
   const codes = ['0', '00'];
   for (let i = 1; i <= max; i++) {
     codes.push(i.toString().padStart(2, '0'));
   }
   return codes;
+};
+
+export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+
+export const getAnimalImageUrl = (code: string | number): string => {
+  const str = String(code).trim();
+  const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
+  return `${SUPA_STORAGE_URL}${normalized}.png`;
 };
 
 export const getAnimalImageUrl = (code: string | number): string => {
