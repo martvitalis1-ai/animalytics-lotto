@@ -12,26 +12,26 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   useEffect(() => {
     async function load() {
       const { data: res } = await supabase.from('lottery_results')
-        .select('*').eq('lottery_type', lotteryId).limit(1000);
+        .select('*').eq('lottery_type', lotteryId).limit(1500);
       setData(res || []);
     }
     load();
   }, [lotteryId]);
 
   const getColor = (count: number) => {
+    if (count === 0) return 'text-slate-200';
     if (count === 1) return 'bg-yellow-400 text-slate-900';
     if (count === 2) return 'bg-blue-500 text-white';
-    if (count > 2) return 'bg-red-600 text-white';
-    return 'text-slate-300';
+    return 'bg-red-600 text-white'; // Más de 2
   };
 
   return (
-    <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 shadow-2xl overflow-hidden">
-      <h3 className="font-black text-3xl uppercase italic mb-8 flex items-center gap-4">
-        <Grid3X3 className="text-emerald-500" /> MATRIZ DE FRECUENCIA ATÓMICA
+    <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-2xl overflow-hidden">
+      <h3 className="font-black text-2xl uppercase italic mb-6 flex items-center gap-2">
+        <Grid3X3 className="text-emerald-500" /> Matriz de Frecuencia Atómica
       </h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse border-2 border-slate-900">
           <thead>
             <tr className="bg-slate-900 text-white">
               <th className="p-4 border border-slate-700">Animal</th>
@@ -40,7 +40,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
           </thead>
           <tbody>
             {codes.map(code => (
-              <tr key={code} className="hover:bg-slate-50">
+              <tr key={code} className="hover:bg-slate-50 transition-all">
                 <td className="p-2 border border-slate-200 flex items-center gap-2">
                    <img src={getAnimalImageUrl(code)} className="w-10 h-10" />
                    <span className="font-black text-[10px]">#{code}</span>
