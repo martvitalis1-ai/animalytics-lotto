@@ -1,30 +1,62 @@
+// src/components/ExplosiveData.tsx
+import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl } from '../lib/animalData';
-import { Zap, Trophy } from "lucide-react";
+import { TrendingUp, Star } from "lucide-react";
 
 export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
-  const explosive = ["33", "05", "10"]; // Lógica simulada conectada a imágenes 3D
+  const [explosives, setExplosives] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchExplosives() {
+      setLoading(true);
+      const { data } = await supabase.from('lottery_results')
+        .select('result_number')
+        .eq('lottery_type', lotteryId);
+      
+      if (data && data.length > 0) {
+        const freq: any = {};
+        data.forEach(r => freq[r.result_number] = (freq[r.result_number] || 0) + 1);
+        const sorted = Object.entries(freq)
+          .sort((a: any, b: any) => b[1] - a[1])
+          .slice(0, 3);
+        
+        setExplosives(sorted.map(([code, count]: any) => ({
+          code,
+          fuerza: Math.min(75 + (count * 2), 99) + "%"
+        })));
+      }
+      setLoading(false);
+    }
+    fetchExplosives();
+  }, [lotteryId]);
+
+  if (loading) return <div className="p-20 text-center animate-pulse font-black text-emerald-500">PROCESANDO HISTORIAL...</div>;
 
   return (
-    <div className="space-y-10 py-10">
-       <div className="flex items-center gap-4 bg-orange-500 text-white p-6 rounded-[3rem] bunker-border glow-orange">
-          <Zap size={40} className="fill-white" />
-          <div>
-            <h2 className="text-3xl font-black uppercase italic leading-none">Animales Explosivos</h2>
-            <p className="text-xs font-bold uppercase tracking-widest mt-1 opacity-80 italic">Puntos de alta presión en el algoritmo</p>
-          </div>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {explosive.map((code, i) => (
-            <div key={code} className="bg-white p-10 rounded-[4rem] bunker-border glow-orange flex flex-col items-center relative overflow-hidden">
-               <div className="absolute top-4 left-4 bg-slate-900 text-white w-12 h-12 rounded-full flex items-center justify-center font-black shadow-xl">
-                  <Trophy size={20} className="text-orange-400" />
-               </div>
-               <img src={getAnimalImageUrl(code)} className="w-64 h-64 object-contain mb-8" />
-               <div className="bg-orange-600 text-white px-10 py-3 rounded-full font-black text-2xl shadow-xl italic uppercase">Frecuencia XL</div>
+    <div className="space-y-12 animate-in fade-in zoom-in duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {explosives.map((a, i) => (
+          <div key={i} className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 flex flex-col items-center shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
+            <div className="absolute top-6 right-8 bg-orange-500 text-white px-4 py-1 rounded-full font-black text-xs italic flex items-center gap-1">
+               <TrendingUp size={12} /> FUERZA: {a.fuerza}
             </div>
-          ))}
-       </div>
+            <img src={getAnimalImageUrl(a.code)} className="w-56 h-56 object-contain drop-shadow-2xl group-hover:scale-110 transition-all" />
+            <h4 className="mt-6 font-black uppercase italic text-3xl tracking-tighter">#{a.code}</h4>
+          </div>
+        ))}
+      </div>
+      <div className="bg-slate-900 text-white p-10 rounded-[4rem] border-b-8 border-emerald-500 shadow-2xl text-center">
+         <h3 className="font-black text-2xl uppercase italic mb-8 flex items-center justify-center gap-3">
+            <Star className="text-emerald-400" fill="currentColor" /> REGALOS DEL DÍA
+         </h3>
+         <div className="flex justify-center gap-10 flex-wrap">
+            {['12', '00', '31'].map(code => (
+              <img key={code} src={getAnimalImageUrl(code)} className="w-28 h-28 object-contain" />
+            ))}
+         </div>
+      </div>
     </div>
   );
 }
