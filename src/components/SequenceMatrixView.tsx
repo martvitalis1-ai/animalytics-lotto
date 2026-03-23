@@ -23,7 +23,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
           .eq('lottery_type', lotteryId)
           .order('draw_date', { ascending: false })
           .order('draw_time', { ascending: false })
-          .limit(800); // Analizamos 800 sorteos para máxima precisión
+          .limit(800); // Analizamos los últimos 800 para máxima precisión
         
         if (error) throw error;
         setHistory(data || []);
@@ -35,7 +35,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     fetchHistory();
   }, [lotteryId]);
 
-  // --- CÁLCULO DE LA MATRIZ (FUERA DEL HTML PARA EVITAR ERRORES DE BUILD) ---
+  // --- CÁLCULO DE LA MATRIZ (ESTO ES EL CEREBRO DEL COMPONENTE) ---
   const matrixData = useMemo((): SuccessorData[] => {
     if (history.length < 2) return [];
     
@@ -45,6 +45,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
       const actualRaw = history[i].result_number.trim();
       const previoRaw = history[i + 1].result_number.trim();
       
+      // Blindaje de identidad para 0 y 00
       const currCode = (actualRaw === '0' || actualRaw === '00') ? actualRaw : actualRaw.padStart(2, '0');
       const prevCode = (previoRaw === '0' || previoRaw === '00') ? previoRaw : previoRaw.padStart(2, '0');
 
@@ -55,7 +56,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
     return Object.entries(counts).map(([trigger, followers]) => {
       const sortedFollowers = Object.entries(followers)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 3); // Top 3 animales que más salen después
+        .slice(0, 3); // Los 3 que más salen después de este
       
       const totalOccurrences = Object.values(followers).reduce((a, b) => a + b, 0);
       
@@ -74,7 +75,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
           <div>
             <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none tracking-tighter">Matriz de Secuencia</h2>
             <p className="text-sm font-bold uppercase tracking-[0.2em] mt-2 text-emerald-400 opacity-80">
-              Absorción Histórica 100% — Sucesores Directos
+              Sucesores Históricos Directos — Animalytics Engine
             </p>
           </div>
         </div>
@@ -85,24 +86,23 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
       </div>
 
       {loading ? (
-        <div className="py-40 text-center flex flex-col items-center gap-6 bg-white rounded-[4rem] border-2 border-slate-900">
+        <div className="py-40 text-center flex flex-col items-center gap-6 bg-white rounded-[4rem] border-2 border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,1)]">
           <Loader2 className="animate-spin text-emerald-600" size={80} />
-          <p className="font-black uppercase text-lg tracking-[0.5em] text-slate-300">Cruzando Datos...</p>
+          <p className="font-black uppercase text-lg tracking-[0.5em] text-slate-400">Analizando Tendencias...</p>
         </div>
       ) : matrixData.length === 0 ? (
-        <div className="p-20 text-center border-2 border-slate-900 bg-white rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(15,23,42,1)]">
-          <p className="italic text-slate-300 font-black uppercase text-2xl">Esperando flujo de información...</p>
+        <div className="p-20 text-center border-2 border-slate-900 bg-white rounded-[4rem] shadow-[8px_8px_0px_0px_rgba(15,23,42,1)]">
+          <p className="italic text-slate-300 font-black uppercase text-2xl">Sincronizando flujo de datos...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
           {matrixData.map(({ trigger, followers, totalOccurrences }) => (
             <div key={trigger} className="bg-white p-10 rounded-[5rem] border-2 border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,1)] flex flex-col items-center group hover:-translate-y-4 transition-all duration-500 relative">
               
-              {/* INDICADOR DE CASOS */}
               <div className="w-full flex justify-between items-center mb-10 px-2">
-                <span className="text-[11px] font-black text-slate-400 uppercase italic">Referencia Actual</span>
-                <span className="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black uppercase shadow-lg border border-slate-700">
-                  {totalOccurrences} Casos Reales
+                <span className="text-[11px] font-black text-slate-400 uppercase italic">Si sale el:</span>
+                <span className="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black uppercase shadow-lg">
+                  {totalOccurrences} Casos
                 </span>
               </div>
 
@@ -121,9 +121,9 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
 
               {/* SUCESORES PROBABLES EN BLOQUE */}
               <div className="w-full bg-slate-50 p-10 rounded-[3.5rem] border-2 border-slate-100 shadow-inner">
-                <p className="text-[10px] font-black text-center text-slate-400 uppercase tracking-widest mb-8 italic border-b border-slate-200 pb-4">Atracción por Frecuencia:</p>
+                <p className="text-[10px] font-black text-center text-slate-400 uppercase tracking-widest mb-8 italic border-b border-slate-200 pb-4">Atrae con mayor fuerza a:</p>
                 <div className="grid grid-cols-3 gap-6">
-                  {followers.map(([fCode, count]) => (
+                  {followers.map(([fCode, count]: any) => (
                     <div key={fCode} className="flex flex-col items-center">
                       <div className="w-20 h-20 bg-white rounded-[2rem] shadow-md border-2 border-slate-200 p-2 group-hover:border-emerald-400 transition-all">
                         <img 
@@ -133,7 +133,7 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
                           crossOrigin="anonymous" 
                         />
                       </div>
-                      <span className="mt-4 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[12px] font-black italic shadow-lg">
+                      <span className="mt-4 bg-emerald-600 text-white px-3 py-1 rounded-full text-[12px] font-black italic shadow-lg">
                         {Math.round((count / totalOccurrences) * 100)}%
                       </span>
                     </div>
