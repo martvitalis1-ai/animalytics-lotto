@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, Star, ShieldCheck, Zap, ChevronRight } from "lucide-react";
+import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, ShieldCheck, Zap } from "lucide-react";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getAnimalImageUrl, getAnimalName } from '@/lib/animalData';
 import { getLotteryLogo } from './LotterySelector';
@@ -16,7 +16,7 @@ interface AnimalStatus {
 }
 
 export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryChange }: any) {
-  const [selectedLottery, setSelectedLottery] = useState(externalLotteryId || 'lotto_activo');
+  const[selectedLottery, setSelectedLottery] = useState(externalLotteryId || 'lotto_activo');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   
@@ -33,7 +33,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
     if (externalLotteryId) setSelectedLottery(externalLotteryId);
   }, [externalLotteryId]);
 
-  const loadAndAnalyze = async () => {
+  const loadAndAnalyze = useCallback(async () => {
     setLoading(true);
     try {
       const { data: results } = await supabase
@@ -43,10 +43,13 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
         .order('draw_date', { ascending: false })
         .limit(400);
 
-      const rows = results || [];
+      const rows = results ||[];
       setHistory(rows);
 
-      if (rows.length === 0) return;
+      if (rows.length === 0) {
+        setLoading(false);
+        return;
+      }
 
       const freq: Record<string, number> = {};
       const lastSeen: Record<string, string> = {};
@@ -84,9 +87,9 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedLottery]);
 
-  useEffect(() => { loadAndAnalyze(); }, [selectedLottery]);
+  useEffect(() => { loadAndAnalyze(); }, [loadAndAnalyze]);
 
   const pred = useMemo(() => {
     if (history.length === 0) return null;
@@ -106,14 +109,26 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
     return { time: nextTime, ...forecasts[0]?.topPick };
   }, [history, selectedLottery]);
 
+  const MiniCard = ({ code, label, color, info }: any) => (
+    <div className="flex flex-col items-center bg-white p-2 border border-slate-100 shadow-sm rounded-2xl">
+      <div className="relative w-20 h-20 flex items-center justify-center">
+        <img src={getAnimalImageUrl(code)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
+        <div className={`absolute top-0 right-0 ${color} p-1 rounded-full shadow-sm`}>{label}</div>
+      </div>
+      <span className="text-[10px] font-black text-slate-400 mt-1 uppercase">{info}</span>
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      
+      {/* 1. SELECTOR Y CABECERA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
         <div>
           <h2 className="font-black text-2xl uppercase italic tracking-tighter text-slate-900 flex items-center gap-2">
             <TrendingUp className="text-emerald-600" /> Inteligencia Predictiva
           </h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedLottery.replace('_',' ')}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedLottery.replace(/_/g, ' ')}</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -133,69 +148,85 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
             </SelectContent>
           </Select>
           <Button onClick={loadAndAnalyze} variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-white shadow-sm border-2 border-white">
-            {loading ? <Loader2 className="animate-spin text-primary" /> : <RefreshCw size={20} className="text-primary" />}
+            <RefreshCw className={loading ? 'animate-spin text-primary' : 'text-primary'} size={20} />
           </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-emerald-600" size={48} /></div>
+        <div className="py-20 text-center flex flex-col items-center">
+           <Loader2 className="animate-spin mx-auto text-emerald-600" size={48} />
+           <p className="mt-4 font-black text-xs uppercase tracking-widest text-slate-400">Analizando Data...</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* COLUMNA IZQUIERDA: PREDICCIÓN Y ESTADOS */}
           <div className="lg:col-span-2 space-y-8">
             
-            <div className="bg-slate-900 p-6 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl text-white relative overflow-hidden">
-              <div className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12 text-emerald-400"><ShieldCheck size={180} /></div>
-              <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-                <div className="bg-emerald-500 p-4 rounded-[2rem] shadow-[0_0_20px_rgba(16,185,129,0.4)]"><Zap size={40} className="fill-white text-white animate-pulse" /></div>
-                <div className="text-center md:text-left flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Análisis de Ciclo Activo</p>
-                  <h2 className="text-2xl lg:text-3xl font-black italic uppercase leading-none mt-1">{stats.recommendation}</h2>
-                  <p className="text-sm mt-2 font-medium text-slate-300">Mejor oportunidad: <span className="text-emerald-400 font-black underline">{stats.bestHours[0]?.time || "---"}</span></p>
-                </div>
-              </div>
-            </div>
-
+            {/* PRÓXIMO SORTEO 3D GIGANTE */}
             <div className="bg-white p-10 rounded-[4rem] border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] flex flex-col items-center relative overflow-hidden">
-               <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full font-black text-xs italic"><Clock size={14} className="text-emerald-400" /> {pred?.time || '--:--'}</div>
+               <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full font-black text-xs italic">
+                 <Clock size={14} className="text-emerald-400" /> {pred?.time || '--:--'}
+               </div>
                <div className="w-64 h-64 lg:w-80 lg:h-80 flex items-center justify-center bg-white mt-4">
-                  <img src={getAnimalImageUrl(pred?.code || '0')} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
+                  <img src={getAnimalImageUrl(pred?.code || '0')} className="w-full h-full object-contain z-10" alt="" crossOrigin="anonymous" onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }} />
                </div>
                <div className="mt-4 bg-emerald-600 text-white px-10 py-4 rounded-3xl font-black text-3xl shadow-xl border-b-8 border-emerald-800 uppercase italic">
                   {pred?.probability || 0}% ÉXITO
                </div>
             </div>
 
+            {/* RECOMENDACIÓN MAESTRA IA */}
+            <div className="bg-slate-900 p-8 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl text-white relative overflow-hidden">
+              <div className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12 text-emerald-400"><ShieldCheck size={180} /></div>
+              <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                <div className="bg-emerald-500 p-4 rounded-[2rem] shadow-[0_0_20px_rgba(16,185,129,0.4)]"><Zap size={40} className="fill-white text-white animate-pulse" /></div>
+                <div className="text-center md:text-left flex-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Análisis de Ciclo Activo</p>
+                  <h2 className="text-xl lg:text-2xl font-black italic uppercase leading-none mt-1">LA IA SUGIERE ATACAR EL CICLO DE {stats.recommendation.split(': ')[1] || '---'}</h2>
+                </div>
+              </div>
+            </div>
+
+            {/* GRID DE ESTADOS (CALIENTES, FRÍOS, ENJAULADOS) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-orange-600 mb-6 bg-orange-50 py-2 rounded-full italic tracking-widest">Calientes</p>
-                <div className="grid grid-cols-2 gap-4">{stats.hot.map(a => <div key={a.code} className="flex flex-col items-center"><img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" /><span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.count} Hits</span></div>)}</div>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.hot.map((a: any) => <MiniCard key={a.code} code={a.code} label={<Flame size={12} className="text-white fill-white"/>} color="bg-orange-500" info={`${a.count} Hits`} />)}
+                </div>
               </div>
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-blue-600 mb-6 bg-blue-50 py-2 rounded-full italic tracking-widest">Fríos</p>
-                <div className="grid grid-cols-2 gap-4">{stats.cold.map(a => <div key={a.code} className="flex flex-col items-center"><img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" /><span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.count} Hits</span></div>)}</div>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.cold.map((a: any) => <MiniCard key={a.code} code={a.code} label={<Snowflake size={12} className="text-white"/>} color="bg-blue-500" info={`${a.count} Hits`} />)}
+                </div>
               </div>
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-slate-700 mb-6 bg-slate-100 py-2 rounded-full italic tracking-widest">Enjaulados</p>
-                <div className="grid grid-cols-2 gap-4">{stats.caged.map(a => <div key={a.code} className="flex flex-col items-center"><img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" /><span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.daysSinceLast} Días</span></div>)}</div>
+                <div className="grid grid-cols-2 gap-4">
+                  {stats.caged.map((a: any) => <MiniCard key={a.code} code={a.code} label={<Lock size={12} className="text-white"/>} color="bg-slate-800" info={`${a.daysSinceLast} Días`} />)}
+                </div>
               </div>
             </div>
           </div>
 
+          {/* COLUMNA DERECHA: TIEMPO Y RECOMENDACIÓN */}
           <div className="space-y-6">
             <div className="bg-slate-900 p-8 rounded-[3.5rem] text-white shadow-2xl border-b-8 border-emerald-500">
-              <h4 className="font-black text-xs uppercase text-emerald-400 mb-8 italic flex items-center gap-2"><Clock size={16} /> Horarios de Poder</h4>
+              <h4 className="font-black text-xs uppercase text-emerald-400 mb-8 flex items-center gap-2 italic"><Clock size={16} /> Horarios de Poder</h4>
               <div className="space-y-4">
-                {stats.bestHours.map((h, i) => (
+                {stats.bestHours.map((h: any) => (
                   <div key={h.time} className="flex justify-between border-b border-white/5 pb-2">
                     <span className="font-mono text-xl font-black">{h.time}</span>
-                    <span className="text-emerald-400 font-black text-[10px] uppercase italic">{h.count} Aciertos</span>
+                    <span className="text-emerald-400 font-black text-[10px] uppercase italic">{h.count} ACIERTOS</span>
                   </div>
                 ))}
               </div>
               <h4 className="font-black text-xs uppercase text-emerald-400 mt-12 mb-8 italic flex items-center gap-2"><Calendar size={16} /> Días de Acierto</h4>
               <div className="space-y-4">
-                {stats.bestDays.map((d, i) => (
+                {stats.bestDays.map((d: any) => (
                   <div key={d.day} className="flex justify-between items-center border-b border-white/5 pb-2">
                     <span className="font-black text-slate-300 uppercase italic text-sm">{d.day}</span>
                     <div className="h-1.5 w-16 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
@@ -204,6 +235,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
               </div>
             </div>
           </div>
+
         </div>
       )}
     </div>
