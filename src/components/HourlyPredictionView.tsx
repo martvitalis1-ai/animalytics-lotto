@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, Calendar, ShieldCheck, Zap, ChevronRight } from "lucide-react";
+import { Clock, RefreshCw, Loader2, Flame, Snowflake, Lock, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
 import { getAnimalImageUrl, getAnimalName } from '@/lib/animalData';
 import { getLotteryLogo } from './LotterySelector';
@@ -80,7 +80,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
         caged: sorted.filter(a => a.daysSinceLast >= 5).sort((a, b) => b.daysSinceLast - a.daysSinceLast).slice(0, 4),
         bestHours: Object.entries(hourFreq).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([time, count]) => ({ time, count })),
         bestDays: Object.entries(dayFreq).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([day, count]) => ({ day, count })),
-        recommendation: `Fijar jugada en ${sorted[0]?.name || '---'}`
+        recommendation: sorted[0]?.name || '---'
       });
     } catch (e) {
       console.error(e);
@@ -109,18 +109,10 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
     return { time: nextTime, ...forecasts[0]?.topPick };
   }, [history, selectedLottery]);
 
-  const MiniCard = ({ code, label, color, info }: any) => (
-    <div className="flex flex-col items-center bg-white p-2 border border-slate-100 shadow-sm rounded-2xl">
-      <div className="relative w-20 h-20 flex items-center justify-center">
-        <img src={getAnimalImageUrl(code)} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
-        <div className={`absolute top-0 right-0 ${color} p-1 rounded-full shadow-sm`}>{label}</div>
-      </div>
-      <span className="text-[10px] font-black text-slate-400 mt-1 uppercase">{info}</span>
-    </div>
-  );
-
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      
+      {/* SELECTOR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
         <div>
           <h2 className="font-black text-2xl uppercase italic tracking-tighter text-slate-900 flex items-center gap-2">
@@ -134,7 +126,7 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
             <SelectTrigger className="w-[220px] h-12 rounded-2xl border-2 border-white bg-white font-black uppercase text-xs shadow-sm">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-2xl border-slate-100">
+            <SelectContent className="rounded-2xl">
               {LOTTERIES.map(l => (
                 <SelectItem key={l.id} value={l.id} className="font-bold text-xs uppercase">
                   <div className="flex items-center gap-2">
@@ -152,60 +144,76 @@ export function HourlyPredictionView({ lotteryId: externalLotteryId, onLotteryCh
       </div>
 
       {loading ? (
-        <div className="py-32 text-center">
-           <Loader2 className="animate-spin mx-auto text-emerald-600" size={48} />
-           <p className="mt-4 font-black text-xs uppercase tracking-widest text-slate-400">Analizando Datos...</p>
-        </div>
+        <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-emerald-600" size={48} /></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-slate-900 p-8 rounded-[3.5rem] border-b-8 border-emerald-500 shadow-2xl text-white relative overflow-hidden">
+            
+            {/* BANNER RECOMENDACIÓN */}
+            <div className="bg-slate-900 p-6 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl text-white relative overflow-hidden">
               <div className="absolute right-[-20px] bottom-[-20px] size-48 opacity-10 rotate-12 text-emerald-400"><ShieldCheck size={180} /></div>
               <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
                 <div className="bg-emerald-500 p-4 rounded-[2rem] shadow-[0_0_20px_rgba(16,185,129,0.4)]"><Zap size={40} className="fill-white text-white animate-pulse" /></div>
                 <div className="text-center md:text-left flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Recomendación Maestra</p>
-                  <h2 className="text-2xl lg:text-3xl font-black italic uppercase mt-1 leading-none">LA IA SUGIERE: {stats.recommendation}</h2>
-                  <p className="text-sm mt-2 font-medium text-slate-300">Máximo potencial: <span className="text-emerald-400 font-black underline">{stats.bestHours[0]?.time || "04:00 PM"}</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Análisis de Ciclo Activo</p>
+                  <h2 className="text-2xl lg:text-3xl font-black italic uppercase leading-none mt-1">Animal Maestro: {stats.recommendation}</h2>
+                  <p className="text-sm mt-2 font-medium text-slate-300">Mejor oportunidad: <span className="text-emerald-400 font-black underline">{stats.bestHours[0]?.time || "---"}</span></p>
                 </div>
               </div>
             </div>
 
+            {/* PRÓXIMO SORTEO GIGANTE */}
             <div className="bg-white p-10 rounded-[4.5rem] border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] flex flex-col items-center relative overflow-hidden">
                <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full font-black text-xs italic">
                  <Clock size={14} className="text-emerald-400" /> {pred?.time || '--:--'} PRÓXIMO
                </div>
                <div className="w-64 h-64 lg:w-80 lg:h-80 flex items-center justify-center bg-white mt-4">
                   <img src={getAnimalImageUrl(pred?.code || '0')} className="w-full h-full object-contain z-10" alt="" crossOrigin="anonymous" onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }} />
-                  <span className="absolute inset-0 flex items-center justify-center text-[180px] lg:text-[250px] font-black text-slate-50 select-none font-mono">#{pred?.code || '0'}</span>
                </div>
                <div className="mt-4 bg-emerald-600 text-white px-10 py-4 rounded-3xl font-black text-3xl shadow-xl border-b-8 border-emerald-800 uppercase italic">
                   {pred?.probability || 0}% ÉXITO
                </div>
             </div>
 
+            {/* BLOQUES TÉRMICOS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-orange-600 mb-6 bg-orange-50 py-2 rounded-full italic tracking-widest">Calientes</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {stats.hot.map(a => <MiniCard key={a.code} code={a.code} label={<Flame size={12} className="text-white fill-white"/>} color="bg-orange-500" info={`${a.count} Hits`} />)}
+                  {stats.hot.map(a => (
+                    <div key={a.code} className="flex flex-col items-center">
+                      <img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" alt="" />
+                      <span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.count} Hits</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-blue-600 mb-6 bg-blue-50 py-2 rounded-full italic tracking-widest">Fríos</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {stats.cold.map(a => <MiniCard key={a.code} code={a.code} label={<Snowflake size={12} className="text-white"/>} color="bg-blue-500" info={`${a.count} Hits`} />)}
+                  {stats.cold.map(a => (
+                    <div key={a.code} className="flex flex-col items-center">
+                      <img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" alt="" />
+                      <span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.count} Hits</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="bg-white rounded-[3rem] p-6 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] text-center">
                 <p className="text-[10px] font-black uppercase text-slate-700 mb-6 bg-slate-100 py-2 rounded-full italic tracking-widest">Enjaulados</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {stats.caged.map(a => <MiniCard key={a.code} code={a.code} label={<Lock size={12} className="text-white"/>} color="bg-slate-800" info={`${a.daysSinceLast} Días`} />)}
+                  {stats.caged.map(a => (
+                    <div key={a.code} className="flex flex-col items-center">
+                      <img src={getAnimalImageUrl(a.code)} className="w-20 h-20 object-contain" alt="" />
+                      <span className="text-[9px] font-black text-slate-400 mt-1 uppercase">{a.daysSinceLast} Días</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
+          {/* COLUMNA DERECHA */}
           <div className="space-y-6">
             <div className="bg-slate-900 p-8 rounded-[3.5rem] text-white shadow-2xl border-b-8 border-emerald-500">
               <h4 className="font-black text-xs uppercase text-emerald-400 mb-8 italic flex items-center gap-2 tracking-widest"><Clock size={16} /> Horarios de Poder</h4>
