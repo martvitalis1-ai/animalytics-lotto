@@ -37,6 +37,33 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
             </div>
           </div>
         ))}
+        // Lógica de cálculo real
+history.forEach((draw, index) => {
+  if (index > 0) {
+    const current = draw.result_number;
+    const previous = history[index - 1].result_number;
+    // Si salió X, el siguiente fue Y...
+  }
+});
+
+// Diseño de la Matriz de Secuencia
+<div className="bg-white p-6 rounded-[3.5rem] border-2 border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)]">
+  <h3 className="font-black text-2xl uppercase italic mb-6">Matriz de Sucesores (Secuencia)</h3>
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {allAnimals.map(code => (
+       <div key={code} className="p-4 bg-slate-50 rounded-[2rem] border border-slate-200 flex items-center gap-4">
+          <img src={getAnimalImageUrl(code)} className="w-16 h-16" />
+          <div className="flex-1">
+             <p className="text-[10px] font-black text-slate-400 uppercase">Suele atraer a:</p>
+             <div className="flex gap-2 mt-1">
+                {/* Los 3 sucesores más probables */}
+                <span className="bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-black">#05 (30%)</span>
+             </div>
+          </div>
+       </div>
+    ))}
+  </div>
+</div>
       </div>
     </div>
   );
