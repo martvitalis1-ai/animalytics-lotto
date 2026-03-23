@@ -2,7 +2,7 @@
 
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// DICCIONARIOS QUE PIDE constants.ts - EXPORTACIÓN EXPLÍCITA
+// 1. DICCIONARIO STANDARD (0-36)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -14,6 +14,7 @@ export const ANIMALS_STANDARD: Record<string, string> = {
   '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA'
 };
 
+// 2. DICCIONARIO GUACHARO (0-75)
 export const ANIMALS_GUACHARO: Record<string, string> = {
   ...ANIMALS_STANDARD,
   '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO',
@@ -26,6 +27,7 @@ export const ANIMALS_GUACHARO: Record<string, string> = {
   '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO'
 };
 
+// 3. DICCIONARIO GUACHARITO (0-99)
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   ...ANIMALS_GUACHARO,
   '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO',
