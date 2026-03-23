@@ -51,18 +51,14 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            <TabsList className="bg-white p-1 rounded-full h-16 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex overflow-x-auto no-scrollbar w-full md:w-auto">
-              <TabsTrigger value="ia" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white flex-1 transition-all">IA</TabsTrigger>
-              <TabsTrigger value="explosivo" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-orange-500 data-[state=active]:text-white flex-1">Explosivo</TabsTrigger>
-              <TabsTrigger value="deportes" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white flex-1">Deportes</TabsTrigger>
-              <TabsTrigger value="resultados" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white flex-1">Resultados</TabsTrigger>
-              <TabsTrigger value="matriz" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-slate-900 data-[state=active]:text-white flex-1">Matriz</TabsTrigger>
-              <TabsTrigger value="guia" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-500 data-[state=active]:text-white flex-1">Guía</TabsTrigger>
-              <TabsTrigger value="agencias" className="rounded-full px-6 font-black text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white flex-1">Agencias</TabsTrigger>
-              {isMaster && <TabsTrigger value="admin" className="rounded-full px-4 bg-slate-900 text-white ml-2"><Settings size={14}/></TabsTrigger>}
-            </TabsList>
-          </div>
-        </div>
+<TabsList className="bg-white p-1 rounded-full h-16 border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex overflow-x-auto no-scrollbar w-full">
+  {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
+    <TabsTrigger key={t} value={t} className="rounded-full px-6 font-black text-[11px] uppercase transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:scale-110 flex-1">
+      {t}
+    </TabsTrigger>
+  ))}
+  <TabsTrigger value="admin" className="rounded-full px-4 bg-slate-900 text-white ml-2"><Settings size={14}/></TabsTrigger>
+</TabsList>
 
         <div className="p-4 max-w-7xl mx-auto pb-20">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
