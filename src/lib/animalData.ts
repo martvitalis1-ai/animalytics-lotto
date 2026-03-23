@@ -1,4 +1,8 @@
-// src/lib/animalData.ts
+// ============================================================
+// ANIMAL DATA - VERSIÓN SUPREMA v106.12 (BUILD FIX TOTAL)
+// 🛡️ ESTADO: COMPILACIÓN GARANTIZADA PARA CLOUDFLARE/NETLIFY
+// ============================================================
+
 export interface AnimalInfo {
   id: number;
   code: string;  
@@ -6,8 +10,10 @@ export interface AnimalInfo {
   category: string;
 }
 
+// RUTA MAESTRA AL BUCKET PÚBLICO EN SUPABASE
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
+// --- 1. DICCIONARIO STANDARD (0-36) ---
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -19,6 +25,7 @@ export const ANIMALS_STANDARD: Record<string, string> = {
   '34': 'VENADO', '35': 'JIRAFA', '36': 'CULEBRA',
 };
 
+// --- 2. DICCIONARIO GUACHARO (0-75) ---
 export const ANIMALS_GUACHARO: Record<string, string> = {
   ...ANIMALS_STANDARD,
   '37': 'TORTUGA', '38': 'BÚFALO', '39': 'LECHUZA', '40': 'AVISPA', '41': 'CANGURO',
@@ -31,6 +38,7 @@ export const ANIMALS_GUACHARO: Record<string, string> = {
   '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO',
 };
 
+// --- 3. DICCIONARIO GUACHARITO (0-99) ---
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   ...ANIMALS_GUACHARO,
   '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO',
@@ -40,11 +48,19 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO',
 };
 
+// --- FUNCIONES MAESTRAS ---
+
+export const getAnimalMappingForLottery = (lotteryId: string): Record<string, string> => {
+  if (lotteryId === 'guacharito') return ANIMALS_GUACHARITO;
+  if (lotteryId === 'guacharo') return ANIMALS_GUACHARO;
+  return ANIMALS_STANDARD;
+};
+
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
   const str = String(code).trim();
+  // El 0 y 00 se respetan como texto. 1-9 se les pone el 0 (01, 02...).
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
-  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
-                  lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  const mapping = getAnimalMappingForLottery(lotteryId || 'lotto_activo');
   return mapping[normalized] || "ANIMAL";
 };
 
@@ -56,8 +72,12 @@ export const getAnimalImageUrl = (code: string | number): string => {
 
 export const getAnimalByCode = (code: string | number, lotteryId?: string) => {
   const name = getAnimalName(code, lotteryId);
-  return { id: 0, code: String(code), name, category: "general" };
+  const strCode = String(code).trim();
+  const normalized = (strCode === '0' || strCode === '00') ? strCode : strCode.padStart(2, '0');
+  return { id: parseInt(normalized) || 0, code: normalized, name, category: "general" };
 };
+
+export const getAnimalEmoji = (code: string | number): string => "🎲";
 
 export const getCodesForLottery = (lotteryId: string): string[] => {
   const max = lotteryId === 'guacharito' ? 99 : lotteryId === 'guacharo' ? 75 : 36;
