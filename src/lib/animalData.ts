@@ -1,6 +1,10 @@
+
 // src/lib/animalData.ts
 
-// 1. DICCIONARIOS EXPORTADOS (NOMBRES EXACTOS PARA EL BUILD)
+// 1. RUTA AL BUCKET
+export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
+
+// 2. DICCIONARIOS EXPORTADOS (NOMBRES EXACTOS PARA QUE EL BUILD PASE)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -32,8 +36,6 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '91': 'MORROCOY', '92': 'CISNE', '93': 'GAVIOTA', '94': 'PAUJÍ', '95': 'ESCARABAJO',
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
 };
-
-export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
