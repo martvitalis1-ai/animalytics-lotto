@@ -1,7 +1,7 @@
 // src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// Diccionarios requeridos por constants.ts
+// 🛡️ DICCIONARIOS EXPORTADOS (NOMBRES EXACTOS PARA EL BUILD)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
