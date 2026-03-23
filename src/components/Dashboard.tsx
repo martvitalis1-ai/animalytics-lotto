@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Brain, Flame, Trophy, Dices, FileText, Grid3X3, PlayCircle, ShoppingCart, LogOut } from "lucide-react";
 import { LOTTERIES } from '../lib/constants';
 import { getLotteryLogo } from './LotterySelector';
@@ -9,7 +9,7 @@ import { SequenceMatrixView } from "./SequenceMatrixView";
 import { ExplosiveData } from "./ExplosiveData";
 import { ResultsPanel } from "./ResultsPanel";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
@@ -18,15 +18,17 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
-      {/* HEADER DE COMANDO */}
-      <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
+      {/* HEADER DE ALTO IMPACTO (Negro y Verde) */}
+      <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-600 px-4 py-4 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="font-black text-xl italic uppercase tracking-tighter text-emerald-400">ANIMALYTICS PRO</h1>
-          
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-xl p-1 border-2 border-emerald-500 shadow-lg">
+          <div className="flex items-center gap-4">
+            <h1 className="font-black text-2xl italic tracking-tighter text-emerald-400">ANIMALYTICS PRO</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="bg-white rounded-2xl p-1 border-2 border-emerald-500">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-40 lg:w-48 h-8 border-none bg-transparent font-black uppercase text-[10px] text-slate-900 focus:ring-0">
+                <SelectTrigger className="w-40 lg:w-56 h-10 border-none bg-transparent font-black uppercase text-[11px] text-slate-900 focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-2 border-slate-900 shadow-2xl z-[100]">
@@ -40,35 +42,51 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-500 rounded-full"><LogOut size={20} /></Button>
+            <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-600 rounded-full"><LogOut size={20} /></Button>
           </div>
         </div>
       </header>
 
-      <main className="p-2 md:p-6 max-w-7xl mx-auto space-y-6">
+      <main className="p-2 md:p-6 max-w-7xl mx-auto space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="flex justify-center overflow-x-auto no-scrollbar py-2 -mx-2 px-2 sticky top-[75px] z-40">
-            <TabsList className="bg-white p-1 rounded-full h-14 border-2 border-slate-900 flex-nowrap shrink-0">
-              <TabsTrigger value="ia" className="rounded-full px-5 font-black text-[10px] uppercase gap-1 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">IA</TabsTrigger>
-              <TabsTrigger value="explosivo" className="rounded-full px-5 font-black text-[10px] uppercase gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white">Explosivo</TabsTrigger>
-              <TabsTrigger value="deportes" className="rounded-full px-5 font-black text-[10px] uppercase gap-1">Deportes</TabsTrigger>
-              <TabsTrigger value="ruleta" className="rounded-full px-5 font-black text-[10px] uppercase gap-1">Ruleta</TabsTrigger>
-              <TabsTrigger value="resultados" className="rounded-full px-5 font-black text-[10px] uppercase gap-1">Resultados</TabsTrigger>
-              <TabsTrigger value="matriz" className="rounded-full px-5 font-black text-[10px] uppercase gap-1">Matriz</TabsTrigger>
-              <TabsTrigger value="guia" className="rounded-full px-5 font-black text-[10px] uppercase gap-1">Guía</TabsTrigger>
-              <TabsTrigger value="agencias" className="rounded-full px-5 font-black text-[10px] uppercase gap-1 bg-emerald-500/10 text-emerald-700">Agencias</TabsTrigger>
+          
+          {/* NAVEGACIÓN DE 8 SECCIONES COMPLETA (FIX PARA MÓVIL) */}
+          <div className="flex justify-start md:justify-center overflow-x-auto no-scrollbar py-2 -mx-2 px-2 sticky top-[85px] z-40">
+            <TabsList className="bg-white p-1 rounded-full h-16 border-2 border-slate-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex-nowrap shrink-0">
+              <TabsTrigger value="ia" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">IA</TabsTrigger>
+              <TabsTrigger value="explosivo" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white">Explosivo</TabsTrigger>
+              <TabsTrigger value="deportes" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">Deportes</TabsTrigger>
+              <TabsTrigger value="ruleta" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">Ruleta</TabsTrigger>
+              <TabsTrigger value="resultados" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">Resultados</TabsTrigger>
+              <TabsTrigger value="matriz" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">Matriz</TabsTrigger>
+              <TabsTrigger value="guia" className="rounded-full px-6 font-black text-[11px] uppercase gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">Guía</TabsTrigger>
+              {isMaster && <TabsTrigger value="admin" className="rounded-full px-5 font-black text-[11px] uppercase bg-slate-900 text-white ml-2">+</TabsTrigger>}
             </TabsList>
           </div>
 
-          <TabsContent value="ia" className="outline-none"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="resultados" className="outline-none"><ResultsPanel lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="matriz" className="outline-none"><FrequencyHeatmap lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="explosivo" className="outline-none"><ExplosiveData lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="ia"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="resultados"><ResultsPanel lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="matriz" className="space-y-12"><FrequencyHeatmap lotteryId={globalLottery} /><SequenceMatrixView lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="explosivo"><ExplosiveData lotteryId={globalLottery} /></TabsContent>
           
-          <TabsContent value="deportes" className="outline-none">
-            <div className="p-20 text-center border-2 border-slate-900 bg-white rounded-[4rem] flex flex-col items-center">
-              <Trophy size={60} className="text-slate-200 mb-4" />
-              <h3 className="font-black uppercase text-2xl italic">Sincronizando Líneas Deportivas</h3>
+          <TabsContent value="deportes">
+            <div className="p-20 text-center border-4 border-slate-900 bg-white rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+               <Trophy size={60} className="mx-auto mb-4 text-slate-200" />
+               <h3 className="font-black uppercase text-2xl italic text-slate-800 tracking-tighter">Sincronizando Líneas de Las Vegas</h3>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="ruleta">
+            <div className="p-20 text-center border-4 border-slate-900 bg-white rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+               <Dices size={60} className="mx-auto mb-4 text-slate-200" />
+               <h3 className="font-black uppercase text-2xl italic text-slate-800 tracking-tighter">Analítica de Ruleta Activa</h3>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="guia">
+            <div className="p-20 text-center border-4 border-slate-900 bg-white rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+               <PlayCircle size={60} className="mx-auto mb-4 text-slate-200" />
+               <h3 className="font-black uppercase text-2xl italic text-slate-800 tracking-tighter">Guía de Operación Maestro</h3>
             </div>
           </TabsContent>
         </Tabs>
