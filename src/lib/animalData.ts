@@ -1,10 +1,8 @@
-
 // src/lib/animalData.ts
 
-// 1. RUTA AL BUCKET
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// 2. DICCIONARIOS EXPORTADOS (NOMBRES EXACTOS PARA QUE EL BUILD PASE)
+// --- DICCIONARIO UNIFICADO ---
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
