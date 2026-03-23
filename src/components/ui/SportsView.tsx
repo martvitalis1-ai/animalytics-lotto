@@ -4,7 +4,7 @@ export function SportsView() {
   const games = [
     { league: "NBA - USA", match: "LAKERS vs CELTICS", line: "O/U 228.5", pick: "OVER" },
     { league: "MLB - USA", match: "YANKEES vs RED SOX", line: "RL -1.5", pick: "YANKEES" },
-    { league: "EUROPA - CHAMPIONS", match: "REAL MADRID vs MAN CITY", line: "Gana/Empata", pick: "MADRID" }
+    { league: "CHAMPIONS", match: "REAL MADRID vs MAN CITY", line: "Gana/Empata", pick: "MADRID" }
   ];
 
   return (
@@ -19,14 +19,14 @@ export function SportsView() {
            </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-20">
         {games.map((g, i) => (
           <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
              <span className="font-black text-[10px] text-emerald-500 uppercase">{g.league}</span>
-             <h4 className="font-black text-xl italic mt-2 uppercase">{g.match}</h4>
+             <h4 className="font-black text-xl italic mt-2 uppercase text-slate-800">{g.match}</h4>
              <div className="mt-4 flex justify-between items-center border-t pt-4">
                 <span className="font-bold text-slate-400">{g.line}</span>
-                <span className="bg-slate-900 text-emerald-400 px-4 py-1 rounded-full font-black text-xs">PICK: {g.pick}</span>
+                <span className="bg-slate-900 text-emerald-400 px-4 py-1 rounded-full font-black text-xs uppercase">PICK: {g.pick}</span>
              </div>
           </div>
         ))}
