@@ -28,12 +28,12 @@ export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
   return (
     <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl mt-10">
       <h3 className="font-black text-2xl uppercase italic mb-8 text-slate-800">Matriz de Secuencia</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {codes.slice(0, 18).map(code => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {codes.slice(0, 15).map(code => (
           <div key={code} className="bg-slate-50 border-2 border-slate-200 p-4 rounded-3xl flex items-center gap-4 hover:border-emerald-500 transition-all">
             <img src={getAnimalImageUrl(code)} className="w-16 h-16 object-contain" />
             <div className="flex-1">
-              <p className="text-[10px] font-black uppercase text-slate-400 leading-none">Después de #{code} sigue:</p>
+              <p className="text-[10px] font-black uppercase text-slate-400">SALE TRAS #{code}:</p>
               <div className="flex gap-2 mt-2">
                 {Array.from(new Set(sequences[code] || [])).slice(0, 3).map((next: any) => (
                   <img key={next} src={getAnimalImageUrl(next)} className="w-10 h-10 object-contain drop-shadow-md" />
