@@ -19,3 +19,12 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+@layer components {
+  .bunker-card {
+    @apply bg-white border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-[3rem];
+  }
+  .bunker-header {
+    @apply bg-slate-900 text-white border-b-8 border-emerald-500 shadow-2xl;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
