@@ -19,7 +19,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ FUNCIÓN INTERNA PARA ASEGURAR LOGOS CORRECTOS Y SIN ERRORES
+  // 🛡️ MAPEADO DEFINITIVO DE LOGOS TRANSPARENTES
   const getCorrectLogo = (id: string) => {
     const baseUrl = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
     const mapping: Record<string, string> = {
@@ -53,12 +53,18 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
 
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {/* SELECTOR CORREGIDO: SOLO UN LOGO Y MAPEADO CORRECTO */}
+            {/* SELECTOR: LOGO ÚNICO, SIN FONDO Y CORRECTO */}
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[160px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
-                  {/* SelectValue renderiza automáticamente el contenido del SelectItem seleccionado */}
-                  <SelectValue />
+                <SelectTrigger className="w-[155px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={getCorrectLogo(globalLottery)} 
+                      className="w-7 h-7 md:w-8 md:h-8 object-contain shrink-0" 
+                      alt=""
+                    />
+                    <SelectValue />
+                  </div>
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
@@ -77,7 +83,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20">
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20 transition-all active:scale-95">
               <Send size={14} className="fill-white" />
             </Button>
 
@@ -89,6 +95,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* NAVEGACIÓN DOS PISOS */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
