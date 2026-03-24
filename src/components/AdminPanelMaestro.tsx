@@ -10,7 +10,7 @@ import { toast } from "sonner";
 export function AdminPanelMaestro() {
   const [auth, setAuth] = useState(false);
   const [pass, setPass] = useState("");
-  const [targetLot, setTargetLot] = useState("lotto_activo");
+  const [adminTab, setAdminTab] = useState<'resultados' | 'accesos' | 'explosivos'>('resultados');
 
   if (!auth) {
     return (
@@ -25,24 +25,30 @@ export function AdminPanelMaestro() {
 
   return (
     <div className="space-y-12 pb-40 animate-in zoom-in duration-500">
-      <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl"><h3 className="font-black text-2xl uppercase italic mb-8"><Database /> Insertar Resultados</h3><ResultsInsert /></div>
-      <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl">
-         <h3 className="font-black text-2xl uppercase italic flex items-center gap-3 mb-8 text-emerald-600"><Gift size={30} /> Configuración de Regalos por Lotería</h3>
-         <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-               <label className="font-black text-xs uppercase opacity-50">1. Seleccionar Lotería</label>
-               <Select value={targetLot} onValueChange={setTargetLot}>
-                 <SelectTrigger className="border-4 border-slate-900 h-14 rounded-xl font-black"><SelectValue /></SelectTrigger>
-                 <SelectContent>{LOTTERIES.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
-               </Select>
-            </div>
-            <div className="space-y-4">
-               <label className="font-black text-xs uppercase opacity-50">2. Animales de Regalo</label>
-               <Input className="border-4 border-slate-900 h-14 rounded-xl font-black" placeholder="Ej: 12, 05, 31" />
-            </div>
-         </div>
-         <Button className="w-full mt-8 h-14 bg-emerald-500 rounded-xl font-black uppercase text-white shadow-xl">Guardar en {targetLot}</Button>
+      <div className="flex justify-center gap-4 bg-white p-2 rounded-full border-4 border-slate-900 shadow-xl max-w-2xl mx-auto">
+        <button onClick={() => setAdminTab('resultados')} className={`px-8 py-3 rounded-full font-black text-xs uppercase transition-all ${adminTab === 'resultados' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Sorteos</button>
+        <button onClick={() => setAdminTab('accesos')} className={`px-8 py-3 rounded-full font-black text-xs uppercase transition-all ${adminTab === 'accesos' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Accesos VIP</button>
+        <button onClick={() => setAdminTab('explosivos')} className={`px-8 py-3 rounded-full font-black text-xs uppercase transition-all ${adminTab === 'explosivos' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Explosivos</button>
       </div>
+
+      {adminTab === 'resultados' && <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl"><ResultsInsert /></div>}
+      
+      {adminTab === 'explosivos' && (
+        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl">
+           <h3 className="font-black text-2xl uppercase italic flex items-center gap-3 mb-8 text-emerald-600"><Gift size={30} /> Configuración de Regalos</h3>
+           <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                 <label className="font-black text-xs uppercase opacity-50 text-slate-900">3 Animales Regalo</label>
+                 <Input className="border-4 border-slate-900 h-14 rounded-xl font-black text-slate-900" />
+              </div>
+              <div className="space-y-4">
+                 <label className="font-black text-xs uppercase opacity-50 text-slate-900">Pirámide / Mapa</label>
+                 <div className="border-4 border-dashed border-slate-100 p-8 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50"><ImageIcon className="text-slate-200" size={40} /></div>
+              </div>
+           </div>
+           <Button className="w-full mt-8 h-14 bg-emerald-500 rounded-xl font-black uppercase text-white shadow-xl">Guardar Cambios</Button>
+        </div>
+      )}
     </div>
   );
 }
