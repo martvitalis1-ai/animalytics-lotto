@@ -1,4 +1,3 @@
-// src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
 export const ANIMALS_STANDARD: Record<string, string> = {
@@ -15,15 +14,12 @@ export const ANIMALS_STANDARD: Record<string, string> = {
 export const ANIMALS_GUACHARO: Record<string, string> = { ...ANIMALS_STANDARD, '37': 'TORTUGA', '75': 'GUÁCHARO' };
 export const ANIMALS_GUACHARITO: Record<string, string> = { ...ANIMALS_GUACHARO, '76': 'RINOCERONTE', '99': 'GUACHARITO' };
 
-export const getCodesForLottery = (lotteryId: string): string[] => {
+export const getCodesForLottery = (id: string): string[] => {
   let max = 36;
-  if (lotteryId === 'guacharo') max = 75;
-  if (lotteryId === 'guacharito') max = 99;
-  
+  if (id === 'guacharo') max = 75;
+  if (id === 'guacharito') max = 99;
   const codes = ['0', '00'];
-  for (let i = 1; i <= max; i++) {
-    codes.push(i.toString().padStart(2, '0'));
-  }
+  for (let i = 1; i <= max; i++) codes.push(i.toString().padStart(2, '0'));
   return codes;
 };
 
@@ -33,8 +29,6 @@ export const getAnimalImageUrl = (code: string | number): string => {
 };
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
-  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
-                  lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
-  const normalized = String(code).trim().padStart(2, '0').replace('000', '00');
-  return mapping[normalized] || "ANIMAL";
+  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  return mapping[String(code).trim().padStart(2, '0')] || "ANIMAL";
 };
