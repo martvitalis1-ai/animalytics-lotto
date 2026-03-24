@@ -82,9 +82,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
-          {isMaster && <TabsContent value="admin" className="mt-0"><AdminPanelMaestro /></TabsContent>}
-        </div>
-      </Tabs>
-    </div>
-  );
-}
+          {isMaster && (
+  <TabsContent value="admin" className="mt-0">
+     <AdminPanelMaestro userRole={userRole} /> 
+  </TabsContent>
+)}
