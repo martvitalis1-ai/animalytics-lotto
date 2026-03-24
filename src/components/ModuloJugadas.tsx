@@ -1,123 +1,114 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { getAnimalImageUrl } from '../lib/animalData';
-import { getDrawTimesForLottery } from '../lib/constants';
-import { Calendar, Loader2, history } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Send, Trash2, Wallet, CheckCircle2, Star, Lock, RefreshCw, Plus, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { getAnimalImageUrl, getCodesForLottery, ANIMALS_STANDARD } from '../lib/animalData';
 
-export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
-  const [results, setResults] = useState<any[]>([]);
+const IMG_BASE = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
+const LOTERIAS = [
+  { id: "granjita", label: "LA GRANJITA", img: `${IMG_BASE}logo-granjita.png` },
+  { id: "lotto_activo", label: "LOTTO ACTIVO", img: `${IMG_BASE}logo-lotto-activo.png` },
+  { id: "guacharo", label: "GUÁCHARO", img: `${IMG_BASE}logo-guacharito.png` }, 
+  { id: "guacharito", label: "GUACHARITO", img: `${IMG_BASE}logo-guacharo.png` },
+  { id: "lotto_rey", label: "LOTTO REY", img: `${IMG_BASE}logo-lotto-rey.png` },
+  { id: "selva_plus", label: "SELVA PLUS", img: `${IMG_BASE}logo-selva-plus.png` },
+];
+
+export function ModuloJugadas({ forcedAgency }: { forcedAgency?: any }) {
+  const [agencias, setAgencias] = useState<any[]>([]);
+  const [selectedAgencia, setSelectedAgencia] = useState<any>(null);
+  const [currentJugadas, setCurrentJugadas] = useState<any[]>([]);
+  const [selectedLot, setSelectedLot] = useState("lotto_activo"); 
+  const [selectedNum, setSelectedNum] = useState<string | null>(null);
+  const [selectedHours, setSelectedHours] = useState<string[]>([]);
+  const [monto, setMonto] = useState("10");
   const [loading, setLoading] = useState(true);
   
-  // 📅 SELECTOR DE FECHA (Igual al video para buscar historial)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-  // Obtenemos los horarios (08:00 AM a 07:00 PM)
-  const times = getDrawTimesForLottery(lotteryId);
+  const [userPM, setUserPM] = useState(localStorage.getItem('u_pm_tlf') || "");
+  const [userCedula, setUserCedula] = useState(localStorage.getItem('u_pm_cedula') || "");
+  const [userBanco, setUserBanco] = useState(localStorage.getItem('u_pm_banco') || "");
 
   useEffect(() => {
-    async function fetchResults() {
-      setLoading(true);
+    const init = async () => {
       try {
-        // 🛡️ SINCRONIZACIÓN TOTAL CON SQL
-        // Usamos el ID de la lotería y la fecha elegida
-        const { data, error } = await supabase
-          .from('lottery_results')
-          .select('*')
-          .eq('lottery_type', lotteryId)
-          .eq('draw_date', selectedDate)
-          .order('draw_time', { ascending: true });
+        if (forcedAgency) setSelectedAgencia(forcedAgency);
+        else {
+          const { data } = await supabase.from('agencias').select('*').eq('activa', true);
+          if (data) setAgencias(data);
+        }
+      } catch (e) { console.error(e); } 
+      finally { setLoading(false); }
+    };
+    init();
+  }, [forcedAgency]);
 
-        if (error) throw error;
-        setResults(data || []);
-      } catch (err) {
-        console.error("Error absorbiendo historial:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchResults();
-  }, [lotteryId, selectedDate]);
+  const filteredNumbers = useMemo(() => getCodesForLottery(selectedLot), [selectedLot]);
+  const horas = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
+
+  const agregar = () => {
+    if (!selectedNum || !monto || selectedHours.length === 0) return toast.error("Faltan datos");
+    setCurrentJugadas([...currentJugadas, { loteria: selectedLot, numero: selectedNum, monto: parseFloat(monto), horas: [...selectedHours] }]);
+    setSelectedNum(null);
+  };
+
+  const msgUrl = useMemo(() => {
+    if (!selectedAgencia || currentJugadas.length === 0) return "#";
+    let tlf = selectedAgencia.whatsapp?.toString().replace(/\D/g, '');
+    tlf = tlf.startsWith('58') ? tlf : '58' + tlf.replace(/^0/, '');
+    let msg = `SOLICITUD DE JUGADA\nDATOS DE COBRO:\n🏦 BANCO: ${userBanco}\n📞 TLF: ${userPM}\n🆔 CI: ${userCedula}\n\n`;
+    currentJugadas.forEach(j => { msg += `${j.loteria.toUpperCase()}\nAnimal: ${j.numero}\nHoras: ${j.horas.join(", ")}\nBs ${j.monto}\n---\n`; });
+    return `https://wa.me/${tlf}?text=${encodeURIComponent(msg)}`;
+  }, [selectedAgencia, currentJugadas, userBanco, userPM, userCedula]);
+
+  if (loading) return <div className="p-20 text-center font-black animate-pulse">Sincronizando...</div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
-      
-      {/* CABECERA BÚNKER CON SELECTOR DE FECHA (FOTO 3 Y 4) */}
-      <div className="bg-slate-900 text-white p-8 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4">
-           <div className="bg-emerald-500 p-3 rounded-2xl shadow-lg text-slate-900">
-              <history size={30} />
-           </div>
-           <h2 className="font-black text-3xl uppercase italic tracking-tighter">Bóveda Histórica</h2>
+    <div className="w-full bg-white min-h-screen text-slate-900 pb-40 flex flex-col items-center">
+      <div className="max-w-[1400px] w-full grid lg:grid-cols-[1fr_400px] gap-8 px-4 mt-10">
+        <div className="space-y-8">
+          <Card className="p-8 bg-emerald-600 text-white rounded-[3rem] border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="grid gap-3">
+              <Input value={userBanco} onChange={e => {setUserBanco(e.target.value); localStorage.setItem('u_pm_banco', e.target.value)}} placeholder="Tu Banco" className="bg-white/20 border-none text-white h-12 rounded-xl font-black text-center" />
+              <Input value={userPM} onChange={e => {setUserPM(e.target.value); localStorage.setItem('u_pm_tlf', e.target.value)}} placeholder="Teléfono Pago Móvil" className="bg-white/20 border-none text-white h-12 rounded-xl font-black text-center" />
+              <Input value={userCedula} onChange={e => {setUserCedula(e.target.value); localStorage.setItem('u_pm_cedula', e.target.value)}} placeholder="Cédula" className="bg-white/20 border-none text-white h-12 rounded-xl font-black text-center" />
+            </div>
+          </Card>
+
+          {/* REJILLA ANIMALES GIGANTES (FOTO 7) */}
+          <Card className="p-4 md:p-10 bg-white border-4 border-slate-900 rounded-[4rem] shadow-2xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
+              {filteredNumbers.map(n => (
+                <button 
+                  key={n} onClick={() => setSelectedNum(n)} 
+                  className={`flex items-center justify-center p-4 rounded-[3rem] border-4 transition-all aspect-square ${selectedNum === n ? 'border-emerald-500 bg-emerald-50 scale-110 shadow-2xl z-20' : 'bg-white border-slate-100'}`}
+                >
+                  <img src={getAnimalImageUrl(n)} className="w-full h-full object-contain" alt={n} />
+                </button>
+              ))}
+            </div>
+          </Card>
         </div>
-        
-        {/* Input de Fecha Estilo Profesional */}
-        <div className="flex items-center gap-3 bg-white text-slate-900 px-6 py-3 rounded-2xl border-4 border-slate-900 shadow-lg w-full md:w-auto">
-          <Calendar className="text-emerald-500" size={24} />
-          <input 
-            type="date" 
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="font-black uppercase text-lg border-none focus:ring-0 outline-none w-full cursor-pointer"
-          />
+
+        <div className="space-y-6">
+          <Card className="p-8 bg-white border-4 border-slate-900 rounded-[4rem] shadow-2xl">
+            <h4 className="text-center font-black uppercase text-lg border-b-2 pb-4 mb-6 italic">Resumen Ticket</h4>
+            <div className="space-y-4 max-h-[300px] overflow-y-auto no-scrollbar">
+              {currentJugadas.map((j, i) => (
+                <div key={i} className="flex justify-between items-center border-b pb-2">
+                   <p className="font-black text-xs">#{j.numero} - {j.loteria}</p>
+                   <button onClick={() => setCurrentJugadas(prev => prev.filter((_, idx) => idx !== i))} className="text-red-500"><Trash2 size={16}/></button>
+                </div>
+              ))}
+            </div>
+            <Button onClick={() => { if (!userPM || !userBanco) return toast.error("¡Completa datos!"); window.open(msgUrl, '_blank'); }} className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xl shadow-xl mt-8">
+              ENVIAR JUGADA
+            </Button>
+          </Card>
         </div>
       </div>
-
-      {loading ? (
-        <div className="p-40 text-center flex flex-col items-center justify-center gap-4">
-          <Loader2 className="animate-spin text-emerald-500" size={60} />
-          <p className="font-black uppercase text-sm tracking-[0.3em] text-slate-400">Abriendo Bóveda...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {times.map(time => {
-            // Buscamos si existe resultado para esta hora
-            const res = results.find(r => r.draw_time.trim() === time.trim());
-            
-            return (
-              <div 
-                key={time} 
-                className={`bg-white border-4 border-slate-900 rounded-[3.5rem] p-8 flex flex-col items-center shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] relative min-h-[280px] transition-all hover:scale-105 ${res ? 'opacity-100 ring-8 ring-emerald-500/5' : 'opacity-40'}`}
-              >
-                {/* HORA DEL SORTEO EN CAPSULA */}
-                <span className="absolute top-6 bg-slate-900 text-white px-6 py-1.5 rounded-full font-mono font-black text-xs italic tracking-tighter border-2 border-emerald-500/30 shadow-md">
-                  {time}
-                </span>
-                
-                {res ? (
-                  <div className="flex flex-col items-center mt-8">
-                    {/* IMAGEN 3D GIGANTE */}
-                    <img 
-                      src={getAnimalImageUrl(res.result_number)} 
-                      className="w-40 h-40 md:w-52 md:h-52 object-contain drop-shadow-2xl" 
-                      alt="Resultado"
-                    />
-                    {/* El número ya viene en la imagen, pero lo ponemos discreto abajo para confirmar */}
-                    <span className="font-black text-slate-400 mt-4 text-xs uppercase tracking-widest">
-                       CONFIRMADO #{res.result_number}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-4 pt-8">
-                    <div className="w-24 h-24 rounded-full border-4 border-dashed border-slate-100 flex items-center justify-center">
-                       <Loader2 className="text-slate-100 animate-spin" size={30} />
-                    </div>
-                    <span className="text-slate-200 font-black italic uppercase text-xs text-center px-4">
-                      Pendiente
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* FOOTER DE ESTADO */}
-      {!loading && results.length === 0 && (
-        <div className="p-10 text-center bg-slate-50 border-4 border-dashed border-slate-200 rounded-[3rem]">
-           <p className="text-slate-300 font-black uppercase italic text-xl tracking-widest">No se encontraron sorteos para esta fecha</p>
-        </div>
-      )}
     </div>
   );
 }
