@@ -48,14 +48,6 @@ export function AdminAgencias() {
           </div>
         </div>
       </div>
-      <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl space-y-8">
-        <h3 className="font-black text-2xl uppercase italic flex items-center gap-3 text-pink-600"><Gift size={30} /> Explosivos: Regalos y Pirámide</h3>
-        <div className="grid md:grid-cols-2 gap-10">
-           <div className="space-y-4"><label className="font-black text-xs uppercase opacity-50 text-slate-900">3 Animales Regalo</label><Input className="border-4 border-slate-900 h-14 rounded-2xl font-black text-slate-900" /></div>
-           <div className="space-y-4"><label className="font-black text-xs uppercase opacity-50 text-slate-900">Cargar Pirámide</label><div className="border-4 border-dashed border-slate-100 p-8 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50"><ImageIcon className="text-slate-200" size={40} /></div></div>
-        </div>
-        <Button className="w-full h-16 bg-emerald-500 rounded-2xl font-black uppercase text-white text-xl border-4 border-slate-900 shadow-xl">Guardar Todo</Button>
-      </div>
     </div>
   );
 }
