@@ -3,51 +3,97 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
 
 export function SequenceMatrixView({ lotteryId }: { lotteryId: string }) {
-  const [sequences, setSequences] = useState<any>({});
+  const [sequences, setSequences] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState(true);
+  
+  // Obtenemos los códigos válidos (0-36, 75 o 99)
   const codes = getCodesForLottery(lotteryId);
 
   useEffect(() => {
-    async function analyze() {
-      const dbId = lotteryId === 'granjita' ? 'la_granjita' : lotteryId === 'lotto_rey' ? 'lotto_rey' : lotteryId;
-      const { data } = await supabase.from('lottery_results').select('result_number').eq('lottery_type', dbId).order('created_at', { ascending: true }).limit(400);
-      if (data) {
-        const map: any = {};
-        data.forEach((res, i) => {
-          if (data[i+1]) {
-            const cur = res.result_number;
-            const nxt = data[i+1].result_number;
-            if (!map[cur]) map[cur] = [];
-            map[cur].push(nxt);
-          }
-        });
-        setSequences(map);
-      }
-    }
-    analyze();
-  }, [lotteryId]);
-
-  return (
-    <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-6 md:p-12 shadow-2xl mt-10">
-      <h3 className="font-black text-3xl uppercase italic mb-10 text-slate-800 border-b-4 border-slate-100 pb-4 text-center">Matriz de Secuencia</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-        {codes.slice(0, 16).map(code => (
-          <div key={code} className="bg-slate-50 border-4 border-slate-900 p-6 rounded-[3rem] flex flex-col items-center gap-6 hover:border-emerald-500 transition-all shadow-lg">
-            <div className="flex items-center gap-4 w-full justify-center border-b-2 pb-4">
-                <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-32 md:h-32 object-contain" />
-                <span className="font-black text-4xl italic text-slate-900">#{code}</span>
+    async function analyzeSequences() {
+      setLoading(true);
+      
+      // Filtro para Granjita (la_granjita o granjita)
+      const idsABuscar = [lotteryId, lotteryId.replace('la_',-center">
+            
+            {/* ANIMAL ACTUAL (GIGANTE) */}
+            <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
+               <img 
+                 src={getAnimalImageUrl(code)} 
+                 className="w-full h-full object-contain drop-shadow-2xl" 
+                 alt="Actual"
+               />
             </div>
-            <div className="w-full text-center">
-              <p className="text-[11px] font-black uppercase text-emerald-600 tracking-widest mb-4 italic">Animales que salen después:</p>
-              <div className="flex justify-center gap-4">
-                {Array.from(new Set(sequences[code] || [])).slice(0, 3).map((nxt:any) => (
-                  <div key={nxt} className="bg-white p-2 rounded-2xl border-2 border-slate-200 shadow-sm">
-                    <img src={getAnimalImageUrl(nxt)} className="w-16 h-16 md:w-24 md:h-24 object-contain" />
-                    <p className="font-black text-xs text-center mt-1">#{nxt}</p>
-                  </div>
-                ))}
+
+            {/* SECCIÓN SUCESORES */}
+            <div className="w-full mt-6 border-t-2 border-slate-50 pt-6">
+              <p className="text-[12px] font-black uppercase text-emerald-600 tracking-widest text-center mb-6 italic">
+                Animales que salen después:
+              </p>
+              
+              <div className="flex justify-center gap-4 md:gap-6">
+                {sequences[code] && sequences[code].length > 0 ? (
+                  sequences[code].map((nextCode, index) => (
+                    <div key={index} className="flex flex-col items-center group">
+                      <div className="w-20 h-20 md '')];
+
+      const { data } = await supabase
+        .from('lottery_results')
+        .select('result_number')
+        .in('lottery_type', idsABuscar)
+        .order('draw_date', { ascending: true })
+        .order('draw_time', { ascending: true })
+        .limit(1000); // Analizamos historial pesado para precisión
+
+      if (data && data.length > 1) {
+        const map: Record<string, string[]> = {};
+        
+        for (let i = 0; i < data.length - 1; i++) {
+          const current = data[i].result_number?.trim();
+          const next = data[i + 1].result_number?.trim();
+          
+          if (current && next) {
+            if (!map[current]) map[current] = [];
+            map[current].push(next);
+          }
+        }
+        
+        // Procesamos para dejar solo los 3 sucesores más frecuentes
+        const finalMap: Record<string, string[]> = {};
+        Object.keys(map).forEach(key => {
+          const counts = map[key].reduce:w-24 md:h-24 bg-slate-50 rounded-full border-2 border-slate-100 flex items-center justify-center shadow-sm group-hover:border-emerald-500 transition-all">
+                        <img 
+                          src={getAnimalImageUrl(nextCode)} 
+                          className="w-16 h-16 md:w-20 md:h-20 object-contain" 
+                          alt="Sucesor"
+                        />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">Sin datos de secuencia aún</p>
+                )}
               </div>
             </div>
-          </div>
+          ((acc: any, val) => {
+            acc[val] = (acc[val] || 0) + 1;
+            return acc;
+          }, {});
+          
+          finalMap[key] = Object.entries(counts)
+            .sort((a: any, b: any) => b[1] - a[1])
+            .slice(0, 3)
+            .map(entry => entry[0]);
+        });
+        
+        setSequences(finalMap);
+      }
+      setLoading(false);
+    }
+    analyzeSequences();
+  }, [lotteryId]);
+
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500 uppercase italic">Analizando Secuencias Maest</div>
         ))}
       </div>
     </div>
