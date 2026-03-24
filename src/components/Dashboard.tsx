@@ -7,10 +7,12 @@ import { getLotteryLogo } from './LotterySelector';
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
 import { ResultsPanel } from "./ResultsPanel";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
+import { SequenceMatrixView } from "./SequenceMatrixView";
 import { ExplosiveData } from "./ExplosiveData";
 import { AdminAgencias } from "./AdminAgencias";
 import { ModuloJugadas } from "./ModuloJugadas"; 
 import { SportsView } from "./SportsView";
+import { GuiaUso } from "./GuiaUso";
 import { Button } from "@/components/ui/button";
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
@@ -19,7 +21,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const isMaster = userRole === 'admin';
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-500 px-4 py-4 shadow-2xl flex justify-between items-center">
         <div className="flex items-center gap-3">
            <img src="/logo-animalytics.png" className="h-10" />
@@ -48,12 +50,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             </TabsList>
           </div>
         </div>
-        <div className="p-4 max-w-7xl mx-auto pb-40">
+        <div className="p-4 max-w-7xl mx-auto pb-40 text-slate-900">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={globalLottery} /></TabsContent>
-          <TabsContent value="matriz" className="mt-0"><FrequencyHeatmap lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="matriz" className="mt-0 space-y-12">
+            <FrequencyHeatmap lotteryId={globalLottery} />
+            <SequenceMatrixView lotteryId={globalLottery} />
+          </TabsContent>
+          <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
           {isMaster && <TabsContent value="admin" className="mt-0"><AdminAgencias /></TabsContent>}
         </div>
