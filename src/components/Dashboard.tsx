@@ -27,7 +27,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER: SELECTOR CON LOGO EN CÍRCULO NEGRO (IGUAL A LA IMAGEN) */}
+      {/* 🛡️ HEADER CORREGIDO: LOGOS SIN FONDO Y SIN DUPLICADOS */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
@@ -40,15 +40,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
 
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {/* SELECTOR ESTILO IMAGEN: CIRCULO NEGRO */}
-            <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500 shadow-md">
+            {/* SELECTOR: LOGOS PUROS SIN FONDO */}
+            <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[145px] md:w-[240px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2 gap-2">
-                  <div className="flex items-center gap-2">
-                    {/* El círculo negro del logo solicitado */}
-                    <div className="bg-black p-0.5 rounded-full ring-1 ring-slate-200 shrink-0">
-                       <img src={getLotteryLogo(globalLottery)} className="w-5 h-5 md:w-6 md:h-6 rounded-full object-contain bg-white" />
-                    </div>
+                <SelectTrigger className="w-[150px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <img 
+                      src={getLotteryLogo(globalLottery)} 
+                      className="w-7 h-7 md:w-8 md:h-8 object-contain shrink-0" 
+                      alt=""
+                    />
                     <SelectValue />
                   </div>
                 </SelectTrigger>
@@ -56,9 +57,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                   {LOTTERIES.map(l => (
                     <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
                       <div className="flex items-center gap-2">
-                        <div className="bg-black p-0.5 rounded-full ring-1 ring-slate-200">
-                           <img src={getLotteryLogo(l.id)} className="w-5 h-5 rounded-full object-contain bg-white" />
-                        </div>
+                        <img 
+                          src={getLotteryLogo(l.id)} 
+                          className="w-6 h-6 object-contain" 
+                          alt=""
+                        />
                         {l.name}
                       </div>
                     </SelectItem>
@@ -67,11 +70,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-9 px-3 rounded-xl shadow-lg border-2 border-white/20 transition-all active:scale-95">
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20">
               <Send size={14} className="fill-white" />
             </Button>
 
-            <Button variant="ghost" onClick={onLogout} className="text-white p-1 hover:bg-red-500 rounded-full transition-colors">
+            <Button variant="ghost" onClick={onLogout} className="text-white p-1">
               <LogOut size={20} />
             </Button>
           </div>
@@ -80,9 +83,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* NAVEGACIÓN DOS PISOS */}
-        <div className="bg-white border-b-2 border-slate-200 sticky top-[68px] md:top-[92px] z-40 shadow-sm">
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
-            <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center gap-1">
+            <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
                 <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent">
                   {t}
@@ -94,7 +97,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         </div>
 
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
-          {/* PASAMOS dbId PARA QUE LOS RESULTADOS NO SALGAN VACÍOS */}
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
           <TabsContent value="matriz" className="mt-0 space-y-12">
