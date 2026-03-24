@@ -20,7 +20,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ MAPEO SEGÚN TU SQL PARA QUE CARGUEN RESULTADOS (lotto_rey, guacharito, granjita, etc)
+  // 🛡️ MAPEADO PROFESIONAL SEGÚN TU SQL
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
@@ -38,7 +38,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <div className="flex items-center gap-2 flex-1 justify-end">
             <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[125px] md:w-[240px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] text-slate-900 focus:ring-0 px-2">
+                <SelectTrigger className="w-[125px] md:w-[220px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] text-slate-900 focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
@@ -76,7 +76,10 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
-          <TabsContent value="matriz" className="mt-0 space-y-12"><FrequencyHeatmap lotteryId={dbId} /><SequenceMatrixView lotteryId={dbId} /></TabsContent>
+          <TabsContent value="matriz" className="mt-0 space-y-12">
+            <FrequencyHeatmap lotteryId={dbId} />
+            <SequenceMatrixView lotteryId={dbId} />
+          </TabsContent>
           <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbId} /></TabsContent>
           <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
