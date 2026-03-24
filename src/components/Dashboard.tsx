@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Flame, Trophy, FileText, Grid3X3, Settings, LogOut, Send } from "lucide-react";
+import { Brain, Flame, Trophy, FileText, Grid3X3, PlayCircle, Settings, LogOut, Send } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
@@ -10,48 +10,23 @@ import { FrequencyHeatmap } from "./FrequencyHeatmap";
 import { SequenceMatrixView } from "./SequenceMatrixView";
 import { ExplosiveData } from "./ExplosiveData";
 import { SportsView } from "./SportsView";
-import { AdminPanelMaestro } from "./AdminPanelMaestro";
 import { ModuloJugadas } from "./ModuloJugadas"; 
+import { AdminPanelMaestro } from "./AdminPanelMaestro";
 import { GuiaUso } from "./GuiaUso";
 import { Button } from "@/components/ui/button";
-
 
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ RUTA DEL LOGO FIJA PARA QUE NO DÉ ERROR
   const LOGO_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-500 px-4 py-4 shadow-2xl flex justify-between items-center">
         <div className="flex items-center gap-3">
-           {/* FIX LOGO: Ya no dará error de imagen rota */}
-           <img src={LOGO_URL} className="h-10 w-auto object-contain" alt="Logo" onError={(e) => e.currentTarget.style.display='none'} />
-           <h1 className="font-black text-xl italic tracking-tighter text-emerald-400 uppercase leading-none">ANIMALYTICS PRO</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <a href="https://t.me/" target="_blank" className="bg-sky-500 px-4 py-2 rounded-full text-white font-black text-[10px] uppercase flex items-center gap-2 shadow-lg">
-            <Send size={14} /> CANAL DE TELEGRAM
-          </a>
-          <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-600 rounded-full ml-2"><LogOut size={22} /></Button>
-        </div>
-      </header>
-      
-      {/* ... resto del código del dashboard se mantiene igual */}
-
-export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
-  const [activeTab, setActiveTab] = useState("ia");
-  const [globalLottery, setGlobalLottery] = useState("lotto_activo");
-  const isMaster = userRole === 'admin';
-
-  return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
-      <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-500 px-4 py-4 shadow-2xl flex justify-between items-center">
-        <div className="flex items-center gap-3">
-           <img src="/logo-animalytics.png" className="h-10" alt="Logo" />
+           <img src={LOGO_URL} className="h-10 w-auto object-contain" alt="Logo" />
            <h1 className="font-black text-xl italic tracking-tighter text-emerald-400 uppercase leading-none">ANIMALYTICS PRO</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -63,7 +38,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="bg-slate-100 border-b-2 border-slate-900 p-4 sticky top-[85px] z-40 space-y-4">
+        <div className="bg-slate-100 border-b-2 border-slate-900 p-4 sticky top-[85px] z-40">
           <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
             <div className="bg-white border-4 border-slate-900 rounded-2xl p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-sm">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
@@ -78,12 +53,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            {/* NAVEGACIÓN DE DOS PISOS (FOTO 9) */}
             <TabsList className="bg-white p-2 rounded-[2rem] border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] grid grid-cols-4 h-auto w-full max-w-4xl">
               {[ {id: "ia", label: "IA"}, {id: "explosivo", label: "EXPLOSIVO"}, {id: "deportes", label: "DEPORTES"}, {id: "resultados", label: "RESULTADOS"}, {id: "matriz", label: "MATRIZ"}, {id: "guia", label: "GUÍA"}, {id: "agencias", label: "AGENCIAS"} ].map((t) => (
-                <TabsTrigger key={t.id} value={t.id} className="rounded-full px-2 py-2 font-black text-[9px] md:text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white m-1">
-                  {t.label}
-                </TabsTrigger>
+                <TabsTrigger key={t.id} value={t.id} className="rounded-full px-2 py-2 font-black text-[9px] md:text-[11px] uppercase data-[state=active]:bg-emerald-600 data-[state=active]:text-white m-1">{t.label}</TabsTrigger>
               ))}
               {isMaster && <TabsTrigger value="admin" className="rounded-full px-4 bg-slate-900 text-white ml-2"><Settings size={14}/></TabsTrigger>}
             </TabsList>
