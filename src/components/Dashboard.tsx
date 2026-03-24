@@ -22,12 +22,13 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   const LOGO_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
 
-  // FIX PARA GRANJITA: El sistema busca "granjita", no "la granjita"
+  // 🛡️ FIX CRÍTICO: Mapeo para que Granjita NO salga vacía
   const dbLotteryId = globalLottery === 'la_granjita' ? 'granjita' : globalLottery;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
+      {/* HEADER: SIN EFECTO CORTINA (position="popper") */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
@@ -44,9 +45,10 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <div className="flex items-center gap-2 flex-1 justify-end">
             <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500 shadow-lg">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[125px] md:w-[220px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
+                <SelectTrigger className="w-[130px] md:w-[220px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
+                {/* position="popper" evita que el menú desplace la pantalla */}
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
                     <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
@@ -62,7 +64,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-9 md:h-11 px-3 md:px-6 rounded-xl text-white font-black uppercase text-[10px] shadow-lg border-2 border-white/20">
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-9 md:h-11 px-3 md:px-6 rounded-xl text-white font-black uppercase text-[10px] shadow-lg border-2 border-white/20 transition-all">
               <Send size={14} className="fill-white" />
               <span className="hidden sm:inline">CANAL VIP</span>
             </Button>
@@ -75,11 +77,12 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* NAVEGACIÓN DOS PISOS (Grid 4 columnas para móvil) */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[68px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
-                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent transition-all">
+                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent">
                   {t}
                 </TabsTrigger>
               ))}
@@ -93,10 +96,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         </div>
 
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
-          {/* PASAMOS dbLotteryId para corregir Granjita */}
+          {/* USAMOS dbLotteryId para que Granjita cargue datos */}
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbLotteryId} /></TabsContent>
+          <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbLotteryId} /></TabsContent>
-          {/* Resto de contenidos... */}
+          <TabsContent value="matriz" className="mt-0 space-y-12">
+            <FrequencyHeatmap lotteryId={dbLotteryId} />
+            <SequenceMatrixView lotteryId={dbLotteryId} />
+          </TabsContent>
+          <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
           {isMaster && (
             <TabsContent value="admin" className="mt-0">
