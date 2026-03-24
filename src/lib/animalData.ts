@@ -47,10 +47,4 @@ export const getAnimalImageUrl = (code: string | number): string => {
   return `${SUPA_STORAGE_URL}${normalized}.png`;
 };
 
-export const getAnimalName = (code: string | number, lotteryId?: string): string => {
-  const normalized = String(code).trim().padStart(2, '0').replace('000', '00');
-  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
-  return mapping[normalized] || "ANIMAL";
-};
-
 export const getAnimalEmoji = (code: string | number): string => "🎯";
