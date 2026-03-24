@@ -36,12 +36,14 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
 
 export const getCodesForLottery = (id: string): string[] => {
   let max = 36;
-  if (id === 'guacharo') max = 75;
+  // Corregimos los IDs para que coincidan con los del sistema
+  if (id === 'el_guacharo' || id === 'guacharo') max = 75;
   if (id === 'guacharito') max = 99;
+  
   const codes = ['0', '00'];
   for (let i = 1; i <= max; i++) codes.push(i.toString().padStart(2, '0'));
   return codes;
-};
+};;
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
