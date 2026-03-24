@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
+import { getLotteryLogo } from './LotterySelector'; // 🛡️ Usamos tu función interna que sí funciona
 import { Button } from "@/components/ui/button";
 
 export function ModuloJugadas({ tenantAgency }: any) {
-  // IDs exactos de tu base de datos SQL
+  // IDs exactos de tu base de datos SQL para que no haya errores de carga
   const [selectedLottery, setSelectedLottery] = useState("lotto_activo");
   const [selectedAnimals, setSelectedAnimals] = useState<string[]>([]);
   const agencies = ["Agencia Central", "Agencia El Rey", "Agencia La Suerte"];
@@ -11,22 +12,7 @@ export function ModuloJugadas({ tenantAgency }: any) {
 
   const AD_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/banner-promo.jpg";
 
-  // 🛡️ MAPEADO DE LOGOS - RUTAS VERIFICADAS PARA QUE NO SALGAN ROTAS
-  const getLotteryLogoUrl = (id: string) => {
-    const baseUrl = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
-    const mapping: Record<string, string> = {
-      granjita: "lotto-granjita.png",
-      lotto_activo: "lotto-activo.png",
-      guacharo: "lotto-guacharo.png",
-      guacharito: "lotto-guacharito.png",
-      selva_plus: "lotto-selvaplus.png",
-      lotto_rey: "lotto-rey.png"
-    };
-    return `${baseUrl}${mapping[id] || "lotto-activo.png"}`;
-  };
-
-  const animalCodes = getCodesForLottery(selectedLottery);
-
+  // Lista única de las 6 loterías basada en tu SQL
   const lotteries = [
     { id: 'granjita', name: 'La Granjita' },
     { id: 'lotto_activo', name: 'Lotto Activo' },
@@ -35,6 +21,8 @@ export function ModuloJugadas({ tenantAgency }: any) {
     { id: 'selva_plus', name: 'Selva Plus' },
     { id: 'lotto_rey', name: 'Lotto Rey' }
   ];
+
+  const animalCodes = getCodesForLottery(selectedLottery);
 
   return (
     <div className="space-y-10 pb-40 px-2">
@@ -51,29 +39,28 @@ export function ModuloJugadas({ tenantAgency }: any) {
          ))}
       </div>
 
-      {/* BOTONES DE DATOS BANCARIOS */}
       <div className="grid gap-3">
          <Button className="h-14 bg-emerald-500 rounded-2xl font-black uppercase border-b-4 border-emerald-700 text-slate-900 text-lg hover:bg-emerald-400">Tu Banco</Button>
          <Button className="h-14 bg-emerald-500 rounded-2xl font-black uppercase border-b-4 border-emerald-700 text-slate-900 text-lg hover:bg-emerald-400">Pago Móvil</Button>
          <Button className="h-14 bg-emerald-500 rounded-2xl font-black uppercase border-b-4 border-emerald-700 text-slate-900 text-lg hover:bg-emerald-400">Cédula</Button>
       </div>
 
-      {/* 2. SELECTOR DE LOTERÍAS - FONDO NEGRO SÓLIDO Y LOGOS CORRECTOS */}
+      {/* 2. SELECTOR DE LOTERÍAS - FONDO NEGRO SÓLIDO Y LOGOS VERIFICADOS */}
       <div className="bg-white border-4 border-slate-900 rounded-[2.5rem] p-6 shadow-xl">
          <div className="flex justify-center flex-wrap gap-4">
             {lotteries.map(lot => (
               <button 
                 key={lot.id} 
                 onClick={() => setSelectedLottery(lot.id)} 
-                className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all bg-black shadow-2xl overflow-hidden group ${
+                className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all bg-black shadow-2xl overflow-hidden border-4 ${
                   selectedLottery === lot.id 
-                  ? 'ring-4 ring-emerald-500 scale-110' 
-                  : 'ring-4 ring-slate-800 opacity-90'
+                  ? 'border-emerald-500 scale-110' 
+                  : 'border-slate-800'
                 }`}
               >
                  <img 
-                    src={getLotteryLogoUrl(lot.id)} 
-                    className={`w-full h-full object-contain p-1.5 transition-all ${selectedLottery === lot.id ? 'opacity-100' : 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100'}`}
+                    src={getLotteryLogo(lot.id)} 
+                    className={`w-full h-full object-contain p-2 transition-all ${selectedLottery === lot.id ? 'opacity-100' : 'grayscale opacity-60'}`}
                     alt="" 
                  />
               </button>
@@ -81,7 +68,7 @@ export function ModuloJugadas({ tenantAgency }: any) {
          </div>
       </div>
 
-      {/* 3. GRILLA DE ANIMALES */}
+      {/* 3. GRILLA DE ANIMALES (75/99 DINÁMICO) */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-8 shadow-2xl">
          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
             {animalCodes.map(code => (
