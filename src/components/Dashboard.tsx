@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Flame, Trophy, FileText, Grid3X3, Settings, LogOut, Send } from "lucide-react";
+import { Brain, Flame, Trophy, FileText, Settings, LogOut, Send } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
 import { getLotteryLogo } from './LotterySelector';
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
@@ -20,17 +20,18 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
+  const LOGO_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
-      {/* HEADER TIPO APP VIEJA: TODO EN UNA LÍNEA */}
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+      {/* HEADER SLIM (Intacto) */}
       <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
-          <div className="flex items-center gap-2 shrink-0">
-             <img src="https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png" className="h-8 md:h-10 w-auto" alt="Logo" />
+          <div className="flex items-center gap-2">
+             <img src={LOGO_URL} className="h-8 md:h-10 w-auto object-contain" alt="Logo" />
           </div>
 
           <div className="flex items-center gap-3 flex-1 justify-end">
-            {/* SELECTOR DISCRETO (COMO EL VIDEO) */}
             <div className="bg-white/10 rounded-xl px-2 border border-white/20">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
                 <SelectTrigger className="w-[140px] md:w-[200px] h-9 border-none bg-transparent font-black uppercase text-[10px] text-white focus:ring-0">
@@ -45,7 +46,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 </SelectContent>
               </Select>
             </div>
-
             <a href="https://t.me/" target="_blank" className="bg-sky-500 p-2 rounded-full text-white shadow-lg"><Send size={18} /></a>
             <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-500 rounded-full p-2"><LogOut size={20} /></Button>
           </div>
@@ -53,7 +53,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN LIMPIA */}
+        {/* NAVEGACIÓN (Intacta) */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[56px] md:top-[64px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <TabsList className="bg-transparent h-12 w-full justify-start md:justify-center overflow-x-auto no-scrollbar flex px-2">
@@ -71,6 +71,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
         </div>
 
+        {/* CONTENIDOS (Intactos) */}
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={globalLottery} /></TabsContent>
@@ -82,8 +83,15 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
+          
+          {/* Aquí es donde pasamos el rol al Panel Maestro */}
           {isMaster && (
-  <TabsContent value="admin" className="mt-0">
-     <AdminPanelMaestro userRole={userRole} /> 
-  </TabsContent>
-)}
+            <TabsContent value="admin" className="mt-0">
+               <AdminPanelMaestro userRole={userRole} />
+            </TabsContent>
+          )}
+        </div>
+      </Tabs>
+    </div>
+  );
+}
