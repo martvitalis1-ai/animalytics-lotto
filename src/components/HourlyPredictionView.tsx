@@ -7,7 +7,7 @@ import { Clock, Calendar, ShieldCheck, Flame } from "lucide-react";
 export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [nextHour, setNextHour] = useState("");
-  const WATERMARK = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
+  const LOGO_BG = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
 
   useEffect(() => {
     const updateStudyTime = () => {
@@ -19,16 +19,10 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     updateStudyTime();
 
     async function loadHistory() {
-      // 🛡️ MAPEADO EXACTO SEGÚN TU SQL
       const dbId = lotteryId === 'la_granjita' ? 'granjita' : 
                    lotteryId === 'el_guacharo' ? 'guacharo' : lotteryId;
 
-      const { data } = await supabase
-        .from('lottery_results')
-        .select('*')
-        .eq('lottery_type', dbId)
-        .order('draw_date', { ascending: false })
-        .limit(400);
+      const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', dbId).order('draw_date', { ascending: false }).limit(400);
       setResults(data || []);
     }
     loadHistory();
@@ -49,7 +43,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0]],
       vencidos: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       hours: [{ h: "05:00 PM", p: [sorted[6][0], sorted[7][0]] }, { h: "10:00 AM", p: [sorted[8][0], sorted[9][0]] }],
-      days: [{ d: "LUNES", p: [sorted[10][0], sorted[11][0]] }, { d: "VIERNES", p: [sorted[12][0], sorted[13][0]] }],
       recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]]
     };
   }, [results, lotteryId]);
@@ -58,19 +51,18 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-40 px-2">
-      {/* 2 ANIMALES GIGANTES - ESTUDIO */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-10 flex flex-col items-center shadow-2xl relative overflow-hidden">
-        <img src={WATERMARK} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
+        <img src={LOGO_BG} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">PRÓXIMO SORTEO: {nextHour}</div>
         <div className="flex justify-center gap-4 md:gap-12 z-10">
            {study.maestros.map(code => <img key={code} src={getAnimalImageUrl(code)} className="w-[145px] h-[145px] md:w-[400px] md:h-[400px] object-contain drop-shadow-2xl" />)}
         </div>
-        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
+        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800">95% ÉXITO</div>
       </div>
 
       {/* TOP 3 - SIN TEXTO */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
-        <img src={WATERMARK} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
+        <img src={LOGO_BG} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-12 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
         <div className="flex justify-center items-center gap-4 md:gap-8 relative z-10">
            {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-28 h-28 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
@@ -79,25 +71,16 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
 
       {/* CALIENTES - FONDO ROJO */}
       <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
-         <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">🔥 CALIENTES</span>
          <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
             {study.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
          </div>
       </div>
 
-      {/* FRÍOS - FONDO AZUL */}
-      <div className="bg-blue-600/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
-         <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
-         <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">❄️ FRÍOS</span>
-         <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
-            {study.frios.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
-         </div>
-      </div>
-
-      {/* RECOMENDACIÓN FINAL */}
-      <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden mt-12">
-         <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
+      {/* RECOMENDACIÓN FINAL - 4 ANIMALES Y EXPLICACIÓN */}
+      <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
+         <img src={LOGO_BG} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
             <ShieldCheck className="text-emerald-500" size={40} />
             <h3 className="font-black text-2xl md:text-3xl uppercase italic">RECOMENDACIÓN DEL SISTEMA</h3>
