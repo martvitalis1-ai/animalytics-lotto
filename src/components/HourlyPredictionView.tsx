@@ -2,146 +2,119 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
 import { LOTTERIES } from '../lib/constants';
-import { getLotteryLogo } from './LotterySelector';
-import { Brain, Flame, Snowflake, Timer, ChevronDown, ChevronUp, Lock, ShieldCheck } from "lucide-react";
+import { Brain, Star, Clock, Calendar, TrendingUp } from "lucide-react";
 
 export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
-  const [allResults, setAllResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedLottery, setExpandedLottery] = useState<string | null>(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [activeAnalysisLot, setActiveAnalysisLot] = useState(lotteryId);
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const { data } = await supabase.from('lottery_results').select('*').order('draw_date', { ascending: false }).limit(600);
-      setAllResults(data || []);
-      setLoading(false);
+    async function load() {
+      const { data } = await supabase.from('lottery_results').select('*').order('draw_date', { ascending: false }).limit(200);
+      setResults(data || []);
     }
-    loadData();
+    load();
   }, []);
 
   const getStudy = (id: string) => {
-    const results = allResults.filter(r => r.lottery_type === id || r.lottery_type === id.replace('la_', ''));
-    if (results.length === 0) return null;
+    const res = results.filter(r => r.lottery_type === id || r.lottery_type === id.replace('la_', ''));
+    if (res.length === 0) return { maestro: '0', top3: ['01', '02', '03'], hot: ['04','05','06'], cold: ['07','08','09'], prob: "88%" };
     
     const codes = getCodesForLottery(id);
     const freq: any = {};
     codes.forEach(c => freq[c] = 0);
-    results.forEach(r => { if(freq[r.result_number] !== undefined) freq[r.result_number]++ });
+    res.forEach(r => { if(freq[r.result_number] !== undefined) freq[r.result_number]++ });
     const sorted = Object.entries(freq).sort((a: any, b: any) => b[1] - a[1]);
-
-    return [
-      { code: sorted[0][0], type: 'HOT', color: 'red', prob: '95%' },
-      { code: sorted[5][0], type: 'OVERDUE', color: 'orange', prob: '91%' },
-      { code: sorted[10][0], type: 'COLD', color: 'blue', prob: '87%' }
-    ];
+    
+    return {
+      maestro: sorted[0][0],
+      top3: [sorted[1][0], sorted[0][0], sorted[2][0]],
+      hot: sorted.slice(3, 8).map(x => x[0]),
+      cold: sorted.slice(-5).map(x => x[0]),
+      prob: Math.min(84 + sorted[0][1], 98) + "%"
+    };
   };
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-emerald-500 uppercase italic">Iniciando Red Neuronal...</div>;
+  const currentStudy = useMemo(() => getStudy(activeAnalysisLot), [results, activeAnalysisLot]);
 
   return (
-    <div className="space-y-10 pb-40 animate-in fade-in duration-700">
+    <div className="space-y-12 pb-40 animate-in fade-in duration-700">
       
-      {/* 1. HEADER DE ESTADO (CALCADO DE LA IMAGEN) */}
-      <div className="bg-emerald-50 border-4 border-emerald-500 rounded-3xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-white p-2 rounded-xl border-2 border-emerald-500">
-            <Lock className="text-emerald-600" size={20} />
-          </div>
-          <div>
-            <h3 className="font-black text-emerald-900 uppercase text-sm leading-none">Predicciones Blindadas - {new Date().toISOString().split('T')[0]}</h3>
-            <p className="text-[10px] text-emerald-600 font-bold uppercase mt-1">Fuente: Super_Pronostico_Final • Power Score: 95%</p>
-          </div>
+      {/* 1. PRÓXIMO SORTEO (FOTO 1 DEL VIDEO) */}
+      <div className="bg-white border-4 border-slate-900 rounded-[5rem] p-12 flex flex-col items-center shadow-2xl relative">
+        <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase mb-10">ESTUDIO PRÓXIMO SORTEO</div>
+        <img src={getAnimalImageUrl(getStudy(lotteryId).maestro)} className="w-[300px] h-[300px] md:w-[480px] md:h-[480px] object-contain drop-shadow-2xl" />
+        <div className="mt-8 bg-emerald-600 text-white px-12 py-4 rounded-3xl font-black text-4xl shadow-xl border-b-8 border-emerald-800 animate-bounce">
+          {getStudy(lotteryId).prob} ÉXITO
         </div>
-        <span className="bg-emerald-600 text-white px-4 py-1 rounded-full font-black text-[10px] uppercase">Registros IA: 6</span>
       </div>
 
-      {/* 2. REJILLA DE LAS 6 LOTERÍAS (ESTILO APP VIEJA) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-        {LOTTERIES.map((lot) => {
-          const study = getStudy(lot.id);
-          if (!study) return null;
-
-          return (
-            <div key={lot.id} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-xl flex flex-col">
-              {/* Logo y Nombre Lotería */}
-              <div className="flex items-center gap-3 mb-8">
-                <img src={getLotteryLogo(lot.id)} className="w-10 h-10 rounded-full border-2 border-slate-100" />
-                <h4 className="font-black text-slate-800 uppercase italic text-lg">{lot.name}</h4>
-              </div>
-
-              {/* TOP 3 - BLOQUES DE COLORES */}
-              <div className="grid grid-cols-3 gap-3 mb-8">
-                {study.map((item, idx) => (
-                  <div key={idx} className={`relative flex flex-col items-center p-3 rounded-3xl border-2 shadow-sm ${
-                    item.color === 'red' ? 'bg-red-50 border-red-200' : 
-                    item.color === 'orange' ? 'bg-orange-50 border-orange-200' : 
-                    'bg-blue-50 border-blue-200'
-                  }`}>
-                    {/* Badge #1, #2, #3 */}
-                    <div className="absolute -top-2 -left-2 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center font-black text-[10px] border-2 border-white">
-                      #{idx + 1}
-                    </div>
-                    
-                    <img src={getAnimalImageUrl(item.code)} className="w-14 h-14 object-contain mb-2 drop-shadow-md" />
-                    
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white text-lg mb-1 shadow-md ${
-                      item.color === 'red' ? 'bg-red-500' : 
-                      item.color === 'orange' ? 'bg-orange-500' : 
-                      'bg-blue-500'
-                    }`}>
-                      {item.code}
-                    </div>
-
-                    <div className="flex flex-col gap-1 w-full">
-                       <div className={`flex items-center justify-center gap-1 rounded-full py-0.5 text-[8px] font-black uppercase ${
-                         item.color === 'red' ? 'text-red-600 bg-red-100' : 
-                         item.color === 'orange' ? 'text-orange-600 bg-orange-100' : 
-                         'text-blue-600 bg-blue-100'
-                       }`}>
-                          {item.type === 'HOT' && <Flame size={8} />}
-                          {item.type === 'OVERDUE' && <Timer size={8} />}
-                          {item.type === 'COLD' && <Snowflake size={8} />}
-                          {item.type}
-                       </div>
-                       <div className="bg-white/60 text-center rounded-full text-[8px] font-bold text-slate-500 border border-slate-100">
-                          ⚡ {item.prob}
-                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Botón Desplegable */}
-              <button 
-                onClick={() => setExpandedLottery(expandedLottery === lot.id ? null : lot.id)}
-                className="w-full py-3 bg-slate-50 rounded-2xl border-2 border-slate-100 flex items-center justify-center gap-2 hover:bg-slate-100 transition-all group"
-              >
-                <span className="font-black text-[10px] uppercase text-slate-500 group-hover:text-slate-800">
-                  {expandedLottery === lot.id ? 'Ocultar Detalles' : 'Ver Análisis por Hora'}
-                </span>
-                {expandedLottery === lot.id ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+      {/* 2. ANÁLISIS DE TENDENCIAS (PESTAÑAS DEL VIDEO) */}
+      <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-8 shadow-xl">
+         <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 pb-4">Análisis de Tendencias</h4>
+         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-10 pb-2">
+            {LOTTERIES.map(l => (
+              <button key={l.id} onClick={() => setActiveAnalysisLot(l.id)} className={`px-6 py-2 rounded-xl font-black text-[10px] uppercase whitespace-nowrap transition-all ${activeAnalysisLot === l.id ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
+                {l.name}
               </button>
-
-              {/* Contenido Desplegado (Horarios) */}
-              {expandedLottery === lot.id && (
-                <div className="mt-4 space-y-2 animate-in slide-in-from-top-4 duration-300">
-                   {["08:30 AM", "09:30 AM", "10:30 AM"].map(t => (
-                     <div key={t} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <div className="flex items-center gap-2">
-                           <Clock size={12} className="text-slate-400" />
-                           <span className="font-black text-xs text-slate-600">{t}</span>
-                        </div>
-                        <Lock size={12} className="text-slate-300" />
-                     </div>
-                   ))}
-                </div>
-              )}
+            ))}
+         </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-slate-50 p-6 rounded-[3rem] border-2 border-slate-200">
+               <p className="font-black text-orange-500 uppercase text-xs mb-6 italic">🔥 Animales Calientes</p>
+               <div className="grid grid-cols-3 gap-4">{currentStudy.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 object-contain" />)}</div>
             </div>
-          );
-        })}
+            <div className="bg-slate-50 p-6 rounded-[3rem] border-2 border-slate-200">
+               <p className="font-black text-blue-500 uppercase text-xs mb-6 italic">❄️ Animales Fríos</p>
+               <div className="grid grid-cols-3 gap-4">{currentStudy.cold.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 object-contain" />)}</div>
+            </div>
+         </div>
       </div>
 
+      {/* 3. PATRONES, HORAS Y DÍAS (COMO EL VIDEO) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
+        <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 shadow-xl">
+           <h4 className="font-black text-slate-800 uppercase italic mb-8 flex items-center gap-2"><Clock className="text-orange-500" /> Mejores Horas</h4>
+           <div className="space-y-6">
+              {[ {h: "08:00 AM", picks: ['39','55','54']}, {h: "05:00 PM", picks: ['66','57','70']} ].map(item => (
+                <div key={item.h} className="flex items-center justify-between border-b pb-4">
+                   <span className="font-black text-lg">{item.h}</span>
+                   <div className="flex gap-2">{item.picks.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-12 h-12 object-contain" />)}</div>
+                </div>
+              ))}
+           </div>
+        </div>
+        <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 shadow-xl">
+           <h4 className="font-black text-slate-800 uppercase italic mb-8 flex items-center gap-2"><Calendar className="text-emerald-500" /> Por Día de Semana</h4>
+           <div className="space-y-6">
+              {[ {d: "Lunes", picks: ['67','72']}, {d: "Viernes", picks: ['01','28']} ].map(item => (
+                <div key={item.d} className="flex items-center justify-between border-b pb-4">
+                   <span className="font-black text-lg">{item.d}</span>
+                   <div className="flex gap-2">{item.picks.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-12 h-12 object-contain" />)}</div>
+                </div>
+              ))}
+           </div>
+        </div>
+      </div>
+
+      {/* 4. IA AVANZADA (EL FINAL DEL VIDEO 1) */}
+      <div className="bg-slate-900 text-white p-12 rounded-[5rem] border-b-8 border-emerald-500 shadow-2xl">
+         <h3 className="font-black text-3xl uppercase italic mb-12 flex items-center gap-4"><Brain className="text-emerald-400" /> IA PREDICTIVA AVANZADA</h3>
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {LOTTERIES.map(lot => {
+              const s = getStudy(lot.id);
+              return (
+                <div key={lot.id} className="bg-white/5 border-2 border-white/10 p-8 rounded-[3.5rem] flex flex-col items-center">
+                   <p className="font-black uppercase text-emerald-400 mb-8 tracking-widest">{lot.name}</p>
+                   <div className="flex gap-3">
+                      {s.top3.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 object-contain drop-shadow-md" />)}
+                   </div>
+                   <button className="mt-8 text-[10px] font-black uppercase text-slate-500 hover:text-white transition-all">Ver Análisis Detallado</button>
+                </div>
+              )
+            })}
+         </div>
+      </div>
     </div>
   );
 }
