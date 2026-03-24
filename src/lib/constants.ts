@@ -1,7 +1,9 @@
 // src/lib/constants.ts
+import { ANIMALS_STANDARD, ANIMALS_GUACHARO, ANIMALS_GUACHARITO } from './animalData';
+
 export const LOTTERIES = [
-  { id: 'lotto_activo', name: 'Lotto Activo' },
   { id: 'la_granjita', name: 'La Granjita' },
+  { id: 'lotto_activo', name: 'Lotto Activo' },
   { id: 'guacharo', name: 'El Guácharo' },
   { id: 'guacharito', name: 'Guacharito' },
   { id: 'selva_plus', name: 'Selva Plus' },
@@ -17,6 +19,8 @@ export const formatResultNumber = (n: string) => {
   const t = n.trim();
   return (t === '0' || t === '00') ? t : t.padStart(2, '0');
 };
+
+export const getAnimalFromNumber = (num: string, lotteryId: string) => {
   const normalized = formatResultNumber(num);
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
                   lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
