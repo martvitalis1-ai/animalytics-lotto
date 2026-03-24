@@ -53,5 +53,4 @@ export const getAnimalName = (code: string | number, lotteryId?: string): string
   return mapping[normalized] || "ANIMAL";
 };
 
-// 🛡️ ESTA ES LA FUNCIÓN QUE FALTABA PARA EL BUILD
 export const getAnimalEmoji = (code: string | number): string => "🎯";
