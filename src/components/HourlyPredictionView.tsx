@@ -19,13 +19,12 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     updateStudyTime();
 
     async function loadHistory() {
-      // 🛡️ MAPEAMOS EL ID PARA QUE GUACHARITO Y LOTTO REY NO SALGAN VACÍOS
+      // 🛡️ MISMO MAPEADO PARA LA IA
       const dbId = lotteryId === 'la_granjita' ? 'granjita' : 
                    lotteryId === 'el_guacharo' ? 'guacharo' : 
                    lotteryId === 'guacharito' ? 'guacharito' : 
                    lotteryId === 'lotto_rey' ? 'lotto_rey' : lotteryId;
 
-      // Aumentamos el límite a 400 para capturar suficiente historial de loterías grandes
       const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', dbId).order('draw_date', { ascending: false }).limit(400);
       setResults(data || []);
     }
@@ -41,14 +40,14 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     const sorted = Object.entries(freq).sort((a: any, b: any) => b[1] - a[1]);
     
     return {
-      maestros: [sorted[0][0], sorted[1][0]], // 2 ANIMALES SEGÚN VIDEO
+      maestros: [sorted[0][0], sorted[1][0]],
       top3: [sorted[2][0], sorted[3][0], sorted[4][0]],
       hot: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0], sorted[4][0]],
       frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       vencidos: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       hours: [{ h: "05:00 PM", p: [sorted[6][0], sorted[7][0]] }, { h: "10:00 AM", p: [sorted[8][0], sorted[9][0]] }],
       days: [{ d: "LUNES", p: [sorted[10][0], sorted[11][0]] }, { d: "VIERNES", p: [sorted[12][0], sorted[13][0]] }],
-      recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]] // 4 ANIMALES
+      recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]]
     };
   }, [results, lotteryId]);
 
@@ -56,18 +55,15 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-40 px-2">
-      
-      {/* PRÓXIMO SORTEO: 2 ANIMALES GIGANTES */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-10 flex flex-col items-center shadow-2xl relative overflow-hidden">
         <img src={LOGO_BG} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">PRÓXIMO SORTEO: {nextHour}</div>
         <div className="flex justify-center gap-4 md:gap-12 z-10">
            {study.maestros.map(code => <img key={code} src={getAnimalImageUrl(code)} className="w-[145px] h-[145px] md:w-[400px] md:h-[400px] object-contain drop-shadow-2xl" />)}
         </div>
-        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800 uppercase italic">95% ÉXITO</div>
+        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
       </div>
 
-      {/* TOP 3 - SIN TEXTO BAJO IMAGEN */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-12 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
@@ -76,7 +72,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* ANÁLISIS TENDENCIAS - BOTONES NEGROS */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
          <h4 className="font-black text-xl uppercase italic mb-8 flex gap-2 border-b-2 pb-2"><Flame className="text-orange-500" /> ANÁLISIS DE TENDENCIAS</h4>
          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
@@ -88,7 +83,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             ))}
          </div>
 
-         {/* CALIENTES - FONDO ROJO */}
          <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
             <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
             <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">🔥 CALIENTES</span>
@@ -97,7 +91,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             </div>
          </div>
 
-         {/* FRÍOS - FONDO AZUL */}
          <div className="bg-blue-600/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
             <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
             <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">❄️ FRÍOS</span>
@@ -107,7 +100,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* VENCIDOS - FONDO AMARILLO */}
       <div className="bg-yellow-500/10 p-8 rounded-[3rem] border-4 border-yellow-500/20 relative overflow-hidden shadow-xl">
          <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 border-yellow-500 pb-2 text-center text-yellow-700">⏳ VENCIDOS</h4>
@@ -116,7 +108,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* HORAS Y DÍAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
            <h4 className="font-black text-xl uppercase italic mb-8 border-b-2 flex gap-2"><Clock className="text-orange-500" /> MEJORES HORAS</h4>
@@ -138,7 +129,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* RECOMENDACIÓN FINAL: 4 ANIMALES Y EXPLICACIÓN */}
       <div className="bg-white border-4 border-slate-900 p-10 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
          <img src={LOGO_BG} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
