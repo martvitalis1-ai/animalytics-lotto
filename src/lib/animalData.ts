@@ -34,18 +34,17 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
-                  (lotteryId === 'guacharo' || lotteryId === 'el_guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+                  (lotteryId === 'guacharo' || lotteryId === 'guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
   const c = String(code).trim().padStart(2, '0');
-  return mapping[c] || mapping[String(code).trim()] || "ANIMAL";
+  return mapping[c] || "ANIMAL";
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎯";
 
 export const getCodesForLottery = (id: string): string[] => {
-  const searchId = id.toLowerCase();
   let max = 36;
-  if (searchId === 'guacharo' || searchId === 'el_guacharo') max = 75;
-  if (searchId === 'guacharito') max = 99;
+  if (id === 'guacharo' || id === 'el_guacharo') max = 75;
+  if (id === 'guacharito') max = 99;
   const codes = ['0', '00'];
   for (let i = 1; i <= max; i++) codes.push(i.toString().padStart(2, '0'));
   return codes;
