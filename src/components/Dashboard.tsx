@@ -15,6 +15,33 @@ import { ModuloJugadas } from "./ModuloJugadas";
 import { GuiaUso } from "./GuiaUso";
 import { Button } from "@/components/ui/button";
 
+
+export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
+  const [activeTab, setActiveTab] = useState("ia");
+  const [globalLottery, setGlobalLottery] = useState("lotto_activo");
+  const isMaster = userRole === 'admin';
+
+  // 🛡️ RUTA DEL LOGO FIJA PARA QUE NO DÉ ERROR
+  const LOGO_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+      <header className="sticky top-0 z-50 bg-slate-900 text-white border-b-8 border-emerald-500 px-4 py-4 shadow-2xl flex justify-between items-center">
+        <div className="flex items-center gap-3">
+           {/* FIX LOGO: Ya no dará error de imagen rota */}
+           <img src={LOGO_URL} className="h-10 w-auto object-contain" alt="Logo" onError={(e) => e.currentTarget.style.display='none'} />
+           <h1 className="font-black text-xl italic tracking-tighter text-emerald-400 uppercase leading-none">ANIMALYTICS PRO</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="https://t.me/" target="_blank" className="bg-sky-500 px-4 py-2 rounded-full text-white font-black text-[10px] uppercase flex items-center gap-2 shadow-lg">
+            <Send size={14} /> CANAL DE TELEGRAM
+          </a>
+          <Button variant="ghost" onClick={onLogout} className="text-white hover:bg-red-600 rounded-full ml-2"><LogOut size={22} /></Button>
+        </div>
+      </header>
+      
+      {/* ... resto del código del dashboard se mantiene igual */}
+
 export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [activeTab, setActiveTab] = useState("ia");
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
