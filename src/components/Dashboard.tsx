@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, LogOut, Send } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
-import { getLotteryLogo } from './LotterySelector';
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
 import { ResultsPanel } from "./ResultsPanel";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
@@ -20,14 +19,28 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ MAPEADO PARA LA BASE DE DATOS SEGÚN TU SQL
+  // 🛡️ FUNCIÓN INTERNA PARA ASEGURAR LOGOS CORRECTOS Y SIN ERRORES
+  const getCorrectLogo = (id: string) => {
+    const baseUrl = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
+    const mapping: Record<string, string> = {
+      granjita: "lotto-granjita.png",
+      la_granjita: "lotto-granjita.png",
+      lotto_activo: "lotto-activo.png",
+      guacharo: "lotto-guacharo.png",
+      el_guacharo: "lotto-guacharo.png",
+      guacharito: "lotto-guacharito.png",
+      selva_plus: "lotto-selvaplus.png",
+      lotto_rey: "lotto-rey.png"
+    };
+    return `${baseUrl}${mapping[id] || "lotto-activo.png"}`;
+  };
+
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER CORREGIDO: LOGOS SIN FONDO Y SIN DUPLICADOS */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
@@ -40,25 +53,19 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
 
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {/* SELECTOR: LOGOS PUROS SIN FONDO */}
+            {/* SELECTOR CORREGIDO: SOLO UN LOGO Y MAPEADO CORRECTO */}
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[150px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <img 
-                      src={getLotteryLogo(globalLottery)} 
-                      className="w-7 h-7 md:w-8 md:h-8 object-contain shrink-0" 
-                      alt=""
-                    />
-                    <SelectValue />
-                  </div>
+                <SelectTrigger className="w-[160px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                  {/* SelectValue renderiza automáticamente el contenido del SelectItem seleccionado */}
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
                     <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
                       <div className="flex items-center gap-2">
                         <img 
-                          src={getLotteryLogo(l.id)} 
+                          src={getCorrectLogo(l.id)} 
                           className="w-6 h-6 object-contain" 
                           alt=""
                         />
@@ -82,7 +89,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DOS PISOS */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
