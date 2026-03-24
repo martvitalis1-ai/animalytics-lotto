@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, LogOut, Send } from "lucide-react";
 import { LOTTERIES } from '@/lib/constants';
-import { getLotteryLogo } from './LotterySelector'; // 🛡️ Usamos tu función que ya funciona
 import { HourlyPredictionView } from "./HourlyPredictionView"; 
 import { ResultsPanel } from "./ResultsPanel";
 import { FrequencyHeatmap } from "./FrequencyHeatmap";
@@ -20,14 +19,30 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ MAPEADO PARA LA BASE DE DATOS (Mantiene el historial funcionando)
+  // 🛡️ FUNCIÓN PROFESIONAL: LOGOS PUROS, SIN FONDO Y RUTAS CORRECTAS
+  const getCleanLogo = (id: string) => {
+    const baseUrl = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/";
+    const mapping: Record<string, string> = {
+      granjita: "lotto-granjita.png",
+      la_granjita: "lotto-granjita.png",
+      lotto_activo: "lotto-activo.png",
+      guacharo: "lotto-guacharo.png",
+      el_guacharo: "lotto-guacharo.png",
+      guacharito: "lotto-guacharito.png",
+      selva_plus: "lotto-selvaplus.png",
+      lotto_rey: "lotto-rey.png"
+    };
+    return `${baseUrl}${mapping[id] || "lotto-activo.png"}`;
+  };
+
+  // Mapeo para base de datos (mantiene historial funcionando)
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER: SELECTOR LIMPIO, SIN LOGOS DOBLES NI ROTOS */}
+      {/* 🛡️ HEADER: SELECTOR LIMPIO, SIN DUPLICADOS Y SIN FONDOS */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
@@ -40,21 +55,20 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
 
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {/* SELECTOR: LOGOS PUROS Y CORRESPONDIENTES */}
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[160px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                <SelectTrigger className="w-[165px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
                   {/* SelectValue renderiza automáticamente el Item seleccionado (Logo + Texto) */}
                   <SelectValue placeholder="Lotería" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase focus:bg-slate-100">
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase focus:bg-slate-50 cursor-pointer">
                       <div className="flex items-center gap-2">
-                        {/* Logo puro sin fondos ni círculos */}
+                        {/* Logo transparente sin cuadros blancos de fondo */}
                         <img 
-                          src={getLotteryLogo(l.id)} 
-                          className="w-7 h-7 object-contain shrink-0" 
+                          src={getCleanLogo(l.id)} 
+                          className="w-7 h-7 md:w-8 md:h-8 object-contain shrink-0" 
                           alt=""
                         />
                         {l.name}
