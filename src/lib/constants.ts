@@ -1,3 +1,4 @@
+// src/lib/constants.ts
 import { ANIMALS_STANDARD, ANIMALS_GUACHARO, ANIMALS_GUACHARITO } from './animalData';
 
 export const LOTTERIES = [
