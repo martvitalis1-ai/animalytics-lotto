@@ -11,43 +11,51 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
 
   useEffect(() => {
     async function load() {
-      // Absorción real de historial
-      const { data: res } = await supabase.from('lottery_results').select('*').eq('lottery_type', lotteryId).limit(600);
+      // 🛡️ Aumentamos el límite para que jale datos históricos pesados
+      const { data: res } = await supabase
+        .from('lottery_results')
+        .select('*')
+        .eq('lottery_type', lotteryId)
+        .limit(1500); 
       setData(res || []);
     }
     load();
   }, [lotteryId]);
 
   const getColor = (count: number) => {
+    if (count === 0) return 'text-slate-200';
     if (count === 1) return 'bg-yellow-400 text-slate-900';
     if (count === 2) return 'bg-blue-500 text-white';
-    if (count > 2) return 'bg-red-600 text-white shadow-lg';
-    return 'text-slate-200';
+    return 'bg-red-600 text-white shadow-lg';
   };
 
   return (
-    <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-10 shadow-2xl overflow-hidden">
+    <div className="bg-white border-4 border-slate-900 rounded-[4rem] p-10 shadow-2xl overflow-hidden">
       <h3 className="font-black text-3xl uppercase italic mb-8 flex items-center gap-4 text-slate-900">
-        <Grid3X3 className="text-emerald-500" size={32} /> MATRIZ ATÓMICA
+        <Grid3X3 className="text-emerald-500" size={32} /> MATRIZ DE FRECUENCIA
       </h3>
       <div className="overflow-x-auto border-4 border-slate-900 rounded-3xl">
-        <table className="w-full border-collapse bg-white">
+        <table className="w-full border-collapse">
           <thead>
             <tr className="bg-slate-900 text-white">
-              <th className="p-6 border-r border-slate-700 min-w-[150px]">ANIMAL</th>
-              {times.map(t => <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-24 rotate-45 font-black">{t}</th>)}
+              <th className="p-4 border border-slate-700">Animal</th>
+              {times.map(t => <th key={t} className="p-2 border border-slate-700 text-[8px] h-20 rotate-45">{t}</th>)}
             </tr>
           </thead>
           <tbody>
             {codes.map(code => (
-              <tr key={code} className="border-b-2 border-slate-100">
-                <td className="p-4 border-r-4 border-slate-900 flex flex-col items-center bg-white sticky left-0 z-10">
-                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-32 md:h-32 object-contain" />
-                   <span className="font-black text-xl mt-1">#{code}</span>
+              <tr key={code} className="hover:bg-slate-50 transition-all border-b">
+                <td className="p-2 border-r-4 border-slate-900 flex items-center gap-2 sticky left-0 bg-white z-10">
+                   <img src={getAnimalImageUrl(code)} className="w-10 h-10 object-contain" />
+                   <span className="font-black text-[10px] text-slate-900">#{code}</span>
                 </td>
                 {times.map(t => {
-                  const hits = data.filter(r => r.draw_time === t && r.result_number === code).length;
-                  return <td key={t} className={`border-r border-slate-200 text-center font-black text-2xl ${getColor(hits)}`}>{hits || '-'}</td>;
+                  const hits = data.filter(r => r.draw_time.trim() === t.trim() && r.result_number.trim() === code.trim()).length;
+                  return (
+                    <td key={t} className={`border border-slate-100 text-center font-black text-xs ${getColor(hits)}`}>
+                      {hits || '-'}
+                    </td>
+                  );
                 })}
               </tr>
             ))}
