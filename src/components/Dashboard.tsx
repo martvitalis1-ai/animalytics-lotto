@@ -20,7 +20,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ MAPEADO PROFESIONAL SEGÚN TU SQL
+  // 🛡️ MAPEADO EXACTO SEGÚN TU SQL
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
@@ -41,6 +41,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 <SelectTrigger className="w-[125px] md:w-[220px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] text-slate-900 focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
+                {/* position="popper" para evitar efecto cortina */}
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
                     <SelectItem key={l.id} value={l.id} className="font-black text-[10px] md:text-xs uppercase">
@@ -72,14 +73,10 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
             </TabsList>
           </div>
         </div>
-
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
-          <TabsContent value="matriz" className="mt-0 space-y-12">
-            <FrequencyHeatmap lotteryId={dbId} />
-            <SequenceMatrixView lotteryId={dbId} />
-          </TabsContent>
+          <TabsContent value="matriz" className="mt-0 space-y-12"><FrequencyHeatmap lotteryId={dbId} /><SequenceMatrixView lotteryId={dbId} /></TabsContent>
           <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbId} /></TabsContent>
           <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
