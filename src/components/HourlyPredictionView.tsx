@@ -7,7 +7,7 @@ import { Clock, Calendar, ShieldCheck, Flame } from "lucide-react";
 export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [nextHour, setNextHour] = useState("");
-  const WATERMARK = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
+  const LOGO_BG = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
 
   useEffect(() => {
     const updateStudyTime = () => {
@@ -19,6 +19,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     updateStudyTime();
 
     async function loadHistory() {
+      // Mapeo interno para cargar datos de Granjita/Guacharo
       const dbId = lotteryId === 'la_granjita' ? 'granjita' : lotteryId === 'el_guacharo' ? 'guacharo' : lotteryId;
       const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', dbId).order('draw_date', { ascending: false }).limit(250);
       setResults(data || []);
@@ -35,44 +36,44 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     const sorted = Object.entries(freq).sort((a: any, b: any) => b[1] - a[1]);
     
     return {
-      maestros: [sorted[0][0], sorted[1][0]], // 🛡️ 2 ANIMALES SEGÚN VIDEO
+      maestros: [sorted[0][0], sorted[1][0]], // 2 ANIMALES
       top3: [sorted[2][0], sorted[3][0], sorted[4][0]],
       hot: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0], sorted[4][0]],
       frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       vencidos: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       hours: [{ h: "05:00 PM", p: [sorted[6][0], sorted[7][0]] }, { h: "10:00 AM", p: [sorted[8][0], sorted[9][0]] }],
       days: [{ d: "LUNES", p: [sorted[10][0], sorted[11][0]] }, { d: "VIERNES", p: [sorted[12][0], sorted[13][0]] }],
-      recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]] // 🛡️ 4 ANIMALES
+      recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]] // 4 ANIMALES
     };
   }, [results, lotteryId]);
 
   if (!study) return <div className="p-20 text-center font-black animate-pulse text-emerald-500 uppercase">Analizando Búnker...</div>;
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-40">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-40 px-2">
       
-      {/* 🛡️ ESTUDIO INICIAL: 2 ANIMALES GIGANTES */}
-      <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-8 md:p-14 flex flex-col items-center shadow-2xl relative overflow-hidden">
-        <img src={WATERMARK} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
+      {/* 🛡️ PRÓXIMO SORTEO: 2 ANIMALES GIGANTES */}
+      <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-10 flex flex-col items-center shadow-2xl relative overflow-hidden">
+        <img src={LOGO_BG} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">PRÓXIMO SORTEO: {nextHour}</div>
         <div className="flex justify-center gap-4 md:gap-12 z-10">
            {study.maestros.map(code => <img key={code} src={getAnimalImageUrl(code)} className="w-[145px] h-[145px] md:w-[400px] md:h-[400px] object-contain drop-shadow-2xl" />)}
         </div>
-        <div className="mt-8 bg-emerald-600 text-white px-10 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl border-b-8 border-emerald-800 animate-bounce z-10">95% ÉXITO</div>
+        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
       </div>
 
-      {/* TOP 3 - GIGANTE Y SIN TEXTO BAJO FOTO */}
+      {/* TOP 3 - SIN TEXTO BAJO IMAGEN */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
-        <img src={WATERMARK} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover grayscale pointer-events-none" />
+        <img src={LOGO_BG} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-12 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
-        <div className="flex justify-around items-center gap-2 relative z-10">
-           {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-32 h-32 md:w-64 md:h-64 object-contain drop-shadow-xl" />)}
+        <div className="flex justify-center items-center gap-4 md:gap-8 relative z-10">
+           {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-28 h-28 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
         </div>
       </div>
 
-      {/* TENDENCIAS - BOTONES NEGROS CON LOGOS CIRCULARES */}
+      {/* ANÁLISIS TENDENCIAS - BOTONES NEGROS */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
-         <h4 className="font-black text-xl uppercase italic mb-8 flex items-center gap-2 border-b-2 pb-2"><Flame className="text-orange-500" /> ANÁLISIS DE TENDENCIAS</h4>
+         <h4 className="font-black text-xl uppercase italic mb-8 flex gap-2 border-b-2 pb-2"><Flame className="text-orange-500" /> ANÁLISIS DE TENDENCIAS</h4>
          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
             {['la_granjita', 'lotto_activo', 'el_guacharo', 'guacharito', 'selva_plus', 'lotto_rey'].map(lot => (
               <div key={lot} className="bg-slate-900 text-white p-3 rounded-2xl border-2 border-slate-700 flex items-center justify-center gap-2 font-black text-[9px] md:text-xs uppercase shadow-lg">
@@ -82,66 +83,44 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             ))}
          </div>
 
-         {/* CALIENTES - FONDO ROJO, LOGO ÚNICO ATRÁS, SIN TEXTO */}
-         <div className="bg-red-500/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
-            <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         {/* CALIENTES - FONDO ROJO */}
+         <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
+            <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
             <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">🔥 CALIENTES</span>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
-               {study.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto" />)}
+               {study.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
             </div>
          </div>
 
-         {/* FRÍOS - FONDO AZUL, LOGO ÚNICO ATRÁS, SIN TEXTO */}
-         <div className="bg-blue-500/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
-            <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         {/* FRÍOS - FONDO AZUL */}
+         <div className="bg-blue-600/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
+            <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
             <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">❄️ FRÍOS</span>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
-               {study.frios.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto" />)}
+               {study.frios.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
             </div>
          </div>
       </div>
 
-      {/* VENCIDOS - FONDO AMARILLO, LOGO ÚNICO ATRÁS, SIN TEXTO */}
+      {/* VENCIDOS - FONDO AMARILLO */}
       <div className="bg-yellow-500/10 p-8 rounded-[3rem] border-4 border-yellow-500/20 relative overflow-hidden shadow-xl">
-         <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 border-yellow-500 pb-2 text-center text-yellow-700">⏳ VENCIDOS</h4>
          <div className="grid grid-cols-3 md:grid-cols-5 gap-6 relative z-10">
-            {study.vencidos.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-48 md:h-48 object-contain mx-auto" />)}
+            {study.vencidos.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
          </div>
       </div>
 
-      {/* HORAS Y DÍAS (RESTAURADOS CON ANIMALES GIGANTES) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
-           <h4 className="font-black text-xl uppercase italic mb-8 border-b-2 flex gap-2"><Clock className="text-orange-500" /> MEJORES HORAS</h4>
-           <div className="space-y-4">{study.hours.map(h => (
-             <div key={h.h} className="flex justify-between items-center p-6 bg-slate-50 rounded-3xl border-2 border-slate-100">
-                <span className="font-black text-lg">{h.h}</span>
-                <div className="flex gap-4">{h.p.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 md:w-32 md:h-32 object-contain" />)}</div>
-             </div>
-           ))}</div>
-        </div>
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
-           <h4 className="font-black text-xl uppercase italic mb-8 border-b-2 flex gap-2"><Calendar className="text-emerald-500" /> MEJORES DÍAS</h4>
-           <div className="space-y-4">{study.days.map(d => (
-             <div key={d.d} className="flex justify-between items-center p-6 bg-slate-50 rounded-3xl border-2 border-slate-100">
-                <span className="font-black text-lg">{d.d}</span>
-                <div className="flex gap-4">{d.p.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 md:w-32 md:h-32 object-contain" />)}</div>
-             </div>
-           ))}</div>
-        </div>
-      </div>
-
-      {/* 🛡️ RECOMENDACIÓN DEL SISTEMA: 4 ANIMALES Y EXPLICACIÓN TÉCNICA */}
+      {/* RECOMENDACIÓN FINAL: 4 ANIMALES Y EXPLICACIÓN */}
       <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
-         <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
+         <img src={LOGO_BG} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
             <ShieldCheck className="text-emerald-500" size={40} />
             <h3 className="font-black text-2xl md:text-3xl uppercase italic">RECOMENDACIÓN DEL SISTEMA</h3>
          </div>
          <div className="flex flex-col gap-10">
             <div className="flex justify-center items-center gap-2 md:gap-8">
-               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-23 h-23 md:w-48 md:h-48 object-contain drop-shadow-xl" />)}
+               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-22 h-22 md:w-48 md:h-48 object-contain drop-shadow-xl" />)}
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-xl">
                <p className="font-black text-sm md:text-xl uppercase leading-relaxed italic">
