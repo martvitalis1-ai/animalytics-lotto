@@ -55,9 +55,9 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   if (!study) return <div className="p-20 text-center font-black animate-pulse text-emerald-500 uppercase">Analizando Búnker...</div>;
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-40">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-40 px-2">
       
-      {/* 🛡️ ESTUDIO INICIAL: 2 ANIMALES GIGANTES */}
+      {/* ESTUDIO INICIAL: 2 ANIMALES GIGANTES */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-8 md:p-14 flex flex-col items-center shadow-2xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">PRÓXIMO SORTEO: {nextHour}</div>
@@ -69,7 +69,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         <div className="mt-10 bg-emerald-600 text-white px-10 md:px-16 py-4 rounded-3xl font-black text-3xl md:text-5xl shadow-xl border-b-8 border-emerald-800 animate-bounce z-10">95% ÉXITO</div>
       </div>
 
-      {/* TOP 3: ANIMALES GIGANTES Y SIN TEXTO */}
+      {/* TOP 3: ANIMALES GIGANTES Y LOGO ÚNICO ATRÁS */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover grayscale pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-12 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
@@ -85,14 +85,14 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          <h4 className="font-black text-xl uppercase italic mb-8 flex items-center gap-2 border-b-2 pb-2"><Flame className="text-orange-500" /> ANÁLISIS DE TENDENCIAS</h4>
          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
             {['la_granjita', 'lotto_activo', 'el_guacharo', 'guacharito', 'selva_plus', 'lotto_rey'].map(lot => (
-              <div key={lot} className="bg-slate-900 text-white p-3 rounded-2xl border-2 border-slate-700 flex items-center justify-center gap-2 font-black text-[9px] md:text-xs uppercase shadow-lg">
+              <div key={lot} className="bg-slate-900 text-white p-3 rounded-2xl border-2 border-slate-700 flex items-center justify-center gap-2 font-black text-[9px] md:text-xs uppercase shadow-lg cursor-pointer hover:bg-slate-800">
                  <div className="bg-white p-0.5 rounded-full"><img src={getLotteryLogo(lot)} className="w-5 h-5 rounded-full object-contain" /></div>
                  {lot.replace('_', ' ')}
               </div>
             ))}
          </div>
 
-         {/* CALIENTES: FONDO ROJO, SIN TEXTOS, LOGO ÚNICO ATRÁS */}
+         {/* CALIENTES: FONDO ROJO, LOGO ÚNICO ATRÁS */}
          <div className="bg-red-500/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
             <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover grayscale pointer-events-none" />
             <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">🔥 CALIENTES</span>
@@ -103,7 +103,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             </div>
          </div>
 
-         {/* FRÍOS: FONDO AZUL, SIN TEXTOS, LOGO ÚNICO ATRÁS */}
+         {/* FRÍOS: FONDO AZUL, LOGO ÚNICO ATRÁS */}
          <div className="bg-blue-500/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
             <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover grayscale pointer-events-none" />
             <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">❄️ FRÍOS</span>
@@ -115,7 +115,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* VENCIDOS: FONDO AMARILLO, SIN TEXTOS, LOGO ÚNICO ATRÁS */}
+      {/* VENCIDOS: FONDO AMARILLO, LOGO ÚNICO ATRÁS */}
       <div className="bg-yellow-500/10 p-8 rounded-[3rem] border-4 border-yellow-500/20 relative overflow-hidden shadow-xl">
          <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover grayscale pointer-events-none" />
          <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 border-yellow-500 pb-2 text-center text-yellow-700">⏳ VENCIDOS</h4>
@@ -126,7 +126,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* HORAS Y DÍAS (RESTAURADO) */}
+      {/* HORAS Y DÍAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
            <h4 className="font-black text-xl uppercase italic mb-8 border-b-2 flex gap-2"><Clock className="text-orange-500" /> MEJORES HORAS</h4>
@@ -142,13 +142,13 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
            <div className="space-y-4">{study.days.map(d => (
              <div key={d.d} className="flex justify-between items-center p-6 bg-slate-50 rounded-3xl border-2 border-slate-100 shadow-inner">
                 <span className="font-black text-lg">{d.d}</span>
-                <div className="flex gap-4">{d.p.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 md:w-32 md:h-32 object-contain" />)}</div>
+                <div className="flex gap-4">{study.maestros.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-20 h-20 md:w-32 md:h-32 object-contain" />)}</div>
              </div>
            ))}</div>
         </div>
       </div>
 
-      {/* 🛡️ RECOMENDACIÓN DEL SISTEMA: 4 ANIMALES Y EXPLICACIÓN */}
+      {/* RECOMENDACIÓN DEL SISTEMA: 4 ANIMALES Y EXPLICACIÓN TÉCNICA */}
       <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
          <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
@@ -165,7 +165,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             <div className="bg-slate-900 text-white p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-xl">
                <p className="font-black text-sm md:text-xl uppercase leading-relaxed italic">
                  EL ALGORITMO DETECTA UNA ALTA PRESIÓN TÉRMICA EN EL HISTORIAL DE {lotteryId.replace('_', ' ').toUpperCase()}. 
-                 ESTOS 4 ANIMALES PRESENTAN UN PATRÓN DE CICLO DE ARRASTRE DEL 91% PARA EL DÍA DE HOY DEBIDO A LA SINCRONIZACIÓN DE LA SUB-BASE Y LA MATRIZ ATÓMICA RECIENTE.
+                 LOS PATRONES INDICAN UN CICLO DE ARRASTRE DEL 91% EN ESTE GRUPO DEBIDO A LA ALTA CONCENTRACIÓN DE LA SUB-BASE Y EL ESTUDIO DETERMINISTA DE LOS SORTEOS RECIENTES.
                </p>
             </div>
          </div>
