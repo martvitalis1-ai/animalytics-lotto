@@ -20,7 +20,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ CORRECCIÓN DE IDS PARA LA BASE DE DATOS (EVITA SECCIONES VACÍAS)
+  // 🛡️ CORRECCIÓN FINAL DE IDS (Asegura que Guacharito y Lotto Rey carguen historial)
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : 
                globalLottery === 'guacharito' ? 'guacharito' : 
@@ -28,8 +28,6 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
-      
-      {/* HEADER: SIN MOVIMIENTO Y CON LOGOS EN CÍRCULOS NEGROS */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           <div className="flex items-center gap-2 shrink-0">
@@ -39,16 +37,15 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 <span className="text-[7px] md:text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.3em] ml-1">Bunker Intelligence</span>
              </div>
           </div>
-
           <div className="flex items-center gap-2 flex-1 justify-end">
-            <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500 shadow-md">
+            <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[130px] md:w-[240px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
+                <SelectTrigger className="w-[125px] md:w-[240px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
+                    <SelectItem key={l.id} value={l.id} className="font-black text-[10px] md:text-xs uppercase">
                       <div className="flex items-center gap-2">
                         <div className="bg-black p-0.5 rounded-full ring-1 ring-slate-200">
                            <img src={getLotteryLogo(l.id)} className="w-5 h-5 rounded-full object-contain bg-white" />
@@ -60,14 +57,13 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-9 px-3 rounded-xl shadow-lg border-2 border-white/20"><Send size={14} /></Button>
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-9 px-4 rounded-xl shadow-lg border-2 border-white/20"><Send size={14} /></Button>
             <Button variant="ghost" onClick={onLogout} className="text-white p-1"><LogOut size={20} /></Button>
           </div>
         </div>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DOS PISOS */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[68px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
@@ -82,13 +78,9 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         </div>
 
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
-          {/* USAMOS dbId PARA QUE LOS COMPONENTES ENCUENTREN EL HISTORIAL */}
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
-          <TabsContent value="matriz" className="mt-0 space-y-12">
-            <FrequencyHeatmap lotteryId={dbId} />
-            <SequenceMatrixView lotteryId={dbId} />
-          </TabsContent>
+          <TabsContent value="matriz" className="mt-0 space-y-12"><FrequencyHeatmap lotteryId={dbId} /><SequenceMatrixView lotteryId={dbId} /></TabsContent>
           <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbId} /></TabsContent>
           <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
