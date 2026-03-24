@@ -1,6 +1,7 @@
 // src/lib/animalData.ts
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
+// 🛡️ DICCIONARIOS COMPLETOS PARA EL BOT Y LA APP
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -24,7 +25,6 @@ export const ANIMALS_GUACHARO: Record<string, string> = {
   '71': 'GUACAMAYA', '72': 'GORILA', '73': 'HIPOPÓTAMO', '74': 'TURPIAL', '75': 'GUÁCHARO'
 };
 
-// 🛡️ ESTA ES LA EXPORTACIÓN QUE FALTABA Y HACÍA FALLAR EL BUILD
 export const ANIMALS_GUACHARITO: Record<string, string> = {
   ...ANIMALS_GUACHARO,
   '76': 'RINOCERONTE', '77': 'PINGÜINO', '78': 'ANTÍLOPE', '79': 'CALAMAR', '80': 'MURCIÉLAGO',
@@ -34,17 +34,34 @@ export const ANIMALS_GUACHARITO: Record<string, string> = {
   '96': 'CABALLITO DE MAR', '97': 'LORO', '98': 'COCODRILO', '99': 'GUACHARITO'
 };
 
+// 🛡️ FUNCIONES EXPORTADAS PARA EL BOT Y LA APP
+export const getAnimalName = (code: string | number, lotteryId?: string): string => {
+  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
+                  (lotteryId === 'guacharo' || lotteryId === 'el_guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  const normalized = String(code).trim().padStart(2, '0').replace('000', '00');
+  const finalCode = (normalized === '00' || normalized === '0') ? normalized.replace(/^0+/, normalized) : normalized;
+  // Manejo especial para Delfín (0) y Ballena (00)
+  const codeStr = String(code).trim();
+  return mapping[codeStr] || mapping[codeStr.padStart(2, '0')] || "ANIMAL";
+};
+
+export const getAnimalEmoji = (code: string | number): string => "🎯";
+
 export const getCodesForLottery = (id: string): string[] => {
   let max = 36;
   if (id === 'el_guacharo' || id === 'guacharo') max = 75;
   if (id === 'guacharito') max = 99;
+  
   const codes = ['0', '00'];
-  for (let i = 1; i <= max; i++) codes.push(i.toString().padStart(2, '0'));
+  for (let i = 1; i <= max; i++) {
+    codes.push(i.toString().padStart(2, '0'));
+  }
   return codes;
 };
 
 export const getAnimalImageUrl = (code: string | number): string => {
   const str = String(code).trim();
+  // Fix para que 0 sea 0.png y 00 sea 00.png
   const normalized = (str === '0' || str === '00') ? str : str.padStart(2, '0');
   return `${SUPA_STORAGE_URL}${normalized}.png`;
 };
