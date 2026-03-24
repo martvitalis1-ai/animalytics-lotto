@@ -25,7 +25,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER CORREGIDO: SECTOR FIJO SIN EFECTO CORTINA */}
+      {/* 🛡️ HEADER: SELECTOR CON LOGOS EN CÍRCULOS NEGROS */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
@@ -40,17 +40,20 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           </div>
 
           <div className="flex items-center gap-2 flex-1 justify-end">
-            {/* SELECTOR CENTRADO Y SIN DESPLAZAR CONTENIDO */}
-            <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500 shadow-lg">
+            <div className="bg-white rounded-xl p-0.5 border-2 border-emerald-500">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[125px] md:w-[220px] h-8 md:h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
+                <SelectTrigger className="w-[135px] md:w-[240px] h-9 md:h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-2">
                   <SelectValue />
                 </SelectTrigger>
-                {/* position="popper" es CLAVE para evitar que se mueva la app */}
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase flex items-center gap-2">
-                      {l.name}
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-black p-0.5 rounded-full">
+                           <img src={getLotteryLogo(l.id)} className="w-5 h-5 rounded-full object-contain bg-white" />
+                        </div>
+                        {l.name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -59,7 +62,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
 
             <Button
               onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')}
-              className="bg-[#229ED9] h-8 md:h-11 px-3 md:px-6 rounded-xl text-white font-black uppercase text-[10px] flex items-center gap-1 shadow-lg border-2 border-white/20"
+              className="bg-[#229ED9] h-9 md:h-11 px-3 md:px-6 rounded-xl text-white font-black uppercase text-[10px] flex items-center gap-1 shadow-lg"
             >
               <Send size={14} className="fill-white" />
               <span className="hidden sm:inline">CANAL VIP</span>
@@ -73,8 +76,8 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DE DOS PISOS PARA MÓVIL */}
-        <div className="bg-white border-b-2 border-slate-200 sticky top-[64px] md:top-[88px] z-40 shadow-sm">
+        {/* NAVEGACIÓN DOS NIVELES */}
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[68px] md:top-[92px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {[ 
@@ -89,7 +92,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 <TabsTrigger 
                   key={t.id} 
                   value={t.id} 
-                  className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent transition-all"
+                  className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent"
                 >
                   {t.label}
                 </TabsTrigger>
