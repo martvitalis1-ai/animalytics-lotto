@@ -21,7 +21,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     async function loadHistory() {
       const dbId = lotteryId === 'la_granjita' ? 'granjita' : 
                    lotteryId === 'el_guacharo' ? 'guacharo' : lotteryId;
-
       const { data } = await supabase.from('lottery_results').select('*').eq('lottery_type', dbId).order('draw_date', { ascending: false }).limit(400);
       setResults(data || []);
     }
@@ -43,6 +42,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0]],
       vencidos: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
       hours: [{ h: "05:00 PM", p: [sorted[6][0], sorted[7][0]] }, { h: "10:00 AM", p: [sorted[8][0], sorted[9][0]] }],
+      days: [{ d: "LUNES", p: [sorted[10][0], sorted[11][0]] }, { d: "VIERNES", p: [sorted[12][0], sorted[13][0]] }],
       recomendacion: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0]]
     };
   }, [results, lotteryId]);
@@ -55,31 +55,44 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         <img src={LOGO_BG} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">PRÓXIMO SORTEO: {nextHour}</div>
         <div className="flex justify-center gap-4 md:gap-12 z-10">
-           {study.maestros.map(code => <img key={code} src={getAnimalImageUrl(code)} className="w-[145px] h-[145px] md:w-[400px] md:h-[400px] object-contain drop-shadow-2xl" />)}
+           {study.maestros.map(code => <img key={code} src={getAnimalImageUrl(code)} className="w-[145px] h-[145px] md:w-[420px] md:h-[420px] object-contain drop-shadow-2xl" />)}
         </div>
-        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800">95% ÉXITO</div>
+        <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl animate-bounce z-10 border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
       </div>
 
-      {/* TOP 3 - SIN TEXTO */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-12 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
         <div className="flex justify-center items-center gap-4 md:gap-8 relative z-10">
-           {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-28 h-28 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
+           {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-32 h-32 md:w-64 md:h-64 object-contain drop-shadow-xl" />)}
         </div>
       </div>
 
-      {/* CALIENTES - FONDO ROJO */}
       <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden mb-10">
          <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">🔥 CALIENTES</span>
          <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
-            {study.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-44 md:h-44 object-contain mx-auto drop-shadow-md" />)}
+            {study.hot.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-48 md:h-48 object-contain mx-auto drop-shadow-md" />)}
          </div>
       </div>
 
-      {/* RECOMENDACIÓN FINAL - 4 ANIMALES Y EXPLICACIÓN */}
-      <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-blue-600/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden mb-10">
+         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">❄️ FRÍOS</span>
+         <div className="grid grid-cols-3 md:grid-cols-5 gap-4 relative z-10">
+            {study.frios.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-48 md:h-48 object-contain mx-auto drop-shadow-md" />)}
+         </div>
+      </div>
+
+      <div className="bg-yellow-500/10 p-8 rounded-[3rem] border-4 border-yellow-500/20 relative overflow-hidden shadow-xl text-center">
+         <img src={LOGO_BG} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
+         <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 border-yellow-500 pb-2 text-yellow-700">⏳ VENCIDOS</h4>
+         <div className="grid grid-cols-3 md:grid-cols-5 gap-6 relative z-10">
+            {study.vencidos.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-24 h-24 md:w-48 md:h-48 object-contain mx-auto drop-shadow-md" />)}
+         </div>
+      </div>
+
+      <div className="bg-white border-4 border-slate-900 p-10 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden mt-12">
          <img src={LOGO_BG} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
             <ShieldCheck className="text-emerald-500" size={40} />
@@ -87,7 +100,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
          <div className="flex flex-col gap-10">
             <div className="flex justify-center items-center gap-2 md:gap-8">
-               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-22 h-22 md:w-48 md:h-48 object-contain drop-shadow-xl" />)}
+               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-22 h-22 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-xl">
                <p className="font-black text-sm md:text-xl uppercase leading-relaxed italic">
