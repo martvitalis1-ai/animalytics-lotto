@@ -8,6 +8,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Obtenemos los horarios y los códigos de animales (36, 75 o 99)
   const times = getDrawTimesForLottery(lotteryId);
   const codes = getCodesForLottery(lotteryId);
 
@@ -15,18 +16,19 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     async function loadFrequencies() {
       setLoading(true);
       
-      // 🛡️ MISMO TÚNEL EXACTO QUE EL HISTORIAL DE RESULTADOS
+      // 🛡️ MISMO TÚNEL QUE EL HISTORIAL DE RESULTADOS (IDs SQL)
       let dbId = lotteryId.toLowerCase().trim();
       if (dbId === 'la_granjita') dbId = 'granjita';
       if (dbId === 'el_guacharo') dbId = 'guacharo';
+      // lotto_rey y guacharito ya están en minúsculas y coinciden con tu SQL
 
-      // Traemos una carga pesada de resultados (últimos 1500) para calcular la matriz
+      // Traemos los últimos 1200 registros para que la matriz sea real
       const { data: res, error } = await supabase
         .from('lottery_results')
         .select('result_number, draw_time')
-        .eq('lottery_type', dbId) // Igual que el historial
+        .eq('lottery_type', dbId) // ID del túnel de historial
         .order('draw_date', { ascending: false })
-        .limit(1500);
+        .limit(1200);
 
       if (error) {
         console.error("Error en túnel de matriz:", error);
@@ -38,18 +40,18 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     loadFrequencies();
   }, [lotteryId]);
 
-  // 🛡️ LÓGICA DE CRUCE DE DATOS PROFESIONAL
-  // Esto normaliza los números (0, 00, 01) para que el hit marque siempre
+  // 🛡️ PROCESAMIENTO DE ALTA VELOCIDAD (Opcional pero necesario para no colgar el móvil)
   const freqMap = useMemo(() => {
     const map: Record<string, number> = {};
     data.forEach(r => {
       if (!r.result_number || !r.draw_time) return;
       
-      const time = r.draw_time.trim().toUpperCase();
-      const num = r.result_number.trim().padStart(2, '0').replace('000', '00');
+      // Normalizamos la hora y el número para que el cruce sea perfecto
+      const timeKey = r.draw_time.trim().toUpperCase();
+      const numKey = r.result_number.trim().padStart(2, '0').replace('000', '00');
       
-      const key = `${time}-${num}`;
-      map[key] = (map[key] || 0) + 1;
+      const combinedKey = `${timeKey}-${numKey}`;
+      map[combinedKey] = (map[combinedKey] || 0) + 1;
     });
     return map;
   }, [data]);
@@ -88,17 +90,20 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
           </thead>
           <tbody>
             {codes.map(code => (
-              <tr key={code} className="border-b-2 border-slate-100 hover:bg-slate-50">
+              <tr key={code} className="border-b-2 border-slate-100 hover:bg-slate-50 transition-colors">
                 <td className="p-4 border-r-4 border-slate-900 flex justify-center bg-white sticky left-0 z-10 shadow-xl">
-                   {/* IMAGEN GIGANTE SEGÚN VIDEO */}
+                   {/* IMAGEN GIGANTE SIN TEXTO - ESTILO VIDEO */}
                    <img 
                     src={getAnimalImageUrl(code)} 
-                    className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-lg" 
+                    className="w-24 h-24 md:w-36 md:h-36 object-contain drop-shadow-lg" 
                     alt="" 
                    />
                 </td>
                 {times.map(t => {
-                  const key = `${t.trim().toUpperCase()}-${code.trim().padStart(2, '0').replace('000', '00')}`;
+                  // Normalización para el cruce de hits en la matriz
+                  const currentCode = code.trim().padStart(2, '0').replace('000', '00');
+                  const currentTime = t.trim().toUpperCase();
+                  const key = `${currentTime}-${currentCode}`;
                   const hits = freqMap[key] || 0;
 
                   return (
