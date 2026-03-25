@@ -188,3 +188,4 @@ export function SportsView() {
 }
 // Al final del return
 <AdBanner slotId="deportes" />
+import { AdBanner } from "./AdBanner";
