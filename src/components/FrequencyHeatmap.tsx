@@ -11,17 +11,15 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
 
   useEffect(() => {
     async function load() {
-      // 🛡️ MAPEADO EXACTO SEGÚN TU SQL
       let dbId = lotteryId.toLowerCase().trim();
       if (dbId === 'la_granjita') dbId = 'granjita';
       if (dbId === 'el_guacharo') dbId = 'guacharo';
 
-      // Traemos más historial (800 sorteos) para que la matriz tenga sentido
       const { data: res } = await supabase
         .from('lottery_results')
         .select('*')
         .eq('lottery_type', dbId)
-        .limit(800);
+        .limit(1000);
       
       setData(res || []);
     }
@@ -35,11 +33,11 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     return 'bg-red-600 text-white shadow-lg';
   };
 
-  // Función para normalizar números (ej: "1" -> "01") para que el cruce sea perfecto
-  const normalize = (val: string) => val.trim().padStart(2, '0').replace('000', '00');
+  // Función para que el cruce de hits sea exacto (Normaliza "0", "00" y "01")
+  const norm = (v: string) => v.trim().padStart(2, '0').replace('000', '00');
 
   return (
-    <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-10 shadow-2xl overflow-hidden relative">
+    <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-10 shadow-2xl overflow-hidden relative animate-in fade-in">
       <h3 className="font-black text-2xl md:text-3xl uppercase italic mb-8 flex items-center gap-4 text-slate-900">
         <Grid3X3 className="text-emerald-500" size={32} /> MATRIZ ATÓMICA
       </h3>
@@ -59,13 +57,12 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
             {codes.map(code => (
               <tr key={code} className="border-b-2 border-slate-100">
                 <td className="p-4 border-r-4 border-slate-900 flex justify-center bg-white sticky left-0 z-10">
-                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-36 md:h-36 object-contain drop-shadow-md" alt="" />
+                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-md" alt="" />
                 </td>
                 {times.map(t => {
-                  // Cruce de datos normalizado para Guacharito y Lotto Rey
                   const hits = data.filter(r => 
                     r.draw_time.trim().toUpperCase() === t.trim().toUpperCase() && 
-                    normalize(r.result_number) === normalize(code)
+                    norm(r.result_number) === norm(code)
                   ).length;
                   
                   return (
