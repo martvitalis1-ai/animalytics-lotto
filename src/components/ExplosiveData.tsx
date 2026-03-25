@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
 import { Flame, Zap, ShieldAlert, Timer } from "lucide-react";
+import { AdBanner } from "./AdBanner"; // 🛡️ Importación movida al lugar correcto
 
 export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
@@ -46,6 +47,8 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
     const offset = hour >= 20 ? 6 : 3; 
 
     // Tomamos 3 animales que NO son el Top 3 (empezamos desde el índice offset)
+    if (sorted.length < offset + 3) return null;
+
     return [
       { code: sorted[offset][0], force: "98%" },
       { code: sorted[offset + 1][0], force: "96%" },
@@ -69,7 +72,7 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
         <div className="relative z-10 flex flex-col items-center md:items-start gap-2">
            <div className="flex items-center gap-3">
               <Flame className="text-orange-500 animate-pulse" size={32} />
-              <h2 className="font-black text-3xl md:text-5xl uppercase italic tracking-tighter">Explosivos del Día</h2>
+              <h2 className="font-black text-3xl md:text-5xl uppercase italic tracking-tighter text-center md:text-left">Explosivos del Día</h2>
            </div>
            <p className="font-bold text-orange-200/60 text-xs md:text-sm uppercase tracking-widest">Estudio de Presión Térmica por Arrastre</p>
         </div>
@@ -107,7 +110,7 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
               />
             </div>
 
-            {/* Decoración del fondo para que se vea premium */}
+            {/* Decoración del fondo */}
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl"></div>
           </div>
         ))}
@@ -124,9 +127,9 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
             A DIFERENCIA DEL TOP 3, SU CICLO DE SALIDA ESTÁ CONFIGURADO POR EL ARRASTRE DE LAS ÚLTIMAS 48 HORAS DE {lotteryId.replace('_',' ').toUpperCase()}.
          </p>
       </div>
+
+      {/* 🛡️ BANNER DE PUBLICIDAD INTEGRADO CORRECTAMENTE AL FINAL DEL DIV */}
+      <AdBanner slotId="explosivo" />
     </div>
   );
 }
-// Al final del return
-<AdBanner slotId="explosivo" />
-import { AdBanner } from "./AdBanner";
