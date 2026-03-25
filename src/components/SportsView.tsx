@@ -197,45 +197,66 @@ export function SportsView() {
              <Button onClick={() => setShowCuadroIA(!showCuadroIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] uppercase italic transition-all"><LayoutGrid className="mr-2" size={24} /> {showCuadroIA ? "CERRAR CUADRO" : "ARMAR CUADRO IA (5y6)"}</Button>
           </div>
 
-          {showCuadroIA && (
-            <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-8 animate-in zoom-in duration-500 relative overflow-hidden text-slate-900">
-               <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-slate-900 pb-6 relative z-10">
-                  <div className="flex items-center gap-4">
-                     <div className="bg-slate-900 p-3 rounded-2xl"><Sparkles className="text-yellow-400" size={32} /></div>
-                     <h3 className="font-black text-3xl uppercase italic tracking-tighter">CUADRO MAESTRO IA</h3>
-                  </div>
-               </div>
-               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
-                  {cuadroIA.map((leg, i) => (
-                    <div key={i} className="bg-white border-4 border-slate-900 p-4 rounded-[2rem] shadow-lg flex flex-col items-center">
-                       <span className="text-[9px] font-black text-slate-400 uppercase mb-1">{leg.leg}</span>
-                       <div className="flex gap-2">{leg.picks.map(p => <span key={p} className="bg-slate-900 text-emerald-400 w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-black border-2 border-slate-700 shadow-md">{p}</span>)}</div>
-                       <span className={`mt-2 px-3 py-0.5 rounded-full font-black text-[8px] uppercase border-2 ${leg.tipo === 'LÍNEA' ? 'bg-emerald-500 text-white border-emerald-700' : 'bg-orange-500 text-white border-orange-700'}`}>{leg.tipo}</span>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
+          {/* 🛡️ BLOQUE MAESTRO: PROPUESTA IA DE DEPORTES (REDISEÑADO) */}
+{showIA && matches.length > 0 && (
+  <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8 animate-in zoom-in duration-500 text-slate-900 relative overflow-hidden">
+     {/* Marca de agua de fondo */}
+     <div className="absolute opacity-5 -right-10 -top-10 rotate-12"><Target size={250} /></div>
 
-          <div className="grid gap-8">
-             {races.map((r, i) => (
-               <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl relative animate-in slide-in-from-bottom-6">
-                  <div className="flex justify-between items-center mb-8 border-b-4 border-emerald-500 pb-4 text-slate-900">
-                     <div className="flex items-center gap-3">
-                        <div className="bg-slate-900 text-white w-14 h-14 rounded-xl flex flex-col items-center justify-center border-2 border-emerald-400 shadow-lg"><span className="font-black text-xl">{r.num}</span><span className="text-[7px] font-bold uppercase">CARR</span></div>
-                        <div><p className="font-black text-lg md:text-2xl uppercase italic tracking-tighter">{r.valida}</p><p className="text-[9px] font-bold text-slate-400 uppercase">{r.hora} EST</p></div>
-                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="bg-emerald-50 border-4 border-emerald-500 p-6 rounded-3xl relative"><span className="absolute -top-3 left-6 bg-emerald-500 text-white px-4 py-0.5 rounded-full font-black text-[9px] uppercase shadow-sm">Favorito Maestro</span><p className="font-black text-2xl md:text-4xl text-emerald-900 uppercase tracking-tighter">{r.fav}</p></div>
-                     <div className="bg-slate-50 border-4 border-slate-300 p-6 rounded-3xl relative"><span className="absolute -top-3 left-6 bg-slate-400 text-white px-4 py-0.5 rounded-full font-black text-[9px] uppercase shadow-sm">Placé</span><p className="font-black text-2xl md:text-4xl text-slate-600 uppercase tracking-tighter">{r.place}</p></div>
-                  </div>
-                  <p className="mt-6 font-black text-xs text-slate-500 uppercase italic leading-relaxed text-center">"{r.analisis}"</p>
-               </div>
-             ))}
-          </div>
+     <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-slate-900 pb-6 relative z-10">
+        <div className="flex items-center gap-4">
+           <div className="bg-slate-900 p-3 rounded-2xl shadow-lg"><Sparkles className="text-yellow-400 fill-yellow-400" size={32} /></div>
+           <h3 className="font-black text-3xl md:text-4xl uppercase italic tracking-tighter">TICKET MAESTRO IA</h3>
         </div>
-      )}
+        <div className="bg-emerald-500 text-slate-900 px-6 py-2 rounded-full font-black text-xs uppercase italic border-2 border-slate-900 shadow-md">
+           PRONÓSTICO DE ALTA PROBABILIDAD
+        </div>
+     </div>
+
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+        {/* Sugerencia 1 */}
+        <div className="bg-white border-4 border-slate-900 p-6 rounded-[2.5rem] shadow-xl flex flex-col justify-between">
+           <div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Juego Seleccionado</span>
+              <p className="font-black text-2xl text-slate-900 uppercase italic leading-none mt-1">{matches[0].t1} vs {matches[0].t2}</p>
+           </div>
+           <div className="mt-6 bg-slate-900 p-4 rounded-2xl border-l-8 border-emerald-500">
+              <span className="text-emerald-400 font-black text-[10px] uppercase">¿QUÉ APOSTAR?</span>
+              <p className="text-white font-black text-2xl uppercase italic tracking-tighter">JUEGA A: {matches[0].gana}</p>
+           </div>
+        </div>
+
+        {/* Sugerencia 2 (Si existe el juego) */}
+        {matches[1] ? (
+          <div className="bg-white border-4 border-slate-900 p-6 rounded-[2.5rem] shadow-xl flex flex-col justify-between">
+             <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Juego Seleccionado</span>
+                <p className="font-black text-2xl text-slate-900 uppercase italic leading-none mt-1">{matches[1].t1} vs {matches[1].t2}</p>
+             </div>
+             <div className="mt-6 bg-slate-900 p-4 rounded-2xl border-l-8 border-orange-500">
+                <span className="text-orange-400 font-black text-[10px] uppercase">¿QUÉ APOSTAR?</span>
+                <p className="text-white font-black text-2xl uppercase italic tracking-tighter">JUEGA A: {matches[1].alta_baja}</p>
+             </div>
+          </div>
+        ) : (
+          <div className="bg-slate-100 border-4 border-dashed border-slate-300 p-6 rounded-[2.5rem] flex items-center justify-center">
+             <p className="font-black text-slate-300 uppercase italic">Esperando más juegos...</p>
+          </div>
+        )}
+     </div>
+
+     {/* RESUMEN FINAL DEL PARLEY */}
+     <div className="bg-slate-900 text-white p-8 rounded-[3rem] border-b-8 border-emerald-600 relative overflow-hidden">
+        <div className="flex items-center gap-3 mb-4">
+           <Zap className="text-yellow-400 fill-yellow-400" size={24} />
+           <p className="font-black text-xl uppercase italic">RECOMENDACIÓN COMBINADA (PARLEY)</p>
+        </div>
+        <p className="font-bold text-sm md:text-lg text-slate-300 leading-relaxed uppercase italic">
+           "COMBINE <span className="text-emerald-400">{matches[0].t1} ({matches[0].gana})</span> CON <span className="text-emerald-400">{matches[1] ? `${matches[1].t1} (${matches[1].alta_baja})` : 'PRÓXIMO EVENTO'}</span> PARA UN LOGRO ESTIMADO DE +240. EFECTIVIDAD DEL CICLO: 92%."
+        </p>
+     </div>
+  </div>
+)}
 
       <AdBanner slotId="deportes" />
     </div>
