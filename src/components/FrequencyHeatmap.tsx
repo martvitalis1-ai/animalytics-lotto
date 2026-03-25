@@ -15,19 +15,22 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     async function loadFrequencies() {
       setLoading(true);
       
-      // 🛡️ MISMO TÚNEL QUE EL HISTORIAL (IDs EXACTOS SQL)
+      // 🛡️ MISMO TÚNEL EXACTO QUE EL HISTORIAL DE RESULTADOS
       let dbId = lotteryId.toLowerCase().trim();
       if (dbId === 'la_granjita') dbId = 'granjita';
       if (dbId === 'el_guacharo') dbId = 'guacharo';
 
-      // Pedimos solo las columnas necesarias para que vuele
+      // Traemos una carga pesada de resultados (últimos 1500) para calcular la matriz
       const { data: res, error } = await supabase
         .from('lottery_results')
         .select('result_number, draw_time')
-        .eq('lottery_type', dbId)
-        .limit(1000); // Suficiente para una matriz ruda
+        .eq('lottery_type', dbId) // Igual que el historial
+        .order('draw_date', { ascending: false })
+        .limit(1500);
 
-      if (error) console.error("Error en Matriz:", error);
+      if (error) {
+        console.error("Error en túnel de matriz:", error);
+      }
 
       setData(res || []);
       setLoading(false);
@@ -35,12 +38,16 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     loadFrequencies();
   }, [lotteryId]);
 
-  // 🛡️ TÚNEL DE VELOCIDAD: Procesamos los datos UNA SOLA VEZ
+  // 🛡️ LÓGICA DE CRUCE DE DATOS PROFESIONAL
+  // Esto normaliza los números (0, 00, 01) para que el hit marque siempre
   const freqMap = useMemo(() => {
     const map: Record<string, number> = {};
     data.forEach(r => {
+      if (!r.result_number || !r.draw_time) return;
+      
       const time = r.draw_time.trim().toUpperCase();
       const num = r.result_number.trim().padStart(2, '0').replace('000', '00');
+      
       const key = `${time}-${num}`;
       map[key] = (map[key] || 0) + 1;
     });
@@ -49,15 +56,15 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
 
   const getColor = (count: number) => {
     if (count === 0) return 'text-slate-200 opacity-20';
-    if (count === 1) return 'bg-yellow-400 text-slate-900 shadow-inner';
-    if (count === 2) return 'bg-blue-500 text-white shadow-md';
-    return 'bg-red-600 text-white shadow-xl scale-105';
+    if (count === 1) return 'bg-yellow-400 text-slate-900 shadow-inner ring-1 ring-yellow-500';
+    if (count === 2) return 'bg-blue-500 text-white shadow-md ring-1 ring-blue-600';
+    return 'bg-red-600 text-white shadow-xl scale-105 ring-2 ring-red-700';
   };
 
   if (loading) return (
     <div className="p-20 text-center flex flex-col items-center gap-4">
       <div className="w-16 h-16 border-8 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></div>
-      <p className="font-black text-slate-400 uppercase italic animate-pulse">Sincronizando Matriz Atómica...</p>
+      <p className="font-black text-slate-400 uppercase italic animate-pulse">Sincronizando Túnel Atómico...</p>
     </div>
   );
 
@@ -71,7 +78,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
         <table className="w-full border-collapse bg-white">
           <thead>
             <tr className="bg-slate-900 text-white">
-              <th className="p-6 border-r-4 border-slate-700 min-w-[120px] md:min-w-[160px] sticky left-0 bg-slate-900 z-20 uppercase italic">Animal</th>
+              <th className="p-6 border-r-4 border-slate-700 min-w-[120px] md:min-w-[160px] sticky left-0 bg-slate-900 z-20 uppercase italic font-black">Animal</th>
               {times.map(t => (
                 <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-28 rotate-45 font-black whitespace-nowrap">
                   <span className="inline-block -rotate-45 translate-y-4">{t}</span>
@@ -81,9 +88,14 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
           </thead>
           <tbody>
             {codes.map(code => (
-              <tr key={code} className="border-b-2 border-slate-100 hover:bg-slate-50 transition-colors">
+              <tr key={code} className="border-b-2 border-slate-100 hover:bg-slate-50">
                 <td className="p-4 border-r-4 border-slate-900 flex justify-center bg-white sticky left-0 z-10 shadow-xl">
-                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-lg" />
+                   {/* IMAGEN GIGANTE SEGÚN VIDEO */}
+                   <img 
+                    src={getAnimalImageUrl(code)} 
+                    className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-lg" 
+                    alt="" 
+                   />
                 </td>
                 {times.map(t => {
                   const key = `${t.trim().toUpperCase()}-${code.trim().padStart(2, '0').replace('000', '00')}`;
