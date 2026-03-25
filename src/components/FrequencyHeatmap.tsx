@@ -15,16 +15,15 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     async function loadFrequencies() {
       setLoading(true);
       
-      // 1. Mapeo exacto igual que en el Historial
-      let cleanId = lotteryId.toLowerCase().trim();
-      if (cleanId === 'la_granjita') cleanId = 'granjita';
-      if (cleanId === 'el_guacharo') cleanId = 'guacharo';
+      let dbId = lotteryId.toLowerCase().trim();
+      if (dbId === 'la_granjita') dbId = 'granjita';
+      if (dbId === 'el_guacharo') dbId = 'guacharo';
 
-      // 2. Traemos los últimos 1000 resultados para que la matriz tenga data real
+      // Traemos los últimos 1000 resultados para máxima precisión
       const { data: res, error } = await supabase
         .from('lottery_results')
         .select('result_number, draw_time')
-        .eq('lottery_type', cleanId)
+        .eq('lottery_type', dbId)
         .limit(1000);
 
       if (error) console.error("Error en Matriz:", error);
@@ -42,7 +41,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     return 'bg-red-600 text-white shadow-lg';
   };
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase">Calculando Matriz...</div>;
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase italic">Calculando Matriz Atómica...</div>;
 
   return (
     <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-10 shadow-2xl overflow-hidden relative">
@@ -56,9 +55,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
             <tr className="bg-slate-900 text-white">
               <th className="p-6 border-r border-slate-700 min-w-[120px] md:min-w-[160px]">ANIMAL</th>
               {times.map(t => (
-                <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-24 rotate-45 font-black whitespace-nowrap">
-                  {t}
-                </th>
+                <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-24 rotate-45 font-black whitespace-nowrap">{t}</th>
               ))}
             </tr>
           </thead>
@@ -69,9 +66,9 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
                    <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-36 md:h-36 object-contain drop-shadow-md" />
                 </td>
                 {times.map(t => {
-                  // Contamos cuántas veces aparece este animal en este horario específico
+                  // Normalización profesional para cruce de hits
                   const hits = data.filter(r => 
-                    r.draw_time.trim() === t.trim() && 
+                    r.draw_time.trim().toUpperCase() === t.trim().toUpperCase() && 
                     r.result_number.trim().padStart(2, '0').replace('000', '00') === code.trim().padStart(2, '0').replace('000', '00')
                   ).length;
 
