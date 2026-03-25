@@ -1,236 +1,129 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LOTTERIES, getDrawTimesForLottery, getAnimalFromNumber, formatResultNumber } from "@/lib/constants";
+import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Loader2, Save, AlertCircle } from "lucide-react";
-import { getLotteryLogo } from "./LotterySelector";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LOTTERIES, getDrawTimesForLottery } from '@/lib/constants';
+import { PlusCircle, AlertCircle, Save } from 'lucide-react';
 
-interface ResultsInsertProps {
-  onInserted?: () => void;
-}
-
-export function ResultsInsert({ onInserted }: ResultsInsertProps) {
-  const [lotteryType, setLotteryType] = useState<string>(LOTTERIES[0].id);
-  const [resultNumber, setResultNumber] = useState("");
-  const [drawTime, setDrawTime] = useState("");
-  const [drawDate, setDrawDate] = useState(new Date().toISOString().split('T')[0]);
+export function ResultsInsert() {
+  const [lottery, setLottery] = useState("lotto_activo");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState("");
+  const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Obtener horarios según lotería seleccionada
-  const availableTimes = getDrawTimesForLottery(lotteryType);
-  
-  // Cuando cambia la lotería, resetear el tiempo si no está disponible
-  const handleLotteryChange = (newLottery: string) => {
-    setLotteryType(newLottery);
-    const times = getDrawTimesForLottery(newLottery);
-    if (!times.includes(drawTime)) {
-      setDrawTime(times[0]);
-    }
-  };
-
-  const handleInsert = async () => {
-    if (!resultNumber.trim()) {
-      toast.error("Ingresa un número");
-      return;
-    }
-
-    if (!drawTime) {
-      toast.error("Selecciona una hora");
-      return;
-    }
-
+  const handleSave = async () => {
+    if (!time || !result) return toast.error("Chamo, faltan datos");
     setLoading(true);
     
-    // Formatear el número correctamente: "0" = Delfín, "00" = Ballena
-    const formattedNumber = formatResultNumber(resultNumber);
-    const animalName = getAnimalFromNumber(resultNumber, lotteryType);
-    
-    // Verificar si ya existe un resultado para esa lotería/fecha/hora
-    const { data: existing } = await supabase
-      .from('lottery_results')
-      .select('id')
-      .eq('lottery_type', lotteryType)
-      .eq('draw_date', drawDate)
-      .eq('draw_time', drawTime)
-      .single();
+    const dbLotteryId = lottery === 'la_granjita' ? 'granjita' : 
+                       lottery === 'el_guacharo' ? 'guacharo' : lottery;
 
-    if (existing) {
-      // Actualizar el existente
-      const { error } = await supabase
-        .from('lottery_results')
-        .update({
-          result_number: formattedNumber,
-          animal_name: animalName || null,
-        })
-        .eq('id', existing.id);
+    const { error } = await supabase.from('lottery_results').upsert({
+      lottery_type: dbLotteryId,
+      draw_date: date,
+      draw_time: time,
+      result_number: result.trim()
+    }, { onConflict: 'lottery_type,draw_date,draw_time' });
 
-      if (error) {
-        console.error(error);
-        toast.error("Error al actualizar");
-      } else {
-        toast.success(`Resultado actualizado: ${formattedNumber} ${animalName ? `(${animalName})` : ''}`);
-        setResultNumber("");
-        onInserted?.();
-      }
+    if (error) {
+      console.error(error);
+      toast.error("Error al guardar en la bóveda");
     } else {
-      // Insertar nuevo
-      const { error } = await supabase.from('lottery_results').insert({
-        lottery_type: lotteryType,
-        result_number: formattedNumber,
-        animal_name: animalName || null,
-        draw_time: drawTime,
-        draw_date: drawDate,
-      });
-
-      if (error) {
-        console.error(error);
-        toast.error("Error al guardar");
-      } else {
-        toast.success(`Resultado guardado: ${formattedNumber} ${animalName ? `(${animalName})` : ''}`);
-        setResultNumber("");
-        onInserted?.();
-      }
+      toast.success("RESULTADO GUARDADO EXITOSAMENTE");
+      setResult("");
     }
-    
     setLoading(false);
   };
 
-  const selectedLottery = LOTTERIES.find(l => l.id === lotteryType);
-  const previewAnimal = resultNumber ? getAnimalFromNumber(resultNumber, lotteryType) : '';
-  const previewNumber = resultNumber ? formatResultNumber(resultNumber) : '';
-
   return (
-    <Card className="glass-card">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-bold flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Insertar Resultado
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          Los resultados se guardan automáticamente en la base de datos. Si ya existe un resultado para la misma fecha/hora, se actualizará.
+    <div className="space-y-10 text-slate-900">
+      {/* HEADER ESTILO BUNKER */}
+      <div className="flex items-center gap-4 border-b-4 border-slate-900 pb-6">
+        <PlusCircle size={40} className="text-slate-900" />
+        <h3 className="font-black text-3xl uppercase italic tracking-tighter">Insertar Resultado</h3>
+      </div>
+
+      {/* NOTA DE IMPORTANCIA */}
+      <div className="bg-amber-400 border-4 border-slate-900 p-5 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-start gap-4">
+        <AlertCircle size={24} className="text-slate-900 shrink-0" />
+        <p className="font-black text-sm uppercase leading-tight">
+          Importante: "0" = Delfín, "00" = Ballena. Ingrésalos exactamente como quieras guardarlos en el historial.
         </p>
-        <div className="text-xs text-amber-600 bg-amber-500/10 p-2 rounded mt-2">
-          💡 <strong>Importante:</strong> "0" = Delfín, "00" = Ballena. Ingrésalos exactamente como quieras guardarlos.
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Selector de Lotería con Logo */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Lotería</label>
-          <Select value={lotteryType} onValueChange={handleLotteryChange}>
-            <SelectTrigger className="bg-background h-12">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  <img src={getLotteryLogo(lotteryType)} alt="" className="w-6 h-6" />
-                  <span>{selectedLottery?.name}</span>
-                </div>
-              </SelectValue>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* SELECTOR DE LOTERIA - SIN LOGO Y CON FONDO BLANCO SOLIDO */}
+        <div className="space-y-3">
+          <label className="font-black text-sm uppercase ml-2 text-slate-600 italic">1. Seleccionar Lotería</label>
+          <Select value={lottery} onValueChange={setLottery}>
+            <SelectTrigger className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-popover border shadow-lg">
-              {LOTTERIES.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  <div className="flex items-center gap-2">
-                    <img src={getLotteryLogo(l.id)} alt="" className="w-6 h-6" />
-                    <span>{l.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {l.schedule === 'half' ? '(8:30-7:30)' : '(8:00-7:00)'}
-                    </span>
-                  </div>
+            <SelectContent className="bg-white border-4 border-slate-900 z-[200] shadow-2xl">
+              {LOTTERIES.map(l => (
+                <SelectItem key={l.id} value={l.id} className="font-black uppercase py-4 text-slate-900 focus:bg-slate-100 cursor-pointer border-b-2 border-slate-50 last:border-0">
+                  {l.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Fecha</label>
-            <Input 
-              type="date" 
-              value={drawDate}
-              onChange={(e) => setDrawDate(e.target.value)}
-              className="bg-background"
-            />
-          </div>
-          
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Hora del Sorteo</label>
-            <Select value={drawTime} onValueChange={setDrawTime}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Seleccionar hora" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border shadow-lg max-h-60">
-                {availableTimes.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Número Ganador</label>
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Ej: 0, 00, 15..."
-              value={resultNumber}
-              onChange={(e) => {
-                // Permitir solo dígitos, máximo 2
-                const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setResultNumber(val);
-              }}
-              className="bg-background text-center font-mono text-3xl font-bold h-16"
-              maxLength={2}
-            />
-            {previewAnimal && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                {previewAnimal}
-              </div>
-            )}
-          </div>
+
+        {/* FECHA */}
+        <div className="space-y-3">
+          <label className="font-black text-sm uppercase ml-2 text-slate-600 italic">2. Fecha del Sorteo</label>
+          <Input 
+            type="date" 
+            value={date} 
+            onChange={e => setDate(e.target.value)} 
+            className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]" 
+          />
         </div>
 
-        {/* Vista previa */}
-        {resultNumber && drawTime && (
-          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-              <AlertCircle className="w-3 h-3" />
-              Vista previa del resultado a guardar:
-            </div>
-            <div className="flex items-center gap-3">
-              <img src={getLotteryLogo(lotteryType)} alt="" className="w-8 h-8" />
-              <div>
-                <div className="font-bold">{selectedLottery?.name}</div>
-                <div className="text-xs text-muted-foreground">{drawDate} - {drawTime}</div>
-              </div>
-              <div className="ml-auto text-right">
-                <div className="font-mono font-black text-2xl">{previewNumber}</div>
-                {previewAnimal && <div className="text-xs text-muted-foreground">{previewAnimal}</div>}
-              </div>
-            </div>
-          </div>
+        {/* HORA */}
+        <div className="space-y-3">
+          <label className="font-black text-sm uppercase ml-2 text-slate-600 italic">3. Hora del Sorteo</label>
+          <Select value={time} onValueChange={setTime}>
+            <SelectTrigger className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              <SelectValue placeholder="SELECCIONAR HORA" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border-4 border-slate-900 z-[200] shadow-2xl">
+              {getDrawTimesForLottery(lottery).map(t => (
+                <SelectItem key={t} value={t} className="font-black uppercase py-4 text-slate-900 focus:bg-slate-100 cursor-pointer border-b-2 border-slate-50 last:border-0">
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* NUMERO GANADOR */}
+        <div className="space-y-3">
+          <label className="font-black text-sm uppercase ml-2 text-slate-600 italic">4. Número Ganador</label>
+          <Input 
+            value={result} 
+            onChange={e => setResult(e.target.value)} 
+            placeholder="Ej: 09, 25, 0..." 
+            className="border-4 border-slate-900 h-16 rounded-2xl font-black text-3xl text-center bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] placeholder:text-slate-200" 
+          />
+        </div>
+      </div>
+
+      {/* BOTON DE GUARDADO IMPACTANTE */}
+      <Button 
+        onClick={handleSave} 
+        disabled={loading} 
+        className="w-full h-24 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-[2.5rem] font-black text-3xl uppercase italic shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-white transition-all active:translate-y-2 active:shadow-none"
+      >
+        {loading ? (
+          <span className="flex items-center gap-3">GUARDANDO...</span>
+        ) : (
+          <span className="flex items-center gap-3"><Save size={32} /> GUARDAR RESULTADO</span>
         )}
-
-        <Button 
-          onClick={handleInsert} 
-          disabled={loading || !resultNumber || !drawTime}
-          className="w-full bg-foreground text-background hover:bg-foreground/90 font-semibold h-12"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Guardar Resultado
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+      </Button>
+    </div>
   );
 }
