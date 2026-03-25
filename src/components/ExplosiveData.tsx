@@ -127,3 +127,5 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
     </div>
   );
 }
+// Al final del return
+<AdBanner slotId="explosivo" />
