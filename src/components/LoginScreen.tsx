@@ -38,20 +38,20 @@ export function LoginScreen({ onLogin }: LoginProps) {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col font-sans antialiased">
       
-      {/* 🛡️ BANNER SUPERIOR: ALTURA OPTIMIZADA PARA PC Y MÓVIL */}
-      <div className="w-full h-44 md:h-80 bg-black relative border-b-4 border-emerald-500 shadow-xl overflow-hidden">
+      {/* 🛡️ ENCABEZADO DE PUBLICIDAD: AHORA ES AUTO-AJUSTABLE PARA VERSE COMPLETO EN PC */}
+      <div className="w-full h-auto min-h-[120px] bg-black relative border-b-4 border-emerald-500 shadow-xl flex items-center justify-center">
          <AdBanner slotId="login" />
-         {/* Brillo sutil de pantalla */}
-         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+         {/* Brillo sutil sobre la imagen */}
+         <div className="absolute inset-0 bg-white/5 pointer-events-none" />
       </div>
 
       {/* CUERPO DE LA APP */}
       <div className="flex-1 flex flex-col items-center px-6 pt-4 pb-10 max-w-md mx-auto w-full">
         
-        {/* LOGO POSICIONADO PROFESIONALMENTE */}
-        <div className="flex flex-col items-center -mt-16 md:-mt-24 relative z-10">
-           <div className="bg-white p-1.5 rounded-full border-[3px] border-slate-900 shadow-2xl">
-              <img src={logoAnimalytics} className="h-20 w-20 md:h-32 md:w-32 object-contain" alt="Logo" />
+        {/* LOGO POSICIONADO SEGÚN EL FLUJO DE LA IMAGEN */}
+        <div className="flex flex-col items-center -mt-10 md:-mt-16 relative z-10">
+           <div className="bg-white p-1 rounded-full border-[3px] border-slate-900 shadow-2xl">
+              <img src={logoAnimalytics} className="h-20 w-20 md:h-28 md:w-28 object-contain" alt="Logo" />
            </div>
            <div className="mt-4 text-center">
               <h1 className="font-black text-2xl md:text-3xl text-slate-900 italic tracking-tighter uppercase leading-none">
@@ -95,14 +95,14 @@ export function LoginScreen({ onLogin }: LoginProps) {
           <Button 
             onClick={handleLoginAction}
             disabled={loading || !termsAccepted}
-            className="w-full h-16 md:h-20 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black text-xl border-[3px] border-slate-900 rounded-2xl shadow-[0_5px_0_0_#064e3b] active:translate-y-1 active:shadow-none transition-all uppercase italic"
+            className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black text-xl border-[3px] border-slate-900 rounded-2xl shadow-[0_5px_0_0_#064e3b] active:translate-y-1 active:shadow-none transition-all uppercase italic"
           >
             {loading ? <Loader2 className="animate-spin" /> : "ENTRAR AL BÚNKER 💰"}
           </Button>
 
           <div className="pt-4 flex justify-center">
             <button 
-               className="font-black text-[10px] text-[#24A1DE] uppercase tracking-[0.2em] hover:underline flex items-center gap-2"
+               className="font-black text-[10px] text-[#24A1DE] uppercase tracking-[0.2em] hover:underline flex items-center justify-center gap-2"
                onClick={() => window.open("https://t.me/Animalytics", '_blank')}
             >
                <MessageCircle size={14} /> SOLICITAR CÓDIGO VIP
