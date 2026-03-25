@@ -15,10 +15,10 @@ export function AdBanner({ slotId }: { slotId: string }) {
   if (!adUrl) return null;
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full bg-black flex items-center justify-center">
       <img 
         src={adUrl} 
-        className="w-full h-full object-cover select-none" 
+        className="max-w-full max-h-full object-contain select-none shadow-2xl" 
         alt="Publicidad" 
       />
     </div>
