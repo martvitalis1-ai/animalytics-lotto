@@ -113,3 +113,4 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
 }
 // Al final del return, antes de cerrar el último </div>
 <AdBanner slotId="ia" />
+import { AdBanner } from "./AdBanner";
