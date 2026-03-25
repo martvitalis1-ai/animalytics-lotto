@@ -27,21 +27,21 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER DE ALTO IMPACTO: LOGO GIGANTE Y EFECTO NEÓN TOTAL */}
+      {/* 🛡️ HEADER DE ALTO IMPACTO: LOGO GIGANTE CON AURA BLANCA */}
       <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-2 md:py-4 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
           
           <div className="flex items-center shrink-0">
-             {/* LOGO GIGANTE CON EFECTO DROP-SHADOW DE NEÓN */}
+             {/* LOGO GIGANTE CON EFECTO DROP-SHADOW BLANCO SOLICITADO */}
              <img 
                src={LOGO_URL} 
-               className="h-16 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.9)] scale-110 md:scale-125 transition-transform" 
+               className="h-16 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] scale-110 md:scale-125 transition-transform" 
                alt="Logo" 
              />
              
-             {/* TEXTO DESPLAZADO MÁS A LA DERECHA */}
-             <div className="flex flex-col ml-6 md:ml-12">
-                <h1 className="font-black text-2xl md:text-5xl italic leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.8)]">
+             {/* TEXTO DESPLAZADO A LA DERECHA CON SU PROPIO BRILLO ESMERALDA */}
+             <div className="flex flex-col ml-8 md:ml-14">
+                <h1 className="font-black text-2xl md:text-5xl italic leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.7)]">
                   <span className="text-emerald-400">ANIMALYTICS</span> <span className="text-white">PRO</span>
                 </h1>
                 
@@ -79,7 +79,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DOS PISOS CORREGIDA */}
+        {/* NAVEGACIÓN DOS PISOS */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[84px] md:top-[124px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1.5">
