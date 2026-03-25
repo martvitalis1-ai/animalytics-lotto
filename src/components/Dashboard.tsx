@@ -19,46 +19,47 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
+  const LOGO_URL = "https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png";
+
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER POTENCIADO: LOGO GIGANTE Y LETRAS CON LUZ */}
-      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-1.5 md:py-2 shadow-2xl">
-        <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
+      {/* 🛡️ HEADER DE ALTO IMPACTO: LOGO GIGANTE Y EFECTO NEÓN TOTAL */}
+      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-2 md:py-4 shadow-2xl">
+        <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
           
-          <div className="flex items-center gap-3 md:gap-4 shrink-0">
-             {/* LOGO MÁS GRANDE (Casi al alto de la franja) */}
+          <div className="flex items-center shrink-0">
+             {/* LOGO GIGANTE CON EFECTO DROP-SHADOW DE NEÓN */}
              <img 
-               src="https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png" 
-               className="h-14 md:h-20 w-auto object-contain drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
+               src={LOGO_URL} 
+               className="h-16 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.9)] scale-110 md:scale-125 transition-transform" 
                alt="Logo" 
              />
              
-             <div className="flex flex-col">
-                {/* NOMBRE CON EFECTO DE ILUMINACIÓN PARA LECTURA FÁCIL */}
-                <h1 className="font-black text-xl md:text-4xl italic leading-none tracking-tighter drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]">
+             {/* TEXTO DESPLAZADO MÁS A LA DERECHA */}
+             <div className="flex flex-col ml-6 md:ml-12">
+                <h1 className="font-black text-2xl md:text-5xl italic leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.8)]">
                   <span className="text-emerald-400">ANIMALYTICS</span> <span className="text-white">PRO</span>
                 </h1>
                 
-                {/* SUBTÍTULO MÁS BRILLANTE Y CLARO */}
-                <span className="text-[8px] md:text-[12px] font-black text-emerald-300 uppercase tracking-[0.25em] mt-0.5 drop-shadow-md">
+                <span className="text-[10px] md:text-[16px] font-black text-emerald-300 uppercase tracking-[0.35em] mt-1.5 drop-shadow-md">
                   Bunker Intelligence
                 </span>
              </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-1 justify-end">
+          <div className="flex items-center gap-3 flex-1 justify-end">
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[140px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                <SelectTrigger className="w-[140px] md:w-[240px] h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-sm text-slate-900 focus:ring-0 px-4">
                   <SelectValue placeholder="Lotería" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-sm uppercase py-3 focus:bg-slate-100">
                       {l.name}
                     </SelectItem>
                   ))}
@@ -66,28 +67,36 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all">
-              <Send size={16} className="fill-white" />
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] hover:bg-[#1e8ec5] h-11 px-4 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all">
+              <Send size={18} className="fill-white" />
             </Button>
 
-            <Button variant="ghost" onClick={onLogout} className="text-white p-1 hover:bg-red-500 rounded-full transition-colors">
-              <LogOut size={24} />
+            <Button variant="ghost" onClick={onLogout} className="text-white p-2 hover:bg-red-500 rounded-full transition-colors">
+              <LogOut size={28} />
             </Button>
           </div>
         </div>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DOS PISOS */}
-        <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[98px] z-40 shadow-sm">
+        {/* NAVEGACIÓN DOS PISOS CORREGIDA */}
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[84px] md:top-[124px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
-            <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
+            <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1.5">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
-                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[11px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent">
+                <TabsTrigger 
+                  key={t} 
+                  value={t} 
+                  className="px-1 py-2.5 font-black text-[9px] md:text-[12px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent transition-all"
+                >
                   {t}
                 </TabsTrigger>
               ))}
-              {isMaster && <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500"><Settings size={16}/></TabsTrigger>}
+              {isMaster && (
+                <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500">
+                  <Settings size={20}/>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
@@ -103,7 +112,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
           <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
-          {isMaster && <TabsContent value="admin" className="mt-0"><AdminPanelMaestro userRole={userRole} /></TabsContent>}
+          {isMaster && (
+            <TabsContent value="admin" className="mt-0">
+               <AdminPanelMaestro userRole={userRole} />
+            </TabsContent>
+          )}
         </div>
       </Tabs>
     </div>
