@@ -186,3 +186,5 @@ export function SportsView() {
     </div>
   );
 }
+// Al final del return
+<AdBanner slotId="deportes" />
