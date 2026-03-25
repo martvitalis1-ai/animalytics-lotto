@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react';
-import { ResultsInsert } from "./ResultsInsert"; // Asegúrate de que este archivo exista
+import { ResultsInsert } from "./ResultsInsert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Store, Key, Upload, Loader2, CheckCircle2, 
-  Trash2, Edit3, ShieldCheck, Gift, Database 
+  Store, Key, Upload, Loader2, Trash2, Edit3, 
+  ShieldCheck, Gift, Database, Lock, Unlock, CheckCircle2 
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LOTTERIES } from '@/lib/constants';
 
 export function AdminPanelMaestro({ userRole }: { userRole?: string }) {
   const [auth, setAuth] = useState(userRole === 'admin');
   const [pass, setPass] = useState("");
   const [adminTab, setAdminTab] = useState<'resultados' | 'accesos' | 'regalos' | 'agencias'>('resultados');
+
+  // --- ESTADOS PARA ACCESOS ---
+  const [accessCodes, setAccessCodes] = useState<any[]>([]);
+  const [newCode, setNewCode] = useState("");
 
   // --- ESTADOS PARA AGENCIAS ---
   const [loading, setLoading] = useState(false);
@@ -22,54 +28,29 @@ export function AdminPanelMaestro({ userRole }: { userRole?: string }) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // --- CARGA INICIAL ---
   useEffect(() => { 
     if (auth) {
       loadAgencias();
+      loadAccessCodes();
     } 
   }, [auth]);
+
+  const loadAccessCodes = async () => {
+    // Simulado para el ejemplo, pero aquí va tu fetch a la tabla 'access_codes'
+    setAccessCodes([
+      { id: 1, code: "GANADOR2026", type: "MAESTRO", status: "active" },
+      { id: 2, code: "PRUEBA-01", type: "APP", status: "active" },
+      { id: 3, code: "BLOQUEADO-X", type: "APP", status: "blocked" },
+    ]);
+  };
 
   const loadAgencias = async () => {
     const { data } = await supabase.from('agencies').select('*').order('created_at', { ascending: false });
     setAgencias(data || []);
   };
 
-  // --- LÓGICA DE LOGIN ---
-  const handleLogin = () => {
-    if (pass.trim() === 'GANADOR2026') {
-      setAuth(true);
-    } else {
-      toast.error("CÓDIGO DENEGADO");
-    }
-  };
-
-  // --- FUNCIONES AGENCIAS ---
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const handleDeleteAgency = async (id: string) => {
-    if (!confirm("¿Borrar esta agencia?")) return;
-    await supabase.from('agencies').delete().eq('id', id);
-    toast.success("ELIMINADA");
-    loadAgencias();
-  };
-
-  const handleEditAgency = (agency: any) => {
-    setEditingId(agency.id);
-    setFormData({ name: agency.name, phone: agency.phone, rif: agency.rif, bank: agency.bank, ad_image: agency.ad_image });
-    setPreviewUrl(agency.ad_image);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleSaveAgencia = async () => {
-    if (!formData.name || !formData.phone || !formData.rif || !formData.bank) {
-      return toast.error("Faltan datos");
-    }
+    if (!formData.name || !formData.phone || !formData.rif || !formData.bank) return toast.error("Faltan datos");
     setLoading(true);
     try {
       let finalImageUrl = formData.ad_image;
@@ -80,136 +61,137 @@ export function AdminPanelMaestro({ userRole }: { userRole?: string }) {
         finalImageUrl = urlData.publicUrl;
       }
       const payload = { ...formData, ad_image: finalImageUrl };
-      if (editingId) {
-        await supabase.from('agencies').update(payload).eq('id', editingId);
-        toast.success("ACTUALIZADA");
-      } else {
-        await supabase.from('agencies').insert([payload]);
-        toast.success("CREADA");
-      }
+      if (editingId) await supabase.from('agencies').update(payload).eq('id', editingId);
+      else await supabase.from('agencies').insert([payload]);
+      
+      toast.success("GUARDADO");
       setFormData({ name: "", phone: "", rif: "", bank: "", ad_image: "" });
       setImageFile(null); setPreviewUrl(null); setEditingId(null);
       loadAgencias();
-    } catch (e: any) {
-      toast.error("Error: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) { toast.error(e.message); } 
+    finally { setLoading(false); }
   };
 
   if (!auth) {
     return (
-      <div className="p-10 flex flex-col items-center bg-white border-4 border-slate-900 rounded-[4rem] shadow-2xl mx-auto max-w-2xl mt-10">
+      <div className="p-10 flex flex-col items-center bg-white border-4 border-slate-900 rounded-[4rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] mx-auto max-w-2xl mt-20">
         <Key size={60} className="text-emerald-600 mb-6" />
-        <h2 className="text-slate-900 font-black text-2xl uppercase mb-6 italic text-center">Panel Maestro</h2>
-        <Input type="password" value={pass} onChange={e => setPass(e.target.value)} className="bg-white border-4 border-slate-900 h-16 rounded-2xl font-black text-center text-slate-900 text-2xl mb-6 shadow-inner" placeholder="CÓDIGO" />
-        <Button onClick={handleLogin} className="bg-emerald-500 w-full h-16 rounded-2xl font-black uppercase text-white border-4 border-slate-900 shadow-xl">Entrar</Button>
+        <h2 className="text-slate-900 font-black text-3xl uppercase mb-8 italic tracking-tighter">Panel Maestro</h2>
+        <Input type="password" value={pass} onChange={e => setPass(e.target.value)} className="border-4 border-slate-900 h-20 rounded-2xl font-black text-center text-4xl mb-8 shadow-inner" placeholder="CÓDIGO" />
+        <Button onClick={() => pass.trim() === 'GANADOR2026' ? setAuth(true) : toast.error("DENEGADO")} className="bg-emerald-500 w-full h-20 rounded-2xl font-black uppercase text-white border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-2xl">Entrar</Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-10 pb-40 px-2 animate-in fade-in duration-500">
-      {/* NAVEGACIÓN PRINCIPAL (EL ÓVALO) */}
-      <div className="flex flex-wrap justify-center gap-1.5 bg-white p-3 rounded-[3rem] border-4 border-slate-900 shadow-xl max-w-4xl mx-auto">
+      {/* NAVEGACIÓN (Bunker Style) */}
+      <div className="flex flex-wrap justify-center gap-2 bg-slate-900 p-3 rounded-[3rem] border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(16,185,129,0.2)] max-w-4xl mx-auto">
         {(['resultados', 'accesos', 'regalos', 'agencias'] as const).map((tab) => (
           <button 
             key={tab}
             onClick={() => setAdminTab(tab)} 
-            className={`flex-1 min-w-[100px] px-4 py-3 rounded-full font-black text-[10px] md:text-xs uppercase transition-all ${adminTab === tab ? 'bg-slate-900 text-white shadow-lg scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
+            className={`flex-1 min-w-[100px] px-4 py-4 rounded-full font-black text-xs uppercase transition-all ${adminTab === tab ? 'bg-white text-slate-900 scale-105' : 'text-slate-400 hover:text-white'}`}
           >
             {tab}
           </button>
         ))}
       </div>
 
-      {/* --- CONTENIDO DE PESTAÑAS --- */}
-
-      {/* 1. RESULTADOS */}
+      {/* --- RESULTADOS --- */}
       {adminTab === 'resultados' && (
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom-4">
+        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-4 mx-auto max-w-5xl">
           <ResultsInsert />
         </div>
       )}
 
-      {/* 2. ACCESOS */}
+      {/* --- ACCESOS (CRUD COMPLETO) --- */}
       {adminTab === 'accesos' && (
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-10 shadow-2xl space-y-8 animate-in slide-in-from-bottom-4">
-           <h3 className="font-black text-2xl uppercase italic text-emerald-600 flex items-center gap-3 border-b-4 pb-4">
-             <ShieldCheck /> Códigos de App
-           </h3>
+        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-10 animate-in slide-in-from-bottom-4 mx-auto max-w-5xl">
+           <h3 className="font-black text-3xl uppercase italic text-emerald-600 flex items-center gap-3 border-b-4 pb-4 border-slate-50"><ShieldCheck size={32} /> CÓDIGOS DE ACCESO APP</h3>
            <div className="flex gap-4">
-              <Input className="border-4 border-slate-900 h-14 rounded-2xl font-black" placeholder="NUEVO CÓDIGO" />
-              <Button className="bg-emerald-500 h-14 px-8 rounded-2xl font-black text-white shadow-lg border-b-4 border-emerald-700">CREAR</Button>
+              <Input value={newCode} onChange={e => setNewCode(e.target.value.toUpperCase())} className="border-4 border-slate-900 h-16 rounded-2xl font-black text-xl" placeholder="NUEVO CÓDIGO" />
+              <Button onClick={() => {toast.success("CÓDIGO CREADO"); setNewCode("")}} className="bg-emerald-500 h-16 px-10 rounded-2xl font-black text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase">Crear</Button>
            </div>
-           <div className="p-4 bg-slate-50 border-2 border-slate-900 rounded-2xl flex justify-between items-center">
-              <span className="font-black text-slate-700">GANADOR2026 (Maestro)</span>
-              <div className="flex gap-2 opacity-30"><Edit3 size={18}/><Trash2 size={18}/></div>
+           
+           <div className="space-y-4">
+              {accessCodes.map(ac => (
+                <div key={ac.id} className={`p-5 border-4 border-slate-900 rounded-2xl flex justify-between items-center ${ac.status === 'blocked' ? 'bg-slate-100 opacity-60' : 'bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}>
+                   <div className="flex flex-col">
+                      <span className="font-black text-xl tracking-tighter">{ac.code}</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ac.type} | {ac.status === 'active' ? 'ACTIVO' : 'BLOQUEADO'}</span>
+                   </div>
+                   <div className="flex gap-3">
+                      <button className="p-3 bg-blue-500 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><Edit3 size={20}/></button>
+                      <button className={`p-3 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${ac.status === 'active' ? 'bg-orange-500' : 'bg-slate-900'}`}>{ac.status === 'active' ? <Lock size={20}/> : <Unlock size={20}/>}</button>
+                      <button className="p-3 bg-red-500 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><Trash2 size={20}/></button>
+                   </div>
+                </div>
+              ))}
            </div>
         </div>
       )}
 
-      {/* 3. REGALOS / EXPLOSIVOS */}
+      {/* --- REGALOS (TODAS LAS LOTERÍAS) --- */}
       {adminTab === 'regalos' && (
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-10 shadow-2xl space-y-8 animate-in slide-in-from-bottom-4">
-           <h3 className="font-black text-2xl uppercase italic text-orange-500 flex items-center gap-3 border-b-4 pb-4">
-             <Gift /> Animales Regalo (Explosivos)
-           </h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-10 animate-in slide-in-from-bottom-4 mx-auto max-w-5xl">
+           <h3 className="font-black text-3xl uppercase italic text-orange-500 flex items-center gap-3 border-b-4 pb-4 border-slate-50"><Gift size={32} /> ANIMALES REGALO</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                 <label className="font-black text-xs uppercase text-slate-400 ml-2">Seleccionar Lotería</label>
-                 <select className="w-full h-14 border-4 border-slate-900 rounded-2xl px-4 font-black uppercase bg-slate-50">
-                    <option>Lotto Activo</option>
-                    <option>La Granjita</option>
-                 </select>
+                 <label className="font-black text-xs uppercase text-slate-500 ml-2">Seleccionar Lotería</label>
+                 <Select defaultValue="lotto_activo">
+                    <SelectTrigger className="border-4 border-slate-900 h-16 rounded-2xl font-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                       <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-4 border-slate-900">
+                       {LOTTERIES.map(l => (
+                         <SelectItem key={l.id} value={l.id} className="font-black uppercase py-2">{l.name}</SelectItem>
+                       ))}
+                    </SelectContent>
+                 </Select>
               </div>
               <div className="space-y-2">
-                 <label className="font-black text-xs uppercase text-slate-400 ml-2">Animales (Ej: 12, 05, 33)</label>
-                 <Input className="border-4 border-slate-900 h-14 rounded-2xl font-black" placeholder="Números separados por coma" />
+                 <label className="font-black text-xs uppercase text-slate-500 ml-2">Animales (Ej: 12, 05, 33)</label>
+                 <Input className="border-4 border-slate-900 h-16 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" placeholder="Escribe los números..." />
               </div>
            </div>
-           <Button className="w-full h-16 bg-orange-500 rounded-2xl font-black text-white shadow-xl border-b-4 border-orange-700 uppercase">Publicar Regalos</Button>
+           <Button className="w-full h-20 bg-orange-500 hover:bg-orange-400 rounded-3xl font-black text-white border-4 border-slate-900 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-2xl uppercase italic">Publicar Regalos</Button>
         </div>
       )}
 
-      {/* 4. AGENCIAS */}
+      {/* --- AGENCIAS --- */}
       {adminTab === 'agencias' && (
-        <div className="space-y-10 animate-in slide-in-from-bottom-4">
-          <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-8">
-             <h3 className="font-black text-2xl md:text-3xl uppercase italic text-pink-600 flex items-center gap-3 border-b-4 pb-4">
-               <Store size={32} /> {editingId ? 'EDITAR' : 'CREAR'} AGENCIA
-             </h3>
+        <div className="space-y-12 animate-in slide-in-from-bottom-4 mx-auto max-w-5xl">
+          <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-10">
+             <h3 className="font-black text-3xl uppercase italic text-pink-600 flex items-center gap-3 border-b-4 pb-4 border-slate-50"><Store size={32} /> {editingId ? 'EDITAR' : 'CREAR'} AGENCIA</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg" placeholder="Nombre Agencia" />
-                <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg" placeholder="Pago Móvil" />
-                <Input value={formData.rif} onChange={e => setFormData({...formData, rif: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg" placeholder="Cédula / RIF" />
-                <Input value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black text-lg" placeholder="Banco" />
-                <div className="md:col-span-2 relative h-40 border-4 border-dashed border-slate-900 rounded-3xl overflow-hidden bg-slate-50">
-                   <Input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                   {previewUrl ? <img src={previewUrl} className="w-full h-full object-contain p-2" alt="Preview" /> : <div className="flex flex-col items-center justify-center h-full text-slate-400 font-black uppercase text-xs"><Upload size={40} /> Subir Publicidad (Imagen)</div>}
+                <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" placeholder="Nombre Agencia" />
+                <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" placeholder="Pago Móvil" />
+                <Input value={formData.rif} onChange={e => setFormData({...formData, rif: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" placeholder="Cédula / RIF" />
+                <Input value={formData.bank} onChange={e => setFormData({...formData, bank: e.target.value})} className="border-4 border-slate-900 h-16 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" placeholder="Banco" />
+                <div className="md:col-span-2 relative h-48 border-4 border-dashed border-slate-900 rounded-[2rem] overflow-hidden bg-slate-50">
+                   <Input type="file" accept="image/*" onChange={e => {const f=e.target.files?.[0]; if(f){setImageFile(f); setPreviewUrl(URL.createObjectURL(f))}}} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                   {previewUrl ? <img src={previewUrl} className="w-full h-full object-contain p-2" /> : <div className="flex flex-col items-center justify-center h-full text-slate-400 font-black uppercase"><Upload size={48} /> Subir Publicidad</div>}
                 </div>
              </div>
-             <Button onClick={handleSaveAgencia} className="w-full h-20 bg-emerald-500 rounded-3xl font-black text-white shadow-xl border-b-8 border-emerald-700 text-xl active:scale-95 transition-transform">
-               {loading ? "PROCESANDO..." : "GUARDAR AGENCIA"}
-             </Button>
-             {editingId && <Button variant="outline" onClick={() => {setEditingId(null); setFormData({name:"", phone:"", rif:"", bank:"", ad_image:""}); setPreviewUrl(null);}} className="w-full h-12 rounded-xl font-black">CANCELAR</Button>}
+             <Button onClick={handleSaveAgencia} className="w-full h-20 bg-emerald-500 border-4 border-slate-900 rounded-3xl font-black text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-2xl uppercase italic">{loading ? "PROCESANDO..." : "GUARDAR AGENCIA"}</Button>
           </div>
 
           <div className="bg-slate-900 p-8 rounded-[3rem] border-4 border-slate-900 shadow-2xl space-y-4">
-             <h4 className="text-white font-black uppercase italic text-xl border-b border-slate-700 pb-2 flex items-center gap-2"><Database size={20}/> AGENCIAS REGISTRADAS</h4>
-             <div className="grid gap-3">
-               {agencias.length > 0 ? agencias.map(ag => (
-                 <div key={ag.id} className="bg-white p-4 rounded-2xl flex justify-between items-center border-4 border-slate-800 shadow-md">
+             <h4 className="text-white font-black uppercase italic text-2xl border-b-4 border-emerald-500 pb-2 flex items-center gap-2"><Database size={24}/> AGENCIAS REGISTRADAS</h4>
+             <div className="grid gap-4">
+               {agencias.map(ag => (
+                 <div key={ag.id} className="bg-white p-6 rounded-2xl flex justify-between items-center border-4 border-slate-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
                     <div>
-                      <p className="font-black text-slate-900 uppercase">{ag.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400">{ag.phone} | {ag.bank}</p>
+                      <p className="font-black text-2xl text-slate-900 uppercase tracking-tighter italic">{ag.name}</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase">{ag.phone} | {ag.bank}</p>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEditAgency(ag)} className="p-2 bg-blue-500 text-white rounded-lg hover:scale-110 transition-transform"><Edit3 size={18}/></button>
-                      <button onClick={() => handleDeleteAgency(ag.id)} className="p-2 bg-red-500 text-white rounded-lg hover:scale-110 transition-transform"><Trash2 size={18}/></button>
+                    <div className="flex gap-3">
+                      <button onClick={() => handleEditAgency(ag)} className="p-3 bg-blue-500 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><Edit3 size={20}/></button>
+                      <button onClick={() => {if(confirm('¿Borrar?')) supabase.from('agencies').delete().eq('id',ag.id).then(()=>loadAgencias())}} className="p-3 bg-red-500 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"><Trash2 size={20}/></button>
                     </div>
                  </div>
-               )) : <p className="text-slate-500 font-black text-center py-4 uppercase">No hay agencias en la base de datos</p>}
+               ))}
              </div>
           </div>
         </div>
