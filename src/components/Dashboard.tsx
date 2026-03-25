@@ -19,7 +19,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ TUNEL DE DATOS: Mismo mapeo que el historial que SÍ funciona
+  // 🛡️ ID PARA LA BASE DE DATOS: Mapeo directo y simple
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
@@ -31,14 +31,14 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
              <img src="https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png" className="h-10 md:h-16 w-auto object-contain" alt="Logo" />
              <div className="flex flex-col">
                 <h1 className="font-black text-lg md:text-3xl italic text-emerald-400 uppercase leading-none tracking-tighter">ANIMALYTICS <span className="text-white">PRO</span></h1>
-                <span className="text-[7px] md:text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.3em] ml-1 text-nowrap">Bunker Intelligence</span>
+                <span className="text-[7px] md:text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.2em] ml-1">Bunker Intelligence</span>
              </div>
           </div>
           <div className="flex items-center gap-2 flex-1 justify-end">
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
                 <SelectTrigger className="w-[140px] md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
-                  <SelectValue />
+                  <SelectValue placeholder="Lotería" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
@@ -57,7 +57,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
-                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent">{t}</TabsTrigger>
+                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent uppercase">{t}</TabsTrigger>
               ))}
               {isMaster && <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500"><Settings size={16}/></TabsTrigger>}
             </TabsList>
@@ -66,8 +66,13 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
-          <TabsContent value="matriz" className="mt-0 space-y-12"><FrequencyHeatmap lotteryId={dbId} /><SequenceMatrixView lotteryId={dbId} /></TabsContent>
-          {/* ... resto de componentes usando dbId ... */}
+          <TabsContent value="matriz" className="mt-0 space-y-12">
+            <FrequencyHeatmap lotteryId={dbId} />
+            <SequenceMatrixView lotteryId={dbId} />
+          </TabsContent>
+          <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbId} /></TabsContent>
+          <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
+          <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
           <TabsContent value="agencias" className="mt-0"><ModuloJugadas tenantAgency={tenantAgency} /></TabsContent>
           {isMaster && <TabsContent value="admin" className="mt-0"><AdminPanelMaestro userRole={userRole} /></TabsContent>}
         </div>
