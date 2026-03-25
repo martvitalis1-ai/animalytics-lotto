@@ -11,22 +11,20 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
     async function fetchResults() {
       setLoading(true);
       
-      // 1. Limpiamos el ID para que coincida con tu SQL
-      let cleanId = lotteryId.toLowerCase().trim();
-      if (cleanId === 'la_granjita') cleanId = 'granjita';
-      if (cleanId === 'el_guacharo') cleanId = 'guacharo';
+      // 🛡️ MAPEADO EXACTO SEGÚN TU SQL
+      let dbId = lotteryId.toLowerCase().trim();
+      if (dbId === 'la_granjita') dbId = 'granjita';
+      if (dbId === 'el_guacharo') dbId = 'guacharo';
 
-      // 2. Buscamos directamente en la tabla
+      // 1. Buscamos todo lo que exista para esa lotería y esa fecha
       const { data, error } = await supabase
         .from('lottery_results')
         .select('*')
-        .eq('lottery_type', cleanId)
+        .eq('lottery_type', dbId)
         .eq('draw_date', selectedDate)
         .order('draw_time', { ascending: true });
 
-      if (error) {
-        console.error("Error de Supabase:", error);
-      }
+      if (error) console.error("Error cargando historial:", error);
 
       setResults(data || []);
       setLoading(false);
@@ -36,7 +34,6 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
 
   return (
     <div className="space-y-8 pb-40 px-2">
-      {/* HEADER DE LA BÓVEDA */}
       <div className="bg-slate-900 text-white p-6 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="font-black text-xl md:text-2xl uppercase italic text-emerald-400">
           Bóveda: {lotteryId.replace('_', ' ')}
@@ -45,14 +42,13 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
           type="date" 
           value={selectedDate} 
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-black text-sm border-4 border-slate-900 w-full md:w-auto text-center"
+          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-black text-sm border-4 border-slate-900 w-full md:w-auto text-center shadow-lg"
         />
       </div>
 
       {loading ? (
         <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase">Abriendo Búnker...</div>
       ) : results.length > 0 ? (
-        // 3. Mostramos TODOS los resultados que existan en la DB
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {results.map((res, index) => (
             <div key={index} className="bg-white border-4 border-slate-900 rounded-[2.5rem] md:rounded-[3rem] p-6 flex flex-col items-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative min-h-[180px]">
@@ -68,9 +64,8 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
           ))}
         </div>
       ) : (
-        // 4. Mensaje si realmente no hay nada
         <div className="p-20 text-center bg-white border-4 border-dashed border-slate-200 rounded-[3rem]">
-          <p className="font-black text-slate-400 uppercase">No hay resultados cargados para esta fecha.</p>
+          <p className="font-black text-slate-400 uppercase">No hay resultados cargados en la base de datos para esta lotería.</p>
         </div>
       )}
     </div>
