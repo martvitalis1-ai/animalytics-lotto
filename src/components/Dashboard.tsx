@@ -19,21 +19,37 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ ID PARA LA BASE DE DATOS: Mapeo directo y simple
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
-      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-3 shadow-2xl">
+      
+      {/* 🛡️ HEADER POTENCIADO: LOGO GIGANTE Y LETRAS CON LUZ */}
+      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-1.5 md:py-2 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-             <img src="https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png" className="h-10 md:h-16 w-auto object-contain" alt="Logo" />
+          
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
+             {/* LOGO MÁS GRANDE (Casi al alto de la franja) */}
+             <img 
+               src="https://raw.githubusercontent.com/martvitalis1-ai/animalytics-lotto/main/src/assets/logo-animalytics.png" 
+               className="h-14 md:h-20 w-auto object-contain drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
+               alt="Logo" 
+             />
+             
              <div className="flex flex-col">
-                <h1 className="font-black text-lg md:text-3xl italic text-emerald-400 uppercase leading-none tracking-tighter">ANIMALYTICS <span className="text-white">PRO</span></h1>
-                <span className="text-[7px] md:text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.2em] ml-1">Bunker Intelligence</span>
+                {/* NOMBRE CON EFECTO DE ILUMINACIÓN PARA LECTURA FÁCIL */}
+                <h1 className="font-black text-xl md:text-4xl italic leading-none tracking-tighter drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]">
+                  <span className="text-emerald-400">ANIMALYTICS</span> <span className="text-white">PRO</span>
+                </h1>
+                
+                {/* SUBTÍTULO MÁS BRILLANTE Y CLARO */}
+                <span className="text-[8px] md:text-[12px] font-black text-emerald-300 uppercase tracking-[0.25em] mt-0.5 drop-shadow-md">
+                  Bunker Intelligence
+                </span>
              </div>
           </div>
+
           <div className="flex items-center gap-2 flex-1 justify-end">
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
@@ -42,27 +58,40 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">{l.name}</SelectItem>
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">
+                      {l.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20 active:scale-95"><Send size={14} /></Button>
-            <Button variant="ghost" onClick={onLogout} className="text-white p-1 hover:bg-red-500"><LogOut size={20} /></Button>
+
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-3 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all">
+              <Send size={16} className="fill-white" />
+            </Button>
+
+            <Button variant="ghost" onClick={onLogout} className="text-white p-1 hover:bg-red-500 rounded-full transition-colors">
+              <LogOut size={24} />
+            </Button>
           </div>
         </div>
       </header>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[92px] z-40 shadow-sm">
+        {/* NAVEGACIÓN DOS PISOS */}
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[72px] md:top-[98px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
-                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[10px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent uppercase">{t}</TabsTrigger>
+                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[11px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent">
+                  {t}
+                </TabsTrigger>
               ))}
               {isMaster && <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500"><Settings size={16}/></TabsTrigger>}
             </TabsList>
           </div>
         </div>
+
         <div className="p-2 md:p-6 max-w-7xl mx-auto">
           <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
           <TabsContent value="resultados" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
