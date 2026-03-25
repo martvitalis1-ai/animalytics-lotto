@@ -1,6 +1,5 @@
 export const SUPA_STORAGE_URL = "https://qfdrmyuuswiubsppyjrt.supabase.co/storage/v1/object/public/ANIMALITOS/";
 
-// 🛡️ DICCIONARIOS EXPORTADOS (REQUERIDOS PARA EL BUILD)
 export const ANIMALS_STANDARD: Record<string, string> = {
   '0': 'DELFÍN', '00': 'BALLENA', '01': 'CARNERO', '02': 'TORO', '03': 'CIEMPIÉS',
   '04': 'ALACRÁN', '05': 'LEÓN', '06': 'RANA', '07': 'PERICO', '08': 'RATÓN',
@@ -50,10 +49,8 @@ export const getAnimalImageUrl = (code: string | number): string => {
 };
 
 export const getAnimalName = (code: string | number, lotteryId?: string): string => {
-  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
-                  (lotteryId === 'guacharo' || lotteryId === 'el_guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
-  const c = String(code).trim().padStart(2, '0');
-  return mapping[c] || "ANIMAL";
+  const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : (lotteryId === 'guacharo' || lotteryId === 'el_guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+  return mapping[String(code).trim().padStart(2, '0')] || "ANIMAL";
 };
 
 export const getAnimalEmoji = (code: string | number): string => "🎯";
