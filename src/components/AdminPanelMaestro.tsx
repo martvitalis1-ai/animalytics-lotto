@@ -53,41 +53,49 @@ export function AdminPanelMaestro({ userRole }: { userRole?: string }) {
         ))}
       </div>
 
-      {adminTab === 'publicidad' && (
-        <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-10 max-w-5xl mx-auto">
-           <h3 className="font-black text-2xl md:text-3xl uppercase italic text-orange-500 flex items-center gap-3 border-b-4 pb-4">
-             <Megaphone size={32} /> GESTIÓN DE BANNERS
-           </h3>
+      // Reemplaza la pestaña de PUBLICIDAD en AdminPanelMaestro.tsx con esto:
+{adminTab === 'publicidad' && (
+  <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-10 max-w-5xl mx-auto animate-in slide-in-from-bottom-4">
+     <h3 className="font-black text-2xl md:text-3xl uppercase italic text-orange-500 flex items-center gap-3 border-b-4 pb-4">
+       <Megaphone size={32} /> GESTIÓN DE BANNERS
+     </h3>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {[
-                { id: 'login', label: '1. Banner Inicio (Arriba del Logo)' },
-                { id: 'ia', label: '2. Banner Sección IA (Al Final)' },
-                { id: 'explosivo', label: '3. Banner Explosivos (Al Final)' },
-                { id: 'deportes', label: '4. Banner Deportes (Al Final)' }
-              ].map((slot) => (
-                <div key={slot.id} className="space-y-3 p-6 border-4 border-slate-900 rounded-[2rem] bg-slate-50 relative">
-                   <label className="font-black text-xs uppercase text-slate-600">{slot.label}</label>
-                   <div className="relative h-32 w-full border-4 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center hover:border-emerald-500 transition-colors bg-white">
-                      <Input 
-                        type="file" 
-                        accept="image/*" 
-                        className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadAd(slot.id, file);
-                        }}
-                      />
-                      <ImageIcon className="text-slate-300" size={30} />
-                      <span className="text-[9px] font-black text-slate-400 uppercase mt-2 text-center px-2">Click para subir {slot.id}</span>
-                   </div>
-                   {loading && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center rounded-[2rem]"><Loader2 className="animate-spin text-emerald-500" /></div>}
-                </div>
-              ))}
-           </div>
-        </div>
-      )}
-
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {[
+          { id: 'login', label: '1. Banner Inicio (Arriba del Logo)' },
+          { id: 'ia', label: '2. Banner Sección IA (Al Final)' },
+          { id: 'explosivo', label: '3. Banner Explosivos (Al Final)' },
+          { id: 'deportes', label: '4. Banner Deportes (Al Final)' }
+        ].map((slot) => (
+          <div key={slot.id} className="space-y-3 p-6 border-4 border-slate-900 rounded-[2rem] bg-slate-50 relative">
+             <label className="font-black text-xs uppercase text-slate-600">{slot.label}</label>
+             
+             {/* El Input ahora está encima de todo para que el clic funcione siempre */}
+             <div className="relative h-32 w-full border-4 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center bg-white hover:border-emerald-500 transition-all overflow-hidden">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="absolute inset-0 opacity-0 cursor-pointer z-30 w-full h-full" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUploadAd(slot.id, file);
+                  }}
+                />
+                <ImageIcon className="text-slate-300 z-10" size={30} />
+                <span className="text-[10px] font-black text-slate-400 uppercase mt-2 z-10 text-center px-2">Click para subir {slot.id}</span>
+                
+                {loading && (
+                  <div className="absolute inset-0 bg-white/90 z-40 flex flex-col items-center justify-center">
+                    <Loader2 className="animate-spin text-emerald-500 mb-2" />
+                    <span className="text-[8px] font-black uppercase text-emerald-600">Subiendo...</span>
+                  </div>
+                )}
+             </div>
+          </div>
+        ))}
+     </div>
+  </div>
+)}
       {adminTab === 'resultados' && <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-2xl"><ResultsInsert /></div>}
       {/* ... resto de las pestañas configuradas antes ... */}
     </div>
