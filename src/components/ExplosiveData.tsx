@@ -129,3 +129,4 @@ export function ExplosiveData({ lotteryId }: { lotteryId: string }) {
 }
 // Al final del return
 <AdBanner slotId="explosivo" />
+import { AdBanner } from "./AdBanner";
