@@ -27,25 +27,25 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER DE ALTO IMPACTO: LOGO GIGANTE CON AURA BLANCA */}
-      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-4 py-2 md:py-4 shadow-2xl">
+      {/* 🛡️ HEADER CORREGIDO: LOGO ALEJADO DEL BORDE Y LETRAS LEGIBLES */}
+      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-6 md:px-12 py-2 md:py-4 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
           
           <div className="flex items-center shrink-0">
-             {/* LOGO GIGANTE CON EFECTO DROP-SHADOW BLANCO SOLICITADO */}
+             {/* LOGO GIGANTE, ALEJADO DEL BORDE Y CON FILTROS DE NITIDEZ */}
              <img 
                src={LOGO_URL} 
-               className="h-16 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] scale-110 md:scale-125 transition-transform" 
+               className="h-20 md:h-32 w-auto object-contain drop-shadow-[0_5px_25px_rgba(255,255,255,0.9)] contrast-125 saturate-110 brightness-110 ml-2 md:ml-4" 
                alt="Logo" 
              />
              
-             {/* TEXTO DESPLAZADO A LA DERECHA CON SU PROPIO BRILLO ESMERALDA */}
-             <div className="flex flex-col ml-8 md:ml-14">
+             {/* BLOQUE DE TEXTO DESPLAZADO PARA DAR AIRE AL LOGO */}
+             <div className="flex flex-col ml-10 md:ml-16">
                 <h1 className="font-black text-2xl md:text-5xl italic leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.7)]">
                   <span className="text-emerald-400">ANIMALYTICS</span> <span className="text-white">PRO</span>
                 </h1>
                 
-                <span className="text-[10px] md:text-[16px] font-black text-emerald-300 uppercase tracking-[0.35em] mt-1.5 drop-shadow-md">
+                <span className="text-[10px] md:text-[16px] font-black text-emerald-300 uppercase tracking-[0.35em] mt-2 drop-shadow-md">
                   Bunker Intelligence
                 </span>
              </div>
@@ -59,17 +59,13 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
                   {LOTTERIES.map(l => (
-                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-sm uppercase py-3 focus:bg-slate-100">
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-sm uppercase py-3">
                       {l.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] hover:bg-[#1e8ec5] h-11 px-4 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all">
-              <Send size={18} className="fill-white" />
-            </Button>
 
             <Button variant="ghost" onClick={onLogout} className="text-white p-2 hover:bg-red-500 rounded-full transition-colors">
               <LogOut size={28} />
@@ -79,8 +75,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* NAVEGACIÓN DOS PISOS */}
-        <div className="bg-white border-b-2 border-slate-200 sticky top-[84px] md:top-[124px] z-40 shadow-sm">
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[92px] md:top-[132px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1.5">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
