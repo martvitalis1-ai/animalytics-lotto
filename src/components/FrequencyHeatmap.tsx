@@ -11,8 +11,18 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
 
   useEffect(() => {
     async function load() {
-      // 🛡️ AQUÍ ESTABA EL ERROR, YA COINCIDE CON EL SQL
-      const { data: res } = await supabase.from('lottery_results').select('*').eq('lottery_type', lotteryId).limit(800);
+      // 🛡️ MAPEADO EXACTO SEGÚN TU SQL
+      let dbId = lotteryId.toLowerCase().trim();
+      if (dbId === 'la_granjita') dbId = 'granjita';
+      if (dbId === 'el_guacharo') dbId = 'guacharo';
+
+      // Traemos más historial (800 sorteos) para que la matriz tenga sentido
+      const { data: res } = await supabase
+        .from('lottery_results')
+        .select('*')
+        .eq('lottery_type', dbId)
+        .limit(800);
+      
       setData(res || []);
     }
     load();
@@ -25,6 +35,9 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     return 'bg-red-600 text-white shadow-lg';
   };
 
+  // Función para normalizar números (ej: "1" -> "01") para que el cruce sea perfecto
+  const normalize = (val: string) => val.trim().padStart(2, '0').replace('000', '00');
+
   return (
     <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-4 md:p-10 shadow-2xl overflow-hidden relative">
       <h3 className="font-black text-2xl md:text-3xl uppercase italic mb-8 flex items-center gap-4 text-slate-900">
@@ -35,17 +48,26 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
           <thead>
             <tr className="bg-slate-900 text-white">
               <th className="p-6 border-r border-slate-700 min-w-[120px] md:min-w-[160px]">ANIMAL</th>
-              {times.map(t => <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-24 rotate-45 font-black whitespace-nowrap">{t}</th>)}
+              {times.map(t => (
+                <th key={t} className="p-2 border-r border-slate-700 text-[10px] h-24 rotate-45 font-black whitespace-nowrap">
+                  {t}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {codes.map(code => (
               <tr key={code} className="border-b-2 border-slate-100">
                 <td className="p-4 border-r-4 border-slate-900 flex justify-center bg-white sticky left-0 z-10">
-                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-40 md:h-40 object-contain drop-shadow-md" />
+                   <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-36 md:h-36 object-contain drop-shadow-md" alt="" />
                 </td>
                 {times.map(t => {
-                  const hits = data.filter(r => r.draw_time.trim() === t.trim() && r.result_number.trim() === code.trim()).length;
+                  // Cruce de datos normalizado para Guacharito y Lotto Rey
+                  const hits = data.filter(r => 
+                    r.draw_time.trim().toUpperCase() === t.trim().toUpperCase() && 
+                    normalize(r.result_number) === normalize(code)
+                  ).length;
+                  
                   return (
                     <td key={t} className={`border-r border-slate-200 text-center font-black text-2xl md:text-4xl ${getColor(hits)}`}>
                       {hits || '-'}
