@@ -86,12 +86,22 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
       </div>
 
-      {/* 2. TOP 3 DEL DÍA */}
-      <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 md:p-12 shadow-xl relative overflow-hidden">
+      {/* 🛡️ 2. TOP 3 DEL DÍA: CORREGIDO Y CENTRADO PARA TELÉFONO */}
+      <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-12 shadow-xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
-        <h3 className="font-black text-2xl uppercase italic text-center mb-10 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
-        <div className="flex justify-around items-center gap-2 md:gap-8 relative z-10">
-           {study.top3.map((code) => <img key={code} src={getAnimalImageUrl(code)} className="w-28 h-28 md:w-60 md:h-60 object-contain drop-shadow-xl" />)}
+        <h3 className="font-black text-xl md:text-2xl uppercase italic text-center mb-10 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
+        
+        {/* Grid de 3 columnas con centrado de items absoluto */}
+        <div className="grid grid-cols-3 gap-2 md:gap-8 justify-items-center items-center relative z-10 w-full px-1">
+           {study.top3.map((code) => (
+             <div key={code} className="flex justify-center items-center w-full">
+                <img 
+                  src={getAnimalImageUrl(code)} 
+                  className="w-full h-auto max-w-[95px] md:max-w-[280px] object-contain drop-shadow-xl" 
+                  alt="Top Animal"
+                />
+             </div>
+           ))}
         </div>
       </div>
 
@@ -144,7 +154,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 🛡️ 7. RECOMENDACIÓN DEL SISTEMA (CORREGIDO PARA 2x2 EN MÓVIL) */}
+      {/* 7. RECOMENDACIÓN DEL SISTEMA (2x2 EN MÓVIL) */}
       <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
          <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
@@ -152,7 +162,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             <h3 className="font-black text-2xl md:text-3xl uppercase italic">RECOMENDACIÓN DEL SISTEMA</h3>
          </div>
          <div className="flex flex-col gap-10">
-            {/* 🛡️ GRID DE 2 COLUMNAS EN MÓVIL Y 4 EN PC */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 justify-items-center relative z-10">
                {study.recomendacion.map(c => (
                  <img key={c} src={getAnimalImageUrl(c)} className="w-32 h-32 md:w-56 md:h-56 object-contain drop-shadow-xl" />
