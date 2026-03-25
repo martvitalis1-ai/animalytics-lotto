@@ -14,20 +14,15 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   useEffect(() => {
     async function loadFrequencies() {
       setLoading(true);
-      
-      let dbId = lotteryId.toLowerCase().trim();
-      if (dbId === 'la_granjita') dbId = 'granjita';
-      if (dbId === 'el_guacharo') dbId = 'guacharo';
+      const cleanId = lotteryId.toLowerCase().trim();
 
-      // Traemos los últimos 1000 resultados para máxima precisión
       const { data: res, error } = await supabase
         .from('lottery_results')
         .select('result_number, draw_time')
-        .eq('lottery_type', dbId)
-        .limit(1000);
+        .ilike('lottery_type', cleanId)
+        .limit(1500); // Subimos el límite para más precisión
 
       if (error) console.error("Error en Matriz:", error);
-
       setData(res || []);
       setLoading(false);
     }
@@ -39,6 +34,13 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     if (count === 1) return 'bg-yellow-400 text-slate-900';
     if (count === 2) return 'bg-blue-500 text-white';
     return 'bg-red-600 text-white shadow-lg';
+  };
+
+  // Función para comparar números sin errores (0 = 00 = 0)
+  const isMatch = (dbNum: string, codeNum: string) => {
+    const db = dbNum.trim().padStart(2, '0').replace('000', '00');
+    const cd = codeNum.trim().padStart(2, '0').replace('000', '00');
+    return db === cd;
   };
 
   if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase italic">Calculando Matriz Atómica...</div>;
@@ -66,10 +68,9 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
                    <img src={getAnimalImageUrl(code)} className="w-24 h-24 md:w-36 md:h-36 object-contain drop-shadow-md" />
                 </td>
                 {times.map(t => {
-                  // Normalización profesional para cruce de hits
                   const hits = data.filter(r => 
                     r.draw_time.trim().toUpperCase() === t.trim().toUpperCase() && 
-                    r.result_number.trim().padStart(2, '0').replace('000', '00') === code.trim().padStart(2, '0').replace('000', '00')
+                    isMatch(r.result_number, code)
                   ).length;
 
                   return (
