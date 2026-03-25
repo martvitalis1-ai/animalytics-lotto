@@ -6,8 +6,12 @@ export function AdBanner({ slotId }: { slotId: string }) {
 
   useEffect(() => {
     const fetchAd = async () => {
-      const { data } = await supabase.from('ads').select('image_url').eq('id', slotId).maybeSingle();
-      if (data) setAdUrl(data.image_url);
+      try {
+        const { data } = await supabase.from('ads').select('image_url').eq('id', slotId).maybeSingle();
+        if (data) setAdUrl(data.image_url);
+      } catch (e) {
+        console.error("Error cargando publicidad:", e);
+      }
     };
     fetchAd();
   }, [slotId]);
@@ -15,12 +19,10 @@ export function AdBanner({ slotId }: { slotId: string }) {
   if (!adUrl) return null;
 
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center">
-      <img 
-        src={adUrl} 
-        className="max-w-full max-h-full object-contain select-none shadow-2xl" 
-        alt="Publicidad" 
-      />
-    </div>
+    <img 
+      src={adUrl} 
+      className="w-full h-auto block select-none" 
+      alt="Publicidad" 
+    />
   );
 }
