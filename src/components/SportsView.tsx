@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdBanner } from "./AdBanner";
 
-// 📊 MEGA CARTELERA DEPORTIVA (TODOS LOS DEPORTES Y LIGAS)
 const DEPORTES_PARLEY = {
   "Fútbol": {
     ligas: ["Champions League", "La Liga", "Premier League", "Serie A", "Liga FUTVE"],
@@ -24,15 +23,13 @@ const DEPORTES_PARLEY = {
     ligas: ["MLB (USA)", "LVBP (VEN)", "Serie del Caribe"],
     juegos: [
       { liga: "MLB (USA)", t1: "Yankees", t2: "Red Sox", time: "07:05 PM", gana: "Local", alta_baja: "Alta 8.5", handicap: "RL -1.5", analisis: "Cole domina a Boston históricamente." },
-      { liga: "MLB (USA)", t1: "Dodgers", t2: "Padres", time: "10:10 PM", gana: "Local", alta_baja: "Baja 7.5", handicap: "RL -1.5", analisis: "Duelo de pitcheo de alto nivel. Ohtani factor clave." },
-      { liga: "MLB (USA)", t1: "Braves", t2: "Mets", time: "07:20 PM", gana: "Local", alta_baja: "Alta 9.0", handicap: "RL -1.5", analisis: "Atlanta tiene la ofensiva más poderosa hoy." }
+      { liga: "MLB (USA)", t1: "Dodgers", t2: "Padres", time: "10:10 PM", gana: "Local", alta_baja: "Baja 7.5", handicap: "RL -1.5", analisis: "Duelo de pitcheo de alto nivel. Ohtani factor clave." }
     ]
   },
   "Básquet": {
     ligas: ["NBA", "Euroliga", "SPB (VEN)"],
     juegos: [
-      { liga: "NBA", t1: "Lakers", t2: "Warriors", time: "10:00 PM", gana: "Visitante", alta_baja: "Alta 232.5", handicap: "Warriors -2.5", analisis: "Curry vs LeBron. La banca de GSW es superior hoy." },
-      { liga: "NBA", t1: "Celtics", t2: "Bucks", time: "07:30 PM", gana: "Local", alta_baja: "Baja 224.5", handicap: "-5.5", analisis: "Boston invencible en casa." }
+      { liga: "NBA", t1: "Lakers", t2: "Warriors", time: "10:00 PM", gana: "Visitante", alta_baja: "Alta 232.5", handicap: "Warriors -2.5", analisis: "Curry vs LeBron. La banca de GSW es superior hoy." }
     ]
   },
   "Hockey (NHL)": {
@@ -49,14 +46,12 @@ const DEPORTES_PARLEY = {
   }
 };
 
-// 🐎 DATA HÍPICA CON LÓGICA DE CUADRO (5y6 / Pick 6)
 const HIPISMO_DATA = {
   "La Rinconada (VEN)": {
     "2026-03-29": {
       carreras: [
         { num: 1, valida: "No Válida", hora: "01:30 PM", fav: "EL DE FROIX (04)", place: "PAPA PEDRO (02)", analisis: "Superior en los papeles. Debe ganar por clase." },
-        { num: 5, valida: "1ra Válida", hora: "03:15 PM", fav: "LUNA NUEVA (05)", place: "STRENGHT MASK (01)", analisis: "Línea nacional. Capriles la conoce a la perfección." },
-        { num: 10, valida: "6ta Válida", hora: "05:35 PM", fav: "CANDY CUMMINGS (09)", place: "MAXIMUS FORTUNE (12)", analisis: "Cierre complicado. Asegurar con el favorito." }
+        { num: 5, valida: "1ra Válida", hora: "03:15 PM", fav: "LUNA NUEVA (05)", place: "STRENGHT MASK (01)", analisis: "Línea nacional. Capriles la conoce a la perfección." }
       ],
       cuadroIA: [
         { leg: "1ra Válida", picks: ["05"], tipo: "LÍNEA" },
@@ -87,13 +82,9 @@ const HIPISMO_DATA = {
 
 export function SportsView() {
   const [mode, setMode] = useState<'deportes' | 'hipismo'>('deportes');
-  
-  // Estados Deportes
   const [sport, setSport] = useState("Fútbol");
   const [league, setLeague] = useState("Champions League");
   const [showIA, setShowIA] = useState(false);
-
-  // Estados Hipismo
   const [track, setTrack] = useState("La Rinconada (VEN)");
   const [date, setDate] = useState("2026-03-29");
   const [showCuadroIA, setShowCuadroIA] = useState(false);
@@ -105,11 +96,8 @@ export function SportsView() {
 
   return (
     <div className="space-y-8 pb-40 px-1 animate-in fade-in duration-1000 relative min-h-screen">
-      
-      {/* 🖼️ FONDO TEMÁTICO SEMITRANSPARENTE */}
       <div className={`fixed inset-0 pointer-events-none opacity-[0.06] grayscale transition-all duration-700 ${mode === 'deportes' ? 'bg-[url("https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000")] bg-cover' : 'bg-[url("https://images.unsplash.com/photo-1599201948464-966904945437?q=80&w=1000")] bg-cover'}`} />
 
-      {/* HEADER MAESTRO */}
       <div className="bg-slate-900 text-white p-8 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl relative overflow-hidden z-10">
         <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter flex items-center gap-4">
            {mode === 'deportes' ? <Trophy className="text-yellow-400" size={40} /> : <Calculator className="text-emerald-400" size={40} />}
@@ -118,13 +106,11 @@ export function SportsView() {
         <p className="text-emerald-400 font-black text-xs uppercase tracking-widest mt-2 ml-1 italic">Inteligencia de Predicción Mundial</p>
       </div>
 
-      {/* SELECTOR DE MÓDULO */}
       <div className="flex bg-white border-4 border-slate-900 rounded-full p-2 shadow-2xl max-w-md mx-auto relative z-10">
          <button onClick={() => setMode('deportes')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'deportes' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>DEPORTES / PARLEY</button>
          <button onClick={() => setMode('hipismo')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'hipismo' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>CARRERAS CABALLOS</button>
       </div>
 
-      {/* --- SECCIÓN DEPORTES (RESTAURADA TOTALMENTE) --- */}
       {mode === 'deportes' && (
         <div className="space-y-8 relative z-10">
           <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-xl space-y-6">
@@ -144,14 +130,37 @@ export function SportsView() {
                    </Select>
                 </div>
              </div>
-             <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-2xl font-black text-slate-900 text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase italic"><Sparkles size={20} className="mr-2"/> Propuesta IA del Día</Button>
+             {/* 🛡️ BOTÓN CORREGIDO: AHORA ACTIVA EL CUADRO IA */}
+             <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-2xl font-black text-slate-900 text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase italic transition-all active:translate-y-1">
+                <Sparkles size={20} className="mr-2"/> {showIA ? "OCULTAR JUGADA" : "VER PROPUESTA IA"}
+             </Button>
           </div>
+
+          {/* 🛡️ BLOQUE NUEVO: PROPUESTA IA DE DEPORTES (PARLEY SUGERIDO) */}
+          {showIA && matches.length > 0 && (
+            <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-6 animate-in zoom-in duration-500 text-slate-900">
+               <div className="flex items-center gap-4 border-b-4 border-slate-900 pb-4">
+                  <div className="bg-slate-900 p-3 rounded-2xl shadow-lg"><Star className="text-yellow-400 fill-yellow-400" size={32} /></div>
+                  <h3 className="font-black text-2xl md:text-3xl uppercase italic tracking-tighter">PARLEY MAESTRO IA</h3>
+               </div>
+               <div className="space-y-4">
+                  <div className="bg-white border-4 border-slate-900 p-6 rounded-[2rem] shadow-md">
+                     <p className="font-black text-lg text-emerald-600 uppercase mb-2">Sugerencia Combinada:</p>
+                     <ul className="space-y-3">
+                        <li className="flex justify-between font-black text-sm border-b pb-1"><span>{matches[0].t1} vs {matches[0].t2}</span> <span className="text-slate-900">{matches[0].gana}</span></li>
+                        {matches[1] && <li className="flex justify-between font-black text-sm border-b pb-1"><span>{matches[1].t1} vs {matches[1].t2}</span> <span className="text-slate-900">{matches[1].alta_baja}</span></li>}
+                     </ul>
+                     <p className="mt-4 font-bold text-[10px] text-slate-400 uppercase italic">Basado en análisis de rachas y sincronización de cuotas.</p>
+                  </div>
+               </div>
+            </div>
+          )}
 
           <div className="grid gap-10">
              {matches.length > 0 ? matches.map((m, i) => (
                <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[4rem] p-6 md:p-10 shadow-2xl relative animate-in zoom-in duration-500">
                   <div className="flex justify-between items-center mb-8 border-b-2 pb-4 border-slate-100">
-                     <span className="font-black text-[9px] md:text-xs text-slate-400 uppercase italic"><Clock className="inline mr-1" size={14}/> {m.time} | {m.liga}</span>
+                     <span className="font-black text-[9px] md:text-xs text-slate-400 uppercase italic"> {m.time} | {m.liga}</span>
                      <span className="bg-slate-900 text-white px-4 py-1 rounded-full font-black text-[9px] uppercase tracking-tighter shadow-md">Cartelera Activa</span>
                   </div>
                   <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10 text-slate-900">
@@ -175,7 +184,6 @@ export function SportsView() {
         </div>
       )}
 
-      {/* --- SECCIÓN HIPISMO (ESTÁ BIEN) --- */}
       {mode === 'hipismo' && (
         <div className="space-y-8 relative z-10">
           <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-xl space-y-6 text-slate-900">
@@ -189,7 +197,6 @@ export function SportsView() {
              <Button onClick={() => setShowCuadroIA(!showCuadroIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] uppercase italic transition-all"><LayoutGrid className="mr-2" size={24} /> {showCuadroIA ? "CERRAR CUADRO" : "ARMAR CUADRO IA (5y6)"}</Button>
           </div>
 
-          {/* CUADRO IA */}
           {showCuadroIA && (
             <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-8 animate-in zoom-in duration-500 relative overflow-hidden text-slate-900">
                <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-slate-900 pb-6 relative z-10">
@@ -210,7 +217,6 @@ export function SportsView() {
             </div>
           )}
 
-          {/* LISTADO CARRERAS */}
           <div className="grid gap-8">
              {races.map((r, i) => (
                <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl relative animate-in slide-in-from-bottom-6">
