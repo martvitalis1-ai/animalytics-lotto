@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
-import { Clock, Calendar, ShieldCheck, Zap, snowflake, Lock } from "lucide-react";
+import { getLotteryLogo } from './LotterySelector';
+import { Clock, Calendar, ShieldCheck, Zap } from "lucide-react";
 import { AdBanner } from "./AdBanner";
 
 export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
@@ -44,11 +45,9 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
     const codes = getCodesForLottery(lotteryId);
     const maxAnimals = codes.length;
 
-    // 🛡️ DATO MAESTRO (Arrastre VIP)
     const maestro1 = codes[(lastNum + 7) % maxAnimals];
     const maestro2 = codes[(lastNum + 15) % maxAnimals];
 
-    // Lógica de Frecuencia
     const freq: any = {};
     codes.forEach(c => freq[c] = 0);
     results.forEach(r => { if(freq[r.result_number] !== undefined) freq[r.result_number]++ });
@@ -58,7 +57,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       maestros: [maestro1, maestro2],
       top3: [sorted[0][0], sorted[1][0], sorted[2][0]],
       hot: [sorted[0][0], sorted[1][0], sorted[2][0], sorted[3][0], sorted[4][0]],
-      frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0], sorted[sorted.length-4][0], sorted[sorted.length-5][0]],
+      frios: [sorted[sorted.length-1][0], sorted[sorted.length-2][0], sorted[sorted.length-3][0]],
       enjaulados: [sorted[sorted.length-6][0], sorted[sorted.length-7][0], sorted[sorted.length-8][0]],
       hours: [
         { h: "05:00 PM", p: [sorted[5][0], sorted[6][0]] }, 
@@ -77,7 +76,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   return (
     <div className="space-y-12 pb-40 px-1 animate-in fade-in duration-700">
       
-      {/* 1. PRÓXIMO SORTEO: 2 ANIMALES GIGANTES */}
+      {/* 1. PRÓXIMO SORTEO */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-8 md:p-14 flex flex-col items-center shadow-2xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">ESTUDIO PRÓXIMO SORTEO: {nextHour}</div>
@@ -96,7 +95,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 3. ANIMALES CALIENTES (ROJO) */}
+      {/* 3. CALIENTES */}
       <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden">
          <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">🔥 CALIENTES</span>
@@ -105,7 +104,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* 4. ANIMALES FRÍOS (AZUL) */}
+      {/* 4. FRÍOS */}
       <div className="bg-blue-600/10 p-8 rounded-[3rem] border-4 border-blue-500/20 relative overflow-hidden">
          <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <span className="font-black text-sm uppercase text-blue-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm">❄️ FRÍOS</span>
@@ -114,7 +113,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* 5. ENJAULADOS / VENCIDOS (AMARILLO) */}
+      {/* 5. ENJAULADOS */}
       <div className="bg-yellow-500/10 p-8 rounded-[3rem] border-4 border-yellow-500/20 relative overflow-hidden shadow-xl text-center">
          <img src={WATERMARK} className="absolute inset-0 opacity-[0.03] w-full h-full object-cover pointer-events-none" />
          <h4 className="font-black text-2xl uppercase italic mb-8 border-b-4 border-yellow-500 pb-2 text-yellow-700">⏳ ENJAULADOS (VENCIDOS)</h4>
@@ -145,7 +144,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 7. RECOMENDACIÓN FINAL (4 ANIMALES) */}
+      {/* 🛡️ 7. RECOMENDACIÓN DEL SISTEMA (CORREGIDO PARA 2x2 EN MÓVIL) */}
       <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
          <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4">
@@ -153,8 +152,11 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
             <h3 className="font-black text-2xl md:text-3xl uppercase italic">RECOMENDACIÓN DEL SISTEMA</h3>
          </div>
          <div className="flex flex-col gap-10">
-            <div className="flex justify-center items-center gap-2 md:gap-8">
-               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-22 h-22 md:w-48 md:h-48 object-contain drop-shadow-xl" />)}
+            {/* 🛡️ GRID DE 2 COLUMNAS EN MÓVIL Y 4 EN PC */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 justify-items-center relative z-10">
+               {study.recomendacion.map(c => (
+                 <img key={c} src={getAnimalImageUrl(c)} className="w-32 h-32 md:w-56 md:h-56 object-contain drop-shadow-xl" />
+               ))}
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-xl">
                <p className="font-black text-sm md:text-xl uppercase leading-relaxed italic">
@@ -164,7 +166,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
       </div>
 
-      {/* PUBLICIDAD AL FINAL */}
       <AdBanner slotId="ia" />
     </div>
   );
