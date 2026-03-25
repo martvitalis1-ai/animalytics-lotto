@@ -27,19 +27,19 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased">
       
-      {/* 🛡️ HEADER CORREGIDO: LOGO ALEJADO DEL BORDE Y LETRAS LEGIBLES */}
-      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-6 md:px-12 py-2 md:py-4 shadow-2xl">
+      {/* 🛡️ HEADER RESTAURADO: LOGO GIGANTE + NEÓN + TELEGRAM */}
+      <header className="sticky top-0 z-[100] bg-slate-900 text-white border-b-4 border-emerald-500 px-6 md:px-10 py-2 md:py-4 shadow-2xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
           
           <div className="flex items-center shrink-0">
-             {/* LOGO GIGANTE, ALEJADO DEL BORDE Y CON FILTROS DE NITIDEZ */}
+             {/* Logo con aura blanca y filtros de nitidez */}
              <img 
                src={LOGO_URL} 
                className="h-20 md:h-32 w-auto object-contain drop-shadow-[0_5px_25px_rgba(255,255,255,0.9)] contrast-125 saturate-110 brightness-110 ml-2 md:ml-4" 
                alt="Logo" 
              />
              
-             {/* BLOQUE DE TEXTO DESPLAZADO PARA DAR AIRE AL LOGO */}
+             {/* Texto desplazado con luz esmeralda */}
              <div className="flex flex-col ml-10 md:ml-16">
                 <h1 className="font-black text-2xl md:text-5xl italic leading-none tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.7)]">
                   <span className="text-emerald-400">ANIMALYTICS</span> <span className="text-white">PRO</span>
@@ -51,10 +51,11 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
              </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-1 justify-end">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
+            {/* Selector de Lotería */}
             <div className="bg-white rounded-xl border-2 border-emerald-500 shadow-md">
               <Select value={globalLottery} onValueChange={setGlobalLottery}>
-                <SelectTrigger className="w-[140px] md:w-[240px] h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-sm text-slate-900 focus:ring-0 px-4">
+                <SelectTrigger className="w-[130px] md:w-[220px] h-11 border-none bg-transparent font-black uppercase text-[10px] md:text-sm text-slate-900 focus:ring-0 px-4">
                   <SelectValue placeholder="Lotería" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
@@ -67,6 +68,16 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
               </Select>
             </div>
 
+            {/* 🛡️ BOTÓN DE TELEGRAM RECUPERADO */}
+            <Button 
+              onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} 
+              className="bg-[#229ED9] hover:bg-[#1e8ec5] h-11 w-11 md:w-auto md:px-6 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Send size={18} className="fill-white" />
+              <span className="hidden md:inline font-black text-xs">CANAL VIP</span>
+            </Button>
+
+            {/* Botón Cerrar Sesión */}
             <Button variant="ghost" onClick={onLogout} className="text-white p-2 hover:bg-red-500 rounded-full transition-colors">
               <LogOut size={28} />
             </Button>
@@ -75,6 +86,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Navegación dos pisos corregida */}
         <div className="bg-white border-b-2 border-slate-200 sticky top-[92px] md:top-[132px] z-40 shadow-sm">
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1.5">
