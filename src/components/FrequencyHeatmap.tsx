@@ -15,7 +15,6 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     async function loadFrequencies() {
       setLoading(true);
       
-      // 🛡️ MISMO TÚNEL QUE EL HISTORIAL (ID LIMPIO SEGÚN SQL)
       let dbId = lotteryId.toLowerCase().trim();
       if (dbId === 'la_granjita') dbId = 'granjita';
       if (dbId === 'el_guacharo') dbId = 'guacharo';
@@ -35,7 +34,6 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     loadFrequencies();
   }, [lotteryId]);
 
-  // 🛡️ LÓGICA DE NORMALIZACIÓN (PARA EL CRUCE DE HITS)
   const cleanFormat = (val: string) => val.toString().replace(/\s/g, '').toUpperCase();
   const cleanNum = (n: string) => n.toString().trim().padStart(2, '0').replace('000', '00');
 
@@ -48,12 +46,11 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     return map;
   }, [data]);
 
-  // 🛡️ COLORES CON BORDES PARA DIVISIÓN CLARA
   const getCellStyle = (count: number) => {
     if (count === 0) return 'text-slate-200 opacity-20 border-slate-100';
     if (count === 1) return 'bg-yellow-400 text-slate-900 border-white shadow-inner';
     if (count === 2) return 'bg-blue-500 text-white border-white';
-    return 'bg-red-600 text-white border-white shadow-md'; // Rojo con borde blanco
+    return 'bg-red-600 text-white border-white shadow-md'; 
   };
 
   if (loading) return (
@@ -70,16 +67,22 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
         <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-900 tracking-tighter">MATRIZ ATÓMICA</h3>
       </div>
       
-      {/* CONTENEDOR MÁS COMPACTO */}
       <div className="overflow-x-auto border-4 border-slate-900 rounded-2xl">
-        <table className="w-full border-collapse bg-white table-fixed">
+        <table className="w-full border-collapse bg-white table-auto">
           <thead>
             <tr className="bg-slate-900 text-white">
-              {/* Columna animal más angosta */}
-              <th className="p-2 border-r-4 border-slate-700 w-20 md:w-28 sticky left-0 bg-slate-900 z-20 font-black text-[10px] uppercase">Animal</th>
+              {/* Columna animal fija */}
+              <th className="p-2 border-r-4 border-slate-700 w-24 min-w-[90px] md:w-28 sticky left-0 bg-slate-900 z-20 font-black text-[10px] uppercase">
+                Animal
+              </th>
               {times.map(t => (
-                <th key={t} className="p-1 border-r border-slate-700 text-[9px] h-20 rotate-45 font-black whitespace-nowrap">
-                  <span className="inline-block -rotate-45 translate-y-2">{t}</span>
+                /* 🛡️ CORRECCIÓN DE HORAS: min-w-[70px] evita que se amontonen */
+                <th key={t} className="p-0 border-r border-slate-700 min-w-[70px] md:min-w-[85px] h-24 relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="transform -rotate-90 md:-rotate-45 font-black text-[10px] md:text-xs whitespace-nowrap tracking-tighter">
+                      {t}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>
