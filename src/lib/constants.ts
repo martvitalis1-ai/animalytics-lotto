@@ -12,7 +12,7 @@ export const LOTTERIES = [
 export const getDrawTimesForLottery = (id: string) => {
   const searchId = id.toLowerCase().trim();
   
-  // 🛡️ REGLA DE ORO PARA LOTTO REY Y GUACHARITO: SIEMPRE :30
+  // 🛡️ REGLA DE ORO: Lotto Rey y Guacharito sortean a las :30 según tu SQL
   if (searchId === 'lotto_rey' || searchId === 'guacharito') {
     return [
       "08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", 
@@ -20,7 +20,7 @@ export const getDrawTimesForLottery = (id: string) => {
     ];
   }
 
-  // Las demás loterías en hora punto
+  // Las demás loterías sortean en hora punto
   return [
     "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", 
     "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"
@@ -35,6 +35,6 @@ export const formatResultNumber = (n: string) => {
 export const getAnimalFromNumber = (num: string, lotteryId: string) => {
   const normalized = formatResultNumber(num);
   const mapping = lotteryId === 'guacharito' ? ANIMALS_GUACHARITO : 
-                  (lotteryId === 'guacharo' || lotteryId === 'el_guacharo') ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
+                  lotteryId === 'guacharo' ? ANIMALS_GUACHARO : ANIMALS_STANDARD;
   return mapping[normalized] || "ANIMAL";
 };
