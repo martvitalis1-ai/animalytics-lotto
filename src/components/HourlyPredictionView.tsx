@@ -73,17 +73,26 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       })
       .map(entry => entry[0]);
 
-    // 🛡️ FILTRO DE EXCLUSIÓN TOTAL (CERO REPETICIONES)
+    // 🛡️ LÓGICA DE EXCLUSIÓN Y UNICIDAD (SOLUCIONA LA REPETICIÓN)
     const used = new Set();
 
-    const animalFijo = dbPredictions?.pronostico_fijo || fullSortedList[0];
-    const animalJaladera = dbPredictions?.pronostico_jaladera || fullSortedList[1];
+    // 1. Maestro Fijo
+    let animalFijo = dbPredictions?.pronostico_fijo || fullSortedList[0];
     used.add(animalFijo);
+
+    // 2. Maestro Jaladera (Valida que no sea igual al Fijo)
+    let animalJaladera = dbPredictions?.pronostico_jaladera;
+    // Si en la DB son iguales o falta el dato, agarra el siguiente de la lista de frecuencia
+    if (!animalJaladera || used.has(animalJaladera)) {
+        animalJaladera = fullSortedList.find(c => !used.has(c));
+    }
     used.add(animalJaladera);
 
+    // 3. Top 3 (Los siguientes 3 que no se hayan usado)
     const top3 = fullSortedList.filter(c => !used.has(c)).slice(0, 3);
     top3.forEach(c => used.add(c));
 
+    // 4. Recomendación VIP (Los siguientes 4 que no se hayan usado)
     const recomendacion = fullSortedList.filter(c => !used.has(c)).slice(0, 4);
     recomendacion.forEach(c => used.add(c));
 
@@ -98,7 +107,6 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
       frios,
       recomendacion,
       enjaulados,
-      // 🛡️ REINSTALADO: MEJORES HORAS Y DÍAS (Basado en frecuencia secundaria)
       hours: [
         { h: "05:00 PM", p: [fullSortedList[10], fullSortedList[11]] }, 
         { h: "10:00 AM", p: [fullSortedList[12], fullSortedList[13]] }
@@ -115,7 +123,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
   return (
     <div className="space-y-12 pb-40 px-1 animate-in fade-in duration-700">
       
-      {/* 1. PRÓXIMO SORTEO */}
+      {/* 🛡️ PRÓXIMO SORTEO: AHORA BLINDADO CONTRA REPETICIONES */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[5rem] p-10 flex flex-col items-center shadow-2xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute opacity-5 w-full max-w-lg grayscale pointer-events-none" />
         <div className="bg-slate-900 text-white px-8 py-2 rounded-full font-black text-xs uppercase italic z-10 shadow-lg mb-8">
@@ -129,7 +137,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         <div className="mt-10 bg-emerald-600 text-white px-12 py-3 rounded-3xl font-black text-3xl md:text-5xl shadow-xl border-b-8 border-emerald-800 italic uppercase">95% ÉXITO</div>
       </div>
 
-      {/* 2. TOP 3 (CENTRADO Y GIGANTE) */}
+      {/* TOP 3 DEL DÍA (SIN REPETIR) */}
       <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-12 shadow-xl relative overflow-hidden">
         <img src={WATERMARK} className="absolute inset-0 opacity-[0.04] w-full h-full object-cover pointer-events-none" />
         <h3 className="font-black text-2xl uppercase italic text-center mb-10 border-b-4 pb-4">TOP 3 DEL DÍA</h3>
@@ -138,7 +146,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 3. CALIENTES, FRÍOS Y ENJAULADOS */}
+      {/* CALIENTES, FRÍOS Y ENJAULADOS */}
       <div className="space-y-8">
         <div className="bg-red-600/10 p-8 rounded-[3rem] border-4 border-red-500/20 relative overflow-hidden">
            <span className="font-black text-sm uppercase text-red-600 block mb-8 text-center bg-white w-fit mx-auto px-6 py-1 rounded-full shadow-sm font-black">🔥 CALIENTES</span>
@@ -162,7 +170,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 🛡️ 4. RESTAURADO: MEJORES HORAS Y DÍAS */}
+      {/* MEJORES HORAS Y DÍAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-8 shadow-xl">
            <h4 className="font-black text-xl uppercase italic mb-8 border-b-2 flex gap-2"><Clock className="text-orange-500" /> MEJORES HORAS</h4>
@@ -188,7 +196,7 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
         </div>
       </div>
 
-      {/* 5. RECOMENDACIÓN FINAL (2x2) */}
+      {/* RECOMENDACIÓN FINAL (2x2) */}
       <div className="bg-white border-4 border-slate-900 p-8 md:p-12 rounded-[4rem] shadow-2xl relative overflow-hidden">
          <img src={WATERMARK} className="absolute opacity-[0.03] -right-20 -bottom-20 w-80 h-80 grayscale pointer-events-none" />
          <div className="flex items-center gap-4 mb-10 border-b-4 border-slate-50 pb-4 text-slate-900">
@@ -197,11 +205,11 @@ export function HourlyPredictionView({ lotteryId }: { lotteryId: string }) {
          </div>
          <div className="flex flex-col gap-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 justify-items-center relative z-10">
-               {study.recomendacion.map(c => <img key={c} src={getAnimalImageUrl(c)} className="w-32 h-32 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
+               {study.recomendacion.map((c, i) => <img key={`${c}-${i}`} src={getAnimalImageUrl(c)} className="w-32 h-32 md:w-56 md:h-56 object-contain drop-shadow-xl" />)}
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-[2rem] border-l-8 border-emerald-500 shadow-xl">
                <p className="font-black text-sm md:text-xl uppercase leading-relaxed italic text-center">
-                 ALGORITMO ACTUALIZADO. LOS PRONÓSTICOS HAN SIDO SINCRONIZADOS SEGÚN LA TENSIÓN TÉRMICA DE LAS ÚLTIMAS 24 HORAS.
+                 ALGORITMO SINCRONIZADO. LOS PRONÓSTICOS HAN SIDO RECALCULADOS PARA ASEGURAR DOS JUGADAS MAESTRAS DIFERENTES POR SORTEO.
                </p>
             </div>
          </div>
