@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl } from '../lib/animalData';
 import { getDrawTimesForLottery } from '../lib/constants';
+import { AdBanner } from "./AdBanner";
 
 export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
-  // 🛡️ OBTENEMOS LOS HORARIOS CRONOLÓGICOS (:00 o :30 según lotería)
   const times = getDrawTimesForLottery(lotteryId);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
         .eq('lottery_type', lotteryId)
         .eq('draw_date', selectedDate);
 
-      if (error) console.error("Error cargando historial:", error);
+      if (error) console.error("Error historial:", error);
       setResults(data || []);
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
       </div>
 
       {loading ? (
-        <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase italic">Abriendo Búnker...</div>
+        <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase italic">Abriendo Bóveda...</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {times.map((slot) => {
@@ -69,6 +69,7 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
           <p className="font-black text-slate-400 uppercase italic">No hay registros para {lotteryId} en esta fecha.</p>
         </div>
       )}
+      <AdBanner slotId="ia" />
     </div>
   );
 }
