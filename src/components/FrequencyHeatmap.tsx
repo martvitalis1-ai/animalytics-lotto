@@ -34,14 +34,46 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
     loadFrequencies();
   }, [lotteryId]);
 
-  const cleanFormat = (val: string) => val.toString().replace(/\s/g, '').toUpperCase();
-  const cleanNum = (n: string) => n.toString().trim().padStart(2, '0').replace('000', '00');
-
   const freqMap = useMemo(() => {
     const map: Record<string, number> = {};
     data.forEach(r => {
-      const key = `${cleanFormat(r.draw_time)}-${cleanNum(r.result_number)}`;
-      map[key] = (map[key] || 0) + 1;
+      if (!r.draw_time || !r.result_number) return;
+      const tKey = r.draw_time.toString().replace(/\s/g, '').toUpperCase();
+      const nKey = r.result_number.toString().trim().padStart(2, '0').replace('000', '00');
+      map[`${tKey}-${nKey}`] = (map[`${tKey}-${setGlobalLottery}>
+                <SelectTrigger className="w-full md:w-[240px] h-10 border-none bg-transparent font-black uppercase text-[10px] md:text-xs text-slate-900 focus:ring-0 px-3">
+                  <SelectValue placeholder="Lotería" />
+                </SelectTrigger>
+                <SelectContent position="popper" sideOffset={5} className="border-2 border-slate-900 bg-white shadow-2xl z-[150]">
+                  {LOTTERIES.map(l => (
+                    <SelectItem key={l.id} value={l.id} className="font-black text-slate-900 text-[10px] md:text-xs uppercase">{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => window.open('https://t.me/+BXV4GahQ4gswNmNh', '_blank')} className="bg-[#229ED9] h-10 px-4 rounded-xl shadow-lg border-2 border-white/20 active:scale-95 transition-all flex items-center gap-2">
+              <Send size={16} className="fill-white" /><span className="hidden xs:inline font-black text-[10px]">CANAL VIP</span>
+            </Button>
+            <Button variant="ghost" onClick={onLogout} className="hidden md:flex text-white p-2 hover:bg-red-500 rounded-full transition-colors"><LogOut size={28} /></Button>
+          </div>
+        </div>
+      </header>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="bg-white border-b-2 border-slate-200 sticky top-[110px] md:top-[128px] z-40 shadow-sm">
+          <div className="max-w-7xl mx-auto">
+            <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
+              {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
+                <TabsTrigger key={t} value={t} className="px-1 py-2.5 font-black text-[9px] md:text-[11px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent uppercase">{t}</TabsTrigger>
+              ))}
+              {isMaster && <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500"><Settings size={20}/></TabsTrigger>}
+            </TabsList>
+          </div>
+        </div>
+
+        <div className="p-2 md:p-6 max-w-7xl mx-auto overflow-hidden">
+          <TabsContent value="ia" className="mt-0"><HourlyPredictionView lotteryId={globalLottery} /></TabsContent>
+          <TabsContent value="resultadosnKey}`] || 0) + 1;
     });
     return map;
   }, [data]);
@@ -71,49 +103,22 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
         <table className="w-full border-collapse bg-white table-auto">
           <thead>
             <tr className="bg-slate-900 text-white">
-              {/* Columna animal fija */}
               <th className="p-2 border-r-4 border-slate-700 w-24 min-w-[90px] md:w-28 sticky left-0 bg-slate-900 z-20 font-black text-[10px] uppercase">
                 Animal
               </th>
               {times.map(t => (
-                /* 🛡️ CORRECCIÓN DE HORAS: min-w-[70px] evita que se amontonen */
-                <th key={t} className="p-0 border-r border-slate-700 min-w-[70px] md:min-w-[85px] h-24 relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="transform -rotate-90 md:-rotate-45 font-black text-[10px] md:text-xs whitespace-nowrap tracking-tighter">
-                      {t}
-                    </span>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {codes.map(code => (
-              <tr key={code} className="border-b border-slate-100">
-                <td className="p-2 border-r-4 border-slate-900 flex justify-center bg-white sticky left-0 z-10 shadow-lg">
-                   <img 
-                    src={getAnimalImageUrl(code)} 
-                    className="w-14 h-14 md:w-20 md:h-20 object-contain" 
-                    alt="" 
-                   />
-                </td>
-                {times.map(t => {
-                  const hits = freqMap[`${cleanFormat(t)}-${cleanNum(code)}`] || 0;
-
-                  return (
-                    <td 
-                      key={t} 
-                      className={`border-2 text-center font-black text-xl md:text-3xl transition-all ${getCellStyle(hits)}`}
-                    >
-                      {hits || '-'}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                <th key={t} className="p-0 border-r border-slate-7" className="mt-0"><ResultsPanel lotteryId={dbId} /></TabsContent>
+          <TabsContent value="matriz" className="mt-0 space-y-12">
+            <FrequencyHeatmap lotteryId={dbId} />
+            <SequenceMatrixView lotteryId={dbId} />
+          </TabsContent>
+          <TabsContent value="explosivo" className="mt-0"><ExplosiveData lotteryId={dbId} /></TabsContent>
+          <TabsContent value="deportes" className="mt-0"><SportsView /></TabsContent>
+          <TabsContent value="guia" className="mt-0"><GuiaUso /></TabsContent>
+          <TabsContent value="agencias" className="mt-0"><ModuloJugadas /></TabsContent>
+          {isMaster && <TabsContent value="admin" className="mt-0"><AdminPanelMaestro userRole={userRole} /></TabsContent>}
+        </div>
+      </Tabs>
     </div>
   );
 }
