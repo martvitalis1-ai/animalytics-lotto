@@ -8,20 +8,26 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
-  // 🛡️ Obtenemos la lista de horas correcta (:00 o :30)
+  // 🛡️ OBTENEMOS LOS HORARIOS (:30 para Lotto Rey según tu SQL)
   const times = getDrawTimesForLottery(lotteryId);
 
   useEffect(() => {
     async function fetchResults() {
       setLoading(true);
       
+      // 🛡️ NORMALIZACIÓN SEGÚN TU SQL: Forzamos minúsculas y limpiamos espacios
+      const dbId = lotteryId.toLowerCase().trim();
+
       const { data, error } = await supabase
         .from('lottery_results')
         .select('*')
-        .eq('lottery_type', lotteryId)
+        .eq('lottery_type', dbId) // Aquí buscamos 'lotto_rey' exacto
         .eq('draw_date', selectedDate);
 
-      if (error) console.error("Error cargando historial:", error);
+      if (error) {
+        console.error("Error cargando bóveda:", error.message);
+      }
+
       setResults(data || []);
       setLoading(false);
     }
@@ -30,6 +36,7 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
 
   return (
     <div className="space-y-8 pb-40 px-1 animate-in fade-in duration-500">
+      {/* HEADER DE BÓVEDA */}
       <div className="bg-slate-900 text-white p-6 rounded-[2.5rem] md:rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="font-black text-xl md:text-2xl uppercase italic text-emerald-400">
           Bóveda: {lotteryId.replace('_', ' ')}
@@ -47,9 +54,9 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {times.map((slot) => {
-            // 🛡️ COMPARACIÓN BLINDADA: Quitamos espacios para que 07:30 PM sea igual a 07:30PM
+            // 🛡️ COMPARACIÓN BLINDADA: Quitamos espacios para que "07:30 PM" sea igual a "07:30PM"
             const res = results.find(r => 
-              r.draw_time.replace(/\s/g, '').toUpperCase() === slot.replace(/\s/g, '').toUpperCase()
+              r.draw_time.trim().toUpperCase().replace(/\s/g, '') === slot.trim().toUpperCase().replace(/\s/g, '')
             );
 
             if (!res) return null;
@@ -59,16 +66,19 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
                 <span className="absolute top-4 bg-slate-900 text-white px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-tighter">
                   {slot}
                 </span>
-                <img src={getAnimalImageUrl(res.result_number)} className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain" alt="Resultado" />
+                <img src={getAnimalImageUrl(res.result_number)} className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain" alt="Animal" />
               </div>
             );
           })}
         </div>
       )}
 
+      {/* MENSAJE SI NO HAY DATOS EN ESA FECHA ESPECÍFICA */}
       {!loading && results.length === 0 && (
         <div className="p-20 text-center bg-white border-4 border-dashed border-slate-200 rounded-[3rem]">
-          <p className="font-black text-slate-400 uppercase italic">No hay registros para {lotteryId} en esta fecha.</p>
+          <p className="font-black text-slate-400 uppercase italic">
+            No hay registros para {lotteryId} en la fecha {selectedDate}.
+          </p>
         </div>
       )}
     </div>
