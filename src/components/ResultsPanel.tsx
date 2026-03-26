@@ -2,25 +2,26 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl } from '../lib/animalData';
 import { getDrawTimesForLottery } from '../lib/constants';
-import { AdBanner } from "./AdBanner";
 
 export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
+  // 🛡️ Obtenemos la lista de horas correcta (:00 o :30)
   const times = getDrawTimesForLottery(lotteryId);
 
   useEffect(() => {
     async function fetchResults() {
       setLoading(true);
+      
       const { data, error } = await supabase
         .from('lottery_results')
         .select('*')
         .eq('lottery_type', lotteryId)
         .eq('draw_date', selectedDate);
 
-      if (error) console.error("Error historial:", error);
+      if (error) console.error("Error cargando historial:", error);
       setResults(data || []);
       setLoading(false);
     }
@@ -46,8 +47,9 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {times.map((slot) => {
+            // 🛡️ COMPARACIÓN BLINDADA: Quitamos espacios para que 07:30 PM sea igual a 07:30PM
             const res = results.find(r => 
-              r.draw_time.trim().toUpperCase().replace(/\s/g, '') === slot.trim().toUpperCase().replace(/\s/g, '')
+              r.draw_time.replace(/\s/g, '').toUpperCase() === slot.replace(/\s/g, '').toUpperCase()
             );
 
             if (!res) return null;
@@ -57,7 +59,7 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
                 <span className="absolute top-4 bg-slate-900 text-white px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-tighter">
                   {slot}
                 </span>
-                <img src={getAnimalImageUrl(res.result_number)} className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain" alt="Animal" />
+                <img src={getAnimalImageUrl(res.result_number)} className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain" alt="Resultado" />
               </div>
             );
           })}
@@ -69,7 +71,6 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
           <p className="font-black text-slate-400 uppercase italic">No hay registros para {lotteryId} en esta fecha.</p>
         </div>
       )}
-      <AdBanner slotId="ia" />
     </div>
   );
 }
