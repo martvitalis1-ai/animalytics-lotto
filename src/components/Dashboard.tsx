@@ -19,7 +19,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
   const [globalLottery, setGlobalLottery] = useState("lotto_activo");
   const isMaster = userRole === 'admin';
 
-  // 🛡️ MAPEADO DEFINITIVO SEGÚN TU SQL (Arregla Lotto Rey y Granjita)
+  // 🛡️ MAPEADO DEFINITIVO SEGÚN TU SQL (Arregla Lotto Rey, Guacharito y Granjita)
   const dbId = globalLottery === 'la_granjita' ? 'granjita' : 
                globalLottery === 'el_guacharo' ? 'guacharo' : globalLottery;
 
@@ -62,7 +62,7 @@ export function Dashboard({ userRole, onLogout, tenantAgency }: any) {
           <div className="max-w-7xl mx-auto p-1">
             <TabsList className="bg-transparent h-auto w-full grid grid-cols-4 md:flex md:justify-center p-1 gap-1">
               {["ia", "explosivo", "deportes", "resultados", "matriz", "guia", "agencias"].map((t) => (
-                <TabsTrigger key={t} value={t} className="px-1 py-2.5 font-black text-[9px] md:text-[11px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 rounded-none bg-transparent uppercase">{t}</TabsTrigger>
+                <TabsTrigger key={t} value={t} className="px-1 py-2 font-black text-[9px] md:text-[11px] uppercase border-b-4 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:text-emerald-600 bg-transparent uppercase">{t}</TabsTrigger>
               ))}
               {isMaster && <TabsTrigger value="admin" className="px-4 border-b-4 border-transparent data-[state=active]:border-orange-500"><Settings size={20}/></TabsTrigger>}
             </TabsList>
