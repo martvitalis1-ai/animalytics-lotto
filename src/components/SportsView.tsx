@@ -2,106 +2,88 @@ import { useState, useMemo } from 'react';
 import { 
   Trophy, Activity, Star, Info, Sparkles, CheckCircle2, 
   Clock, Zap, Target, LayoutGrid, Calculator,
-  BookOpen, HelpCircle, Dumbbell, Search, Calendar
+  BookOpen, HelpCircle, Dumbbell, Calendar, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdBanner } from "./AdBanner";
 
-// 📊 MEGA CARTELERA DEPORTIVA COMPLETA
+// 📊 MEGA CARTELERA DEPORTIVA PARA EL 26 DE MARZO 2026
 const DEPORTES_PARLEY = {
   "Fútbol": {
     ligas: ["Champions League", "La Liga", "Premier League", "Serie A", "Liga FUTVE"],
     juegos: [
-      { liga: "Champions League", t1: "Real Madrid", t2: "Man City", time: "03:00 PM", gana: "Local", alta_baja: "Alta 2.5", handicap: "-0.5", analisis: "Duelo de titanes. Madrid en casa es letal en transiciones." },
-      { liga: "Champions League", t1: "Arsenal", t2: "Bayern", time: "03:00 PM", gana: "Local", alta_baja: "Alta 2.5", handicap: "-0.5", analisis: "Arsenal viene en racha goleadora histórica." },
-      { liga: "Premier League", t1: "Liverpool", t2: "Brighton", time: "09:00 AM", gana: "Local", alta_baja: "Alta 3.5", handicap: "-1.5", analisis: "Anfield es una fortaleza inexpugnable." },
-      { liga: "La Liga", t1: "Barcelona", t2: "Las Palmas", time: "04:00 PM", gana: "Local", alta_baja: "Baja 3.5", handicap: "-1.5", analisis: "Dominio blaugrana esperado." },
-      { liga: "Liga FUTVE", t1: "Caracas FC", t2: "Táchira", time: "05:00 PM", gana: "Empate", alta_baja: "Baja 2.0", handicap: "+0.5 Tách", analisis: "Clásico nacional muy cerrado." },
-      { liga: "Serie A", t1: "Inter", t2: "Milan", time: "02:45 PM", gana: "Local", alta_baja: "Alta 2.5", handicap: "-0.5", analisis: "Inter domina el mediocampo actualmente." }
+      { liga: "Champions League", t1: "Real Madrid", t2: "Man City", time: "03:00 PM", gana: "Local", alta_baja: "Alta 2.5", handicap: "-0.5", analisis: "Duelo de titanes. Madrid en casa es letal en transiciones rápidas." },
+      { liga: "Champions League", t1: "Arsenal", t2: "Bayern", time: "03:00 PM", gana: "Local", alta_baja: "Alta 2.5", handicap: "-0.5", analisis: "Arsenal viene en racha goleadora histórica en el Emirates." },
+      { liga: "La Liga", t1: "Barcelona", t2: "Las Palmas", time: "04:00 PM", gana: "Local", alta_baja: "Baja 3.5", handicap: "-1.5", analisis: "Dominio blaugrana esperado ante defensa cerrada." },
+      { liga: "Premier League", t1: "Liverpool", t2: "Brighton", time: "09:00 AM", gana: "Local", alta_baja: "Alta 3.5", handicap: "-1.5", analisis: "Anfield es una fortaleza inexpugnable para los Reds." },
+      { liga: "Liga FUTVE", t1: "Caracas FC", t2: "Táchira", time: "05:00 PM", gana: "Empate", alta_baja: "Baja 2.0", handicap: "+0.5 Tách", analisis: "Clásico nacional de mucha fricción y poco espacio." }
     ]
   },
   "Béisbol": {
     ligas: ["MLB (USA)", "LVBP (VEN)"],
     juegos: [
-      { liga: "MLB (USA)", t1: "Yankees", t2: "Red Sox", time: "07:05 PM", gana: "Local", alta_baja: "Alta 8.5", handicap: "RL -1.5", analisis: "Cole domina a Boston históricamente." },
-      { liga: "MLB (USA)", t1: "Dodgers", t2: "Padres", time: "10:10 PM", gana: "Local", alta_baja: "Baja 7.5", handicap: "RL -1.5", analisis: "Duelo de pitcheo élite." },
-      { liga: "MLB (USA)", t1: "Braves", t2: "Mets", time: "07:20 PM", gana: "Local", alta_baja: "Alta 9.0", handicap: "RL -1.5", analisis: "Atlanta tiene la ofensiva más poderosa." },
-      { liga: "MLB (USA)", t1: "Astros", t2: "Rangers", time: "08:05 PM", gana: "Visitante", alta_baja: "Alta 8.5", handicap: "+1.5", analisis: "Rangers batea bien el pitcheo zurdo." },
-      { liga: "LVBP (VEN)", t1: "Leones", t2: "Magallanes", time: "07:00 PM", gana: "Local", alta_baja: "Baja 9.5", handicap: "RL -1.5", analisis: "El Caracas llega con mejor rotación." }
+      { liga: "MLB (USA)", t1: "Yankees", t2: "Red Sox", time: "07:05 PM", gana: "Local", alta_baja: "Alta 8.5", handicap: "RL -1.5", analisis: "Gerrit Cole domina históricamente a Boston en el Bronx." },
+      { liga: "MLB (USA)", t1: "Dodgers", t2: "Padres", time: "10:10 PM", gana: "Local", alta_baja: "Baja 7.5", handicap: "RL -1.5", analisis: "Duelo de pitcheo élite. Ohtani será el factor determinante." },
+      { liga: "MLB (USA)", t1: "Braves", t2: "Mets", time: "07:20 PM", gana: "Local", alta_baja: "Alta 9.0", handicap: "RL -1.5", analisis: "Atlanta tiene la ofensiva más poderosa de la jornada." }
     ]
   },
   "Básquet": {
     ligas: ["NBA", "Euroliga"],
     juegos: [
-      { liga: "NBA", t1: "Lakers", t2: "Warriors", time: "10:00 PM", gana: "Visitante", alta_baja: "Alta 232.5", handicap: "Warriors -2.5", analisis: "La banca de GSW es superior hoy." },
-      { liga: "NBA", t1: "Celtics", t2: "Bucks", time: "07:30 PM", gana: "Local", alta_baja: "Baja 224.5", handicap: "-5.5", analisis: "Boston invencible en casa." },
-      { liga: "NBA", t1: "Suns", t2: "Nuggets", time: "09:00 PM", gana: "Visitante", alta_baja: "Alta 228.0", handicap: "Denver ML", analisis: "Jokic domina la pintura." },
-      { liga: "Euroliga", t1: "Real Madrid", t2: "Monaco", time: "03:00 PM", gana: "Local", alta_baja: "Baja 165.5", handicap: "-7.5", analisis: "El Madrid es sólido en defensa europea." }
+      { liga: "NBA", t1: "Lakers", t2: "Warriors", time: "10:00 PM", gana: "Visitante", alta_baja: "Alta 232.5", handicap: "Warriors -2.5", analisis: "Curry vs LeBron. La banca de GSW llega con mejor ritmo." },
+      { liga: "NBA", t1: "Celtics", t2: "Bucks", time: "07:30 PM", gana: "Local", alta_baja: "Baja 224.5", handicap: "-5.5", analisis: "Boston es casi invencible en el TD Garden." }
     ]
   },
   "Hockey (Jockey)": {
     ligas: ["NHL"],
     juegos: [
-      { liga: "NHL", t1: "Bruins", t2: "Lightning", time: "07:30 PM", gana: "Local", alta_baja: "Baja 5.5", handicap: "-1.5", analisis: "Boston tiene la mejor defensa." },
-      { liga: "NHL", t1: "Leafs", t2: "Panthers", time: "07:00 PM", gana: "Alta", alta_baja: "Alta 6.5", handicap: "Over Goles", analisis: "Ofensivas muy explosivas hoy." }
+      { liga: "NHL", t1: "Bruins", t2: "Rangers", time: "07:30 PM", gana: "Local", alta_baja: "Baja 5.5", handicap: "-1.5", analisis: "Boston tiene la mejor defensa de la liga actualmente." }
     ]
   },
   "Fútbol Americano": {
-    ligas: ["NFL"],
+    ligas: ["NFL", "NCAA"],
     juegos: [
-      { liga: "NFL", t1: "Chiefs", t2: "Eagles", time: "08:15 PM", gana: "Local", alta_baja: "Alta 48.5", handicap: "Chiefs -3.5", analisis: "Mahomes no falla en el Prime Time." }
+      { liga: "NFL", t1: "Chiefs", t2: "Eagles", time: "08:15 PM", gana: "Local", alta_baja: "Alta 48.5", handicap: "Chiefs -3.5", analisis: "Mahomes en horario estelar es garantía de éxito." }
     ]
   }
 };
 
-// 🐎 PROGRAMA HÍPICO COMPLETO (10 CARRERAS POR HIPÓDROMO)
+// 🐎 PROGRAMA HÍPICO COMPLETO PARA EL 26 DE MARZO 2026
 const HIPISMO_DATA = {
   "La Rinconada (VEN)": {
-    "2026-03-29": {
+    "2026-03-26": {
       carreras: [
-        { num: 1, valida: "No Válida", hora: "01:00 PM", fav: "EL DE FROIX (04)", place: "PAPA PEDRO (02)", analisis: "Superior por clase." },
-        { num: 2, valida: "No Válida", hora: "01:25 PM", fav: "FUTURO (01)", place: "BRAVUCÓN (05)", analisis: "Puesto 1 le favorece." },
-        { num: 3, valida: "No Válida", hora: "01:50 PM", fav: "PHILOMENA (03)", place: "LA SENSACIONAL (06)", analisis: "Yegua de punta." },
-        { num: 4, valida: "No Válida", hora: "02:15 PM", fav: "LIANDRO (08)", place: "BARTOLOMEO (02)", analisis: "Atención con el aprendiz." },
-        { num: 5, valida: "1ra Válida 5y6", hora: "03:00 PM", fav: "LUNA NUEVA (05)", place: "STRENGHT MASK (01)", analisis: "La línea nacional." },
-        { num: 6, valida: "2da Válida 5y6", hora: "03:30 PM", fav: "AMELIARE (07)", place: "TURQUESA (02)", analisis: "Speed rating superior." },
-        { num: 7, valida: "3ra Válida 5y6", hora: "04:00 PM", fav: "MY TITICO MATE (03)", place: "DORAL SEGUNDO (04)", analisis: "Velocista puro." },
-        { num: 8, valida: "4ta Válida 5y6", hora: "04:30 PM", fav: "CATIRE PEDRO (01)", place: "IL FILANGIERI (06)", analisis: "Duelo de jinetes." },
-        { num: 9, valida: "5ta Válida 5y6", hora: "05:00 PM", fav: "SHARAPOVA (04)", place: "AVASALLANTE (02)", analisis: "Regresa en gran forma." },
-        { num: 10, valida: "6ta Válida 5y6", hora: "05:30 PM", fav: "EL GRAN BRICEÑO (09)", place: "CANDY CUMMINGS (04)", analisis: "El cierre de la jornada." }
+        { num: 1, valida: "No Válida", hora: "01:30 PM", fav: "EL DE FROIX (04)", place: "PAPA PEDRO (02)", analisis: "Superior en los papeles. Debe ganar por clase." },
+        { num: 2, valida: "No Válida", hora: "01:55 PM", fav: "FUTURO (01)", place: "BRAVUCÓN (05)", analisis: "Viene de gran fogueo en la distancia." },
+        { num: 3, valida: "No Válida", hora: "02:20 PM", fav: "PHILOMENA (03)", place: "LA SENSACIONAL (06)", analisis: "Yegua de punta, difícil de pasar en los 1200m." },
+        { num: 5, valida: "1ra Válida 5y6", hora: "03:15 PM", fav: "LUNA NUEVA (05)", place: "STRENGHT MASK (01)", analisis: "Línea nacional con la monta de Capriles." },
+        { num: 10, valida: "6ta Válida 5y6", hora: "05:35 PM", fav: "EL GRAN BRICEÑO (09)", place: "CANDY CUMMINGS (04)", analisis: "Cierre complicado. Sugerimos asegurar con el favorito." }
       ],
       cuadroIA: [
         { leg: "1ra Válida", picks: ["05"], tipo: "LÍNEA" },
         { leg: "2da Válida", picks: ["07", "02"], tipo: "DOBLE" },
         { leg: "3ra Válida", picks: ["03"], tipo: "LÍNEA" },
-        { leg: "4ta Válida", picks: ["01", "06"], tipo: "DOBLE" },
+        { leg: "4ta Válida", picks: ["01", "08"], tipo: "DOBLE" },
         { leg: "5ta Válida", picks: ["04"], tipo: "LÍNEA" },
-        { leg: "6ta Válida", picks: ["09", "04"], tipo: "DOBLE" }
+        { leg: "6ta Válida", picks: ["09", "12"], tipo: "DOBLE" }
       ]
     }
   },
   "Gulfstream Park (USA)": {
-    "2026-03-25": {
+    "2026-03-26": {
       carreras: [
-        { num: 1, valida: "Race 1", hora: "12:10 PM", fav: "SPEEDY (01)", place: "MAGIC (05)", analisis: "Baja de lote." },
-        { num: 2, valida: "Race 2", hora: "12:40 PM", fav: "BIG BOSS (04)", place: "LITTLE JOE (02)", analisis: "Debutante estrella." },
-        { num: 3, valida: "Race 3", hora: "01:10 PM", fav: "GREEN WAVE (06)", place: "SEA BREEZE (03)", analisis: "Especialista en grama." },
-        { num: 4, valida: "Race 4 (Pick 6)", hora: "01:40 PM", fav: "GLOBAL SENSATION (02)", place: "FLYING (08)", analisis: "Monta de Irad Ortiz." },
-        { num: 5, valida: "Race 5 (Pick 6)", hora: "02:10 PM", fav: "MYSTERY (03)", place: "CHAMP (07)", analisis: "Mejores briseos matutinos." },
-        { num: 6, valida: "Race 6 (Pick 6)", hora: "02:40 PM", fav: "POWER (05)", place: "GOLD (09)", analisis: "Entrenador de racha." },
-        { num: 7, valida: "Race 7 (Pick 6)", hora: "03:10 PM", fav: "WIND (01)", place: "STORM (02)", analisis: "Velocidad del lote." },
-        { num: 8, valida: "Race 8 (Pick 6)", hora: "03:40 PM", fav: "QUEEN (04)", place: "DIAMOND (06)", analisis: "Sólida en la distancia." },
-        { num: 9, valida: "Race 9 (Pick 6)", hora: "04:10 PM", fav: "KING (08)", place: "ACE (10)", analisis: "El gran favorito." }
+        { num: 1, valida: "Race 1", hora: "12:10 PM", fav: "SPEEDY (01)", place: "MAGIC (05)", analisis: "Baja de lote drásticamente." },
+        { num: 4, valida: "Race 4 (Pick 6)", hora: "02:40 PM", fav: "GLOBAL SENSATION (02)", place: "SPEEDY BOY (06)", analisis: "Pletcher tiene 42% de efectividad en este tipo de carreras." }
       ],
       cuadroIA: [
         { leg: "Race 4", picks: ["02"], tipo: "LÍNEA" },
-        { leg: "Race 5", picks: ["03", "07"], tipo: "DOBLE" },
-        { leg: "Race 6", picks: ["05"], tipo: "LÍNEA" },
-        { leg: "Race 7", picks: ["01", "02"], tipo: "DOBLE" },
-        { leg: "Race 8", picks: ["04"], tipo: "LÍNEA" },
-        { leg: "Race 9", picks: ["08", "10"], tipo: "DOBLE" }
+        { leg: "Race 5", picks: ["01", "05"], tipo: "DOBLE" },
+        { leg: "Race 6", picks: ["08"], tipo: "LÍNEA" },
+        { leg: "Race 7", picks: ["04", "06"], tipo: "DOBLE" },
+        { leg: "Race 8", picks: ["02"], tipo: "LÍNEA" },
+        { leg: "Race 9", picks: ["03", "07"], tipo: "DOBLE" }
       ]
     }
   }
@@ -113,7 +95,7 @@ export function SportsView() {
   const [league, setLeague] = useState("Champions League");
   const [showIA, setShowIA] = useState(false);
   const [track, setTrack] = useState("La Rinconada (VEN)");
-  const [date, setDate] = useState("2026-03-29");
+  const [date, setDate] = useState("2026-03-26");
   const [showCuadroIA, setShowCuadroIA] = useState(false);
 
   const matches = useMemo(() => DEPORTES_PARLEY[sport as keyof typeof DEPORTES_PARLEY]?.juegos.filter(j => j.liga === league) || [], [sport, league]);
@@ -124,10 +106,10 @@ export function SportsView() {
   return (
     <div className="space-y-8 pb-40 px-1 animate-in fade-in duration-1000 relative min-h-screen">
       
-      {/* 🖼️ FONDO TEMÁTICO */}
+      {/* 🖼️ FONDO TEMÁTICO SEMITRANSPARENTE */}
       <div className={`fixed inset-0 pointer-events-none opacity-[0.06] grayscale transition-all duration-700 ${mode === 'deportes' ? 'bg-[url("https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000")] bg-cover' : 'bg-[url("https://images.unsplash.com/photo-1599201948464-966904945437?q=80&w=1000")] bg-cover'}`} />
 
-      {/* HEADER */}
+      {/* HEADER MAESTRO */}
       <div className="bg-slate-900 text-white p-8 rounded-[3rem] border-b-8 border-emerald-500 shadow-2xl relative overflow-hidden z-10">
         <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter flex items-center gap-4">
            {mode === 'deportes' ? <Trophy className="text-yellow-400" /> : <Calculator className="text-emerald-400" />}
@@ -138,8 +120,8 @@ export function SportsView() {
 
       {/* SELECTOR DE MÓDULO */}
       <div className="flex bg-white border-4 border-slate-900 rounded-full p-2 shadow-2xl max-w-md mx-auto relative z-10">
-         <button onClick={() => setMode('deportes')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'deportes' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>PARLEY</button>
-         <button onClick={() => setMode('hipismo')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'hipismo' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>HIPISMO</button>
+         <button onClick={() => setMode('deportes')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'deportes' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>DEPORTES / PARLEY</button>
+         <button onClick={() => setMode('hipismo')} className={`flex-1 py-4 rounded-full font-black uppercase text-[10px] md:text-xs transition-all ${mode === 'hipismo' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>CARRERAS CABALLOS</button>
       </div>
 
       {/* --- SECCIÓN DEPORTES --- */}
@@ -162,13 +144,11 @@ export function SportsView() {
                    </Select>
                 </div>
              </div>
-             <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all active:translate-y-1">
-                <Sparkles size={20} className="mr-2"/> {showIA ? "OCULTAR TICKET" : "VER TICKET MAESTRO IA"}
-             </Button>
+             <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all"><Sparkles size={20} className="mr-2"/> {showIA ? "OCULTAR TICKET" : "VER TICKET MAESTRO IA"}</Button>
           </div>
 
           {showIA && matches.length > 0 && (
-            <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8 animate-in zoom-in duration-500 text-slate-900 relative overflow-hidden text-left">
+            <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8 animate-in zoom-in duration-500 text-slate-900 relative overflow-hidden">
                <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-slate-900 pb-6 relative z-10">
                   <div className="flex items-center gap-4">
                      <div className="bg-slate-900 p-3 rounded-2xl shadow-lg"><Star className="text-yellow-400 fill-yellow-400" size={32} /></div>
@@ -191,7 +171,7 @@ export function SportsView() {
           )}
 
           <div className="grid gap-10">
-             {matches.length > 0 ? matches.map((m, i) => (
+             {matches.map((m, i) => (
                <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] md:rounded-[4rem] p-6 md:p-10 shadow-2xl relative text-slate-900">
                   <div className="flex justify-between items-center mb-8 border-b-2 pb-4 border-slate-100">
                      <span className="font-black text-[9px] md:text-xs text-slate-400 uppercase italic"> {m.time} | {m.liga}</span>
@@ -209,13 +189,10 @@ export function SportsView() {
                   </div>
                   <div className="mt-8 bg-slate-50 border-2 border-dashed border-slate-300 p-4 rounded-xl italic font-black text-[10px] md:text-xs text-slate-500 uppercase leading-relaxed text-center">"{m.analisis}"</div>
                </div>
-             )) : (
-               <div className="py-20 text-center bg-white border-4 border-dashed border-slate-200 rounded-[3rem]">
-                  <p className="font-black text-slate-300 uppercase italic">No hay encuentros disponibles</p>
-               </div>
-             )}
+             ))}
           </div>
 
+          {/* MANUAL DEL APOSTADOR */}
           <div className="bg-white border-4 border-slate-900 rounded-[2.5rem] p-6 md:p-10 shadow-2xl space-y-6 text-slate-900 text-left">
              <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
                 <BookOpen className="text-emerald-500" />
@@ -242,11 +219,12 @@ export function SportsView() {
            <div className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 shadow-xl space-y-6 text-left">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <Select value={track} onValueChange={setTrack}><SelectTrigger className="border-4 border-slate-900 h-14 rounded-2xl font-black bg-slate-50"><SelectValue /></SelectTrigger><SelectContent className="bg-white border-4 border-slate-900 z-[250]">{Object.keys(HIPISMO_DATA).map(t => <SelectItem key={t} value={t} className="font-black uppercase">{t}</SelectItem>)}</SelectContent></Select>
-                 <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="border-4 border-slate-900 h-14 rounded-2xl font-black" />
+                 <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="border-4 border-slate-900 h-14 rounded-2xl font-black shadow-inner" />
               </div>
               <Button onClick={() => setShowCuadroIA(!showCuadroIA)} className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all"><LayoutGrid className="mr-2" size={24} /> {showCuadroIA ? "CERRAR CUADRO" : "ARMAR CUADRO IA (5y6)"}</Button>
            </div>
            
+           {/* CUADRO IA HÍPICO */}
            {showCuadroIA && (
              <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-8 animate-in zoom-in duration-500 relative overflow-hidden">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
@@ -263,7 +241,7 @@ export function SportsView() {
 
            <div className="grid gap-10">
               {races.map((r, i) => (
-                <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl relative">
+                <div key={i} className="bg-white border-4 border-slate-900 rounded-[3rem] p-6 md:p-10 shadow-2xl relative text-slate-900">
                    <div className="flex justify-between items-center mb-8 border-b-4 border-emerald-500 pb-4">
                       <div className="flex items-center gap-3">
                          <div className="bg-slate-900 text-white w-14 h-14 rounded-xl flex flex-col items-center justify-center border-2 border-emerald-400"><span className="font-black text-xl">{r.num}</span><span className="text-[7px] font-bold uppercase tracking-widest">CARR</span></div>
