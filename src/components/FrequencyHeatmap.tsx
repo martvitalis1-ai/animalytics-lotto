@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl, getCodesForLottery } from '../lib/animalData';
 import { getDrawTimesForLottery } from '../lib/constants';
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3 } from "lucide-center";
+import { Grid3X3 as GridIcon } from "lucide-react";
 
 export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   const [data, setData] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
         .order('draw_date', { ascending: false })
         .limit(1500);
 
-      if (error) console.error("Error Matriz:", error.message);
+      if (error) console.error("Error Matriz:", error);
       setData(res || []);
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export function FrequencyHeatmap({ lotteryId }: { lotteryId: string }) {
   return (
     <div className="bg-white border-4 border-slate-900 rounded-[2.5rem] p-3 md:p-6 shadow-2xl overflow-hidden relative">
       <div className="flex items-center gap-3 mb-6 px-2">
-        <Grid3X3 className="text-emerald-500" size={24} />
+        <GridIcon className="text-emerald-500" size={24} />
         <h3 className="font-black text-xl md:text-2xl uppercase italic text-slate-900 tracking-tighter">MATRIZ ATÓMICA</h3>
       </div>
       
