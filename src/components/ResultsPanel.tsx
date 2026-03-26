@@ -1,33 +1,30 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { getAnimalImageUrl } from '../lib/animalData';
-import { getDrawTimesForLottery } from '../lib/constants';
 
 export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
 
-  // Obtenemos los horarios ordenados según la lotería
-  const times = getDrawTimesForLottery(lotteryId);
+  // 🛡️ MOLDE DE HORARIOS CRONOLÓGICOS (PARA ORDENAR EL TELÉFONO)
+  const isHalfHour = lotteryId.toLowerCase().trim() === 'lotto_rey' || lotteryId.toLowerCase().trim() === 'guacharito';
+  
+  const timeSlots = isHalfHour 
+    ? ["08:30 AM", "09:30 AM", "10:30 AM", "11:30 AM", "12:30 PM", "01:30 PM", "02:30 PM", "03:30 PM", "04:30 PM", "05:30 PM", "06:30 PM", "07:30 PM"]
+    : ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"];
 
   useEffect(() => {
     async function fetchResults() {
       setLoading(true);
-      
-      // Mapeo de ID para la base de datos
-      let dbId = lotteryId.toLowerCase().trim();
-      if (dbId === 'la_granjita') dbId = 'granjita';
-      if (dbId === 'el_guacharo') dbId = 'guacharo';
-
+      // lotteryId ya viene mapeado desde el Dashboard
       const { data, error } = await supabase
         .from('lottery_results')
         .select('*')
-        .eq('lottery_type', dbId)
+        .eq('lottery_type', lotteryId)
         .eq('draw_date', selectedDate);
 
-      if (error) console.error("Error cargando búnker:", error);
-
+      if (error) console.error("Error cargando bóveda:", error);
       setResults(data || []);
       setLoading(false);
     }
@@ -45,48 +42,47 @@ export function ResultsPanel({ lotteryId }: { lotteryId: string }) {
           type="date" 
           value={selectedDate} 
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-black text-sm border-4 border-slate-900 w-full md:w-auto text-center"
+          className="bg-white text-slate-900 px-4 py-2 rounded-xl font-black text-sm border-4 border-slate-900 w-full md:w-auto text-center shadow-lg"
         />
       </div>
 
       {loading ? (
-        <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase">Abriendo Búnker...</div>
+        <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase italic">Abriendo Bóveda...</div>
       ) : (
-        /* 🛡️ RENDERIZADO CRONOLÓGICO: Mapeamos la lista de TIEMPOS, no los resultados */
+        /* 🛡️ RENDERIZADO ORDENADO POR HORA (Mapeamos los SLOTS, no el resultado directo) */
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {times.map((time) => {
-            // Buscamos si existe un resultado que coincida exactamente con esta hora de la lista
+          {timeSlots.map((slot) => {
+            // Buscamos si existe un resultado en la DB que coincida con esta hora del molde
             const res = results.find(r => 
-              r.draw_time.trim().toUpperCase() === time.trim().toUpperCase()
+              r.draw_time.trim().toUpperCase() === slot.trim().toUpperCase()
             );
+
+            // Si no hay resultado, mostramos el cuadro vacío con la hora (opcional) o solo si hay resultado
+            if (!res) return null; 
 
             return (
               <div 
-                key={time} 
-                className={`bg-white border-4 border-slate-900 rounded-[2.5rem] md:rounded-[3rem] p-6 flex flex-col items-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative min-h-[180px] transition-all ${res ? 'opacity-100 scale-100' : 'opacity-10 scale-95'}`}
+                key={slot} 
+                className="bg-white border-4 border-slate-900 rounded-[2.5rem] md:rounded-[3rem] p-6 flex flex-col items-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative min-h-[180px] animate-in zoom-in duration-300"
               >
-                {/* La hora siempre sale en orden porque viene de la constante */}
-                <span className="absolute top-4 bg-slate-900 text-white px-4 py-1 rounded-full font-black text-[10px] tracking-tighter">
-                  {time}
+                <span className="absolute top-4 bg-slate-900 text-white px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-tighter">
+                  {slot}
                 </span>
-                
-                {res && (
-                  <img 
-                    src={getAnimalImageUrl(res.result_number)} 
-                    className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain animate-in zoom-in duration-300" 
-                    alt="Animal"
-                  />
-                )}
+                <img 
+                  src={getAnimalImageUrl(res.result_number)} 
+                  className="w-32 h-32 md:w-44 md:h-44 mt-4 object-contain" 
+                  alt="Resultado"
+                />
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Mensaje si la fecha está totalmente vacía */}
+      {/* Mensaje de seguridad si realmente no hay nada en todo el día */}
       {!loading && results.length === 0 && (
-        <div className="p-10 text-center bg-slate-50 border-4 border-dashed border-slate-200 rounded-[2.5rem]">
-           <p className="font-black text-slate-300 uppercase text-xs">Sin registros para esta fecha</p>
+        <div className="p-20 text-center bg-white border-4 border-dashed border-slate-200 rounded-[3rem]">
+          <p className="font-black text-slate-400 uppercase italic">No hay registros para esta fecha.</p>
         </div>
       )}
     </div>
