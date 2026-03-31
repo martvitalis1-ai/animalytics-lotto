@@ -61,7 +61,7 @@ export function SportsView() {
       .slice(0, 6)
       .map(r => ({
         leg: r.valida_text,
-        picks: [r.favorite.match(/\(([^)]+)\)/)?.[1] || "01"], // Extrae el número entre paréntesis
+        picks: [r.favorite.match(/\(([^)]+)\)/)?.[1] || "01"], 
         tipo: "LÍNEA"
       }));
   }, [filteredRaces]);
@@ -115,10 +115,10 @@ export function SportsView() {
          </div>
       </div>
 
-      {/* --- RENDERIZADO DEPORTES (DATA REAL) --- */}
+      {/* --- RENDERIZADO DEPORTES --- */}
       {mode === 'deportes' && (
         <div className="space-y-8 relative z-10 text-slate-900 text-left">
-           <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all"><Sparkles size={20} className="mr-2"/> {showIA ? "OCULTAR TICKET" : "VER TICKET MAESTRO IA"}</Button>
+           <Button onClick={() => setShowIA(!showIA)} className="w-full h-16 bg-emerald-500 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all active:translate-y-1"><Sparkles size={20} className="mr-2"/> {showIA ? "OCULTAR TICKET" : "VER TICKET MAESTRO IA"}</Button>
            
            {showIA && filteredMatches.filter(m => m.is_ia_pick).length > 0 && (
              <div className="bg-[#FFFCEB] border-4 border-slate-900 rounded-[3rem] p-6 shadow-2xl space-y-6 animate-in zoom-in">
@@ -149,7 +149,7 @@ export function SportsView() {
                       <p className="font-black text-2xl md:text-5xl uppercase text-slate-900 text-center">{m.team_away}</p>
                    </div>
                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-900 p-2 rounded-xl text-center"><p className="text-[7px] text-emerald-400 font-black uppercase">Gana</p><p className="text-white font-black text-[10px] uppercase">{m.prediction_gana}</p></div>
+                      <div className="bg-slate-900 p-2 rounded-xl text-center"><p className="text-[8px] font-black text-emerald-400 uppercase">Gana</p><p className="text-white font-black text-[10px] uppercase">{m.prediction_gana}</p></div>
                       <div className="bg-slate-900 p-2 rounded-xl text-center"><p className="text-[7px] text-emerald-400 font-black uppercase">Alta/Baja</p><p className="text-white font-black text-[10px] uppercase">{m.prediction_alta_baja}</p></div>
                       <div className="bg-slate-900 p-2 rounded-xl text-center"><p className="text-[7px] text-emerald-400 font-black uppercase">RL/H</p><p className="text-white font-black text-[10px] uppercase">{m.prediction_handicap}</p></div>
                    </div>
@@ -171,7 +171,7 @@ export function SportsView() {
         </div>
       )}
 
-      {/* --- RENDERIZADO HIPISMO (DATA REAL) --- */}
+      {/* --- RENDERIZADO HIPISMO --- */}
       {mode === 'hipismo' && (
         <div className="space-y-8 relative z-10 text-slate-900 text-left">
            <Button onClick={() => setShowCuadroIA(!showCuadroIA)} className="w-full h-16 bg-emerald-500 border-4 border-slate-900 rounded-3xl font-black text-slate-900 text-xl shadow-lg uppercase italic transition-all"><LayoutGrid className="mr-2" size={24} /> {showCuadroIA ? "CERRAR CUADRO" : "ARMAR CUADRO IA (5y6)"}</Button>
@@ -202,8 +202,8 @@ export function SportsView() {
                       </div>
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-emerald-50 border-4 border-emerald-500 p-6 rounded-3xl relative shadow-sm"><span className="absolute -top-3 left-6 bg-emerald-500 text-white px-4 py-0.5 rounded-full font-black text-[9px] uppercase">Favorito</span><p className="font-black text-2xl md:text-4xl text-emerald-900 uppercase tracking-tighter">{r.favorite}</p></div>
-                      <div className="bg-slate-50 border-4 border-slate-300 p-6 rounded-3xl relative shadow-sm"><span className="absolute -top-3 left-6 bg-slate-400 text-white px-4 py-0.5 rounded-full font-black text-[9px] uppercase">Placé</span><p className="font-black text-2xl md:text-4xl text-slate-600 uppercase tracking-tighter">{r.place}</p></div>
+                      <div className="bg-emerald-50 border-4 border-emerald-500 p-6 rounded-3xl relative shadow-sm"><span className="absolute -top-3 left-6 bg-emerald-500 text-white px-4 py-0.5 rounded-full font-black text-[8px] md:text-[10px] uppercase">Favorito</span><p className="font-black text-2xl md:text-4xl text-emerald-900 uppercase tracking-tighter">{r.favorite}</p></div>
+                      <div className="bg-slate-50 border-4 border-slate-300 p-6 rounded-3xl relative shadow-sm"><span className="absolute -top-3 left-6 bg-slate-400 text-white px-4 py-0.5 rounded-full font-black text-[8px] md:text-[10px] uppercase">Placé</span><p className="font-black text-2xl md:text-4xl text-slate-600 uppercase tracking-tighter">{r.place}</p></div>
                    </div>
                    <p className="mt-6 font-black text-xs text-slate-500 uppercase italic text-center leading-relaxed">"{r.analysis}"</p>
                 </div>
@@ -215,5 +215,4 @@ export function SportsView() {
       <AdBanner slotId="deportes" />
     </div>
   );
-}
 }
